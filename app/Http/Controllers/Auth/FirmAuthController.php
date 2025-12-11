@@ -36,4 +36,13 @@ class FirmAuthController extends Controller
 
         return redirect()->route('company.dashboard');
     }
+
+    // WYLOGOWANIE FIRMY
+    public function logout()
+    {
+        session()->forget('firm_id');
+        session()->flush();
+
+        return redirect('/company/login')->with('success', 'Zostałeś wylogowany.');
+    }
 }

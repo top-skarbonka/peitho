@@ -94,8 +94,10 @@
             <a href="#">🎁 Vouchery</a>
             <a href="#">⭐ Karty lojalnościowe</a>
 
-            <!-- NOWA OPCJA: DODAWANIE PUNKTÓW -->
             <a href="/company/points">💎 Dodaj punkty</a>
+
+            <!-- NOWOŚĆ -->
+            <a href="/company/transactions">📜 Historia transakcji</a>
 
             <a href="#">📈 Statystyki</a>
             <a href="#">⚙️ Ustawienia</a>

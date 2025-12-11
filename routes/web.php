@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FirmController;
 use App\Http\Controllers\Auth\FirmAuthController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\ClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – logowanie i dashboard
+| PANEL FIRMY – logowanie, wylogowanie i dashboard
 |--------------------------------------------------------------------------
 */
 
@@ -28,30 +29,29 @@ Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
 Route::post('/company/login', [FirmAuthController::class, 'login'])
     ->name('company.login.submit');
 
+Route::get('/company/logout', [FirmAuthController::class, 'logout'])
+    ->name('company.logout');
+
 Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
     ->name('company.dashboard');
 
+
 /*
 |--------------------------------------------------------------------------
-| PUNKTY LOJALNOŚCIOWE – formularz + zapis
-|--------------------------------------------------------------------------
-|
-| Firma wprowadza kwotę → system liczy punkty i dodaje klientowi
+| PUNKTY LOJALNOŚCIOWE – formularz i zapis
 |--------------------------------------------------------------------------
 */
 
-// formularz „Dodaj punkty”
 Route::get('/company/points', [FirmController::class, 'showPointsForm'])
     ->name('company.points.form');
 
-// zapis punktów (submit formularza)
 Route::post('/company/points/add', [FirmController::class, 'addPoints'])
     ->name('company.points.add');
 
 
 /*
 |--------------------------------------------------------------------------
-| SKANOWANIE QR
+| SKANOWANIE QR – karty i vouchery
 |--------------------------------------------------------------------------
 */
 
@@ -80,3 +80,23 @@ Route::post('/firm/card/{id}/reset', [FirmController::class, 'resetCard'])
 
 Route::post('/firm/voucher/{id}/use', [FirmController::class, 'useVoucher'])
     ->name('firm.voucher.use');
+
+
+/*
+|--------------------------------------------------------------------------
+| HISTORIA TRANSAKCJI – PANEL FIRMY
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/company/transactions', [FirmController::class, 'transactions'])
+    ->name('company.transactions');
+
+
+/*
+|--------------------------------------------------------------------------
+| HISTORIA TRANSAKCJI – PANEL KLIENTA
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/client/transactions', [ClientController::class, 'transactions'])
+    ->name('client.transactions');
