@@ -93,8 +93,13 @@
             <a href="/company/dashboard">📊 Dashboard</a>
             <a href="#">🎁 Vouchery</a>
             <a href="#">⭐ Karty lojalnościowe</a>
+
+            <!-- NOWA OPCJA: DODAWANIE PUNKTÓW -->
+            <a href="/company/points">💎 Dodaj punkty</a>
+
             <a href="#">📈 Statystyki</a>
             <a href="#">⚙️ Ustawienia</a>
+
             <a href="/company/logout" style="color:#d13c3c;">🚪 Wyloguj</a>
         </div>
     </div>

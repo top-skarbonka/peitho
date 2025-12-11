@@ -1,4 +1,18 @@
-public function loyaltyCard()
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Client extends Model
 {
-    return $this->hasOne(LoyaltyCard::class);
+    protected $fillable = [
+        'program_id',
+        'email',
+        'phone',
+        'city',
+        'postal_code',
+        'qr_code',
+        'points',
+    ];
 }

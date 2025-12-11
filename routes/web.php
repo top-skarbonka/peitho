@@ -7,25 +7,46 @@ use App\Http\Controllers\Auth\AdminAuthController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes – Peitho
+| Strona główna – test
 |--------------------------------------------------------------------------
 */
 
-// STRONA GŁÓWNA TESTOWA
 Route::get('/', function () {
     return "PEITHO DZIAŁA — strona główna";
 });
 
+
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY
+| PANEL FIRMY – logowanie i dashboard
 |--------------------------------------------------------------------------
 */
 
-Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])->name('company.login');
-Route::post('/company/login', [FirmAuthController::class, 'login'])->name('company.login.submit');
+Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
+    ->name('company.login');
 
-Route::get('/company/dashboard', [FirmController::class, 'dashboard'])->name('company.dashboard');
+Route::post('/company/login', [FirmAuthController::class, 'login'])
+    ->name('company.login.submit');
+
+Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
+    ->name('company.dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| PUNKTY LOJALNOŚCIOWE – formularz + zapis
+|--------------------------------------------------------------------------
+|
+| Firma wprowadza kwotę → system liczy punkty i dodaje klientowi
+|--------------------------------------------------------------------------
+*/
+
+// formularz „Dodaj punkty”
+Route::get('/company/points', [FirmController::class, 'showPointsForm'])
+    ->name('company.points.form');
+
+// zapis punktów (submit formularza)
+Route::post('/company/points/add', [FirmController::class, 'addPoints'])
+    ->name('company.points.add');
 
 
 /*
@@ -34,17 +55,21 @@ Route::get('/company/dashboard', [FirmController::class, 'dashboard'])->name('co
 |--------------------------------------------------------------------------
 */
 
-Route::get('/scan/{code}', [FirmController::class, 'scan'])->name('firm.scan');
+Route::get('/scan/{code}', [FirmController::class, 'scan'])
+    ->name('firm.scan');
 
 
 /*
 |--------------------------------------------------------------------------
-| KARTY LOJALNOŚCIOWE
+| KARTY LOJALNOŚCIOWE – naklejki
 |--------------------------------------------------------------------------
 */
 
-Route::post('/firm/card/{id}/add-stamp', [FirmController::class, 'addStamp'])->name('firm.card.addStamp');
-Route::post('/firm/card/{id}/reset', [FirmController::class, 'resetCard'])->name('firm.card.reset');
+Route::post('/firm/card/{id}/add-stamp', [FirmController::class, 'addStamp'])
+    ->name('firm.card.addStamp');
+
+Route::post('/firm/card/{id}/reset', [FirmController::class, 'resetCard'])
+    ->name('firm.card.reset');
 
 
 /*
@@ -53,4 +78,5 @@ Route::post('/firm/card/{id}/reset', [FirmController::class, 'resetCard'])->name
 |--------------------------------------------------------------------------
 */
 
-Route::post('/firm/voucher/{id}/use', [FirmController::class, 'useVoucher'])->name('firm.voucher.use');
+Route::post('/firm/voucher/{id}/use', [FirmController::class, 'useVoucher'])
+    ->name('firm.voucher.use');
