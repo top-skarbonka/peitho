@@ -24,7 +24,7 @@ class FirmController extends Controller
         $firmId    = session('firm_id');
         $programId = Firm::find($firmId)?->program_id;
 
-        // 1️⃣ PODSTAWOWE STATYSTYKI
+        // Statystyki główne
         $totalClients      = Client::where('program_id', $programId)->count();
         $totalTransactions = Transaction::where('program_id', $programId)->count();
         $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
@@ -36,7 +36,7 @@ class FirmController extends Controller
             ->orderByDesc('count')
             ->first();
 
-        // 2️⃣ WYKRES DZIENNY — OSTATNIE 60 DNI
+        // Wykres dzienny
         $daily = Transaction::selectRaw('DATE(created_at) AS date, SUM(points) AS total')
             ->where('program_id', $programId)
             ->groupBy('date')
@@ -47,7 +47,7 @@ class FirmController extends Controller
         $chartLabels = $daily->pluck('date');
         $chartValues = $daily->pluck('total');
 
-        // 3️⃣ WYKRES MIESIĘCZNY — OSTATNIE 12 MIES.
+        // Wykres miesięczny
         $monthly = Transaction::selectRaw('DATE_FORMAT(created_at, "%Y-%m") AS month, SUM(points) AS total_points')
             ->where('program_id', $programId)
             ->groupBy('month')
@@ -58,13 +58,13 @@ class FirmController extends Controller
         $monthlyLabels = $monthly->pluck('month');
         $monthlyValues = $monthly->pluck('total_points');
 
-        // 4️⃣ TOP KLIENCI
+        // TOP klienci
         $topClients = Client::where('program_id', $programId)
             ->orderByDesc('points')
             ->limit(10)
             ->get();
 
-        // 5️⃣ HEATMAPA GODZIN
+        // Heatmapa godzin
         $hoursRaw = Transaction::selectRaw('HOUR(created_at) AS hour, SUM(points) AS total')
             ->where('program_id', $programId)
             ->groupBy('hour')
@@ -94,7 +94,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | HISTORIA TRANSAKCJI — z filtrami (telefon, daty, typ) + statystyki do kafelków
+    | HISTORIA TRANSAKCJI — PEŁNE FILTRY: telefon, daty, punkty, kwoty
     |--------------------------------------------------------------------------
     */
     public function transactions(Request $request)
@@ -102,32 +102,39 @@ class FirmController extends Controller
         $firmId    = session('firm_id');
         $programId = Firm::find($firmId)?->program_id;
 
-        // ---------------- FILTRY Z FORMULARZA ----------------
-        $filterPhone    = $request->input('phone');
-        $filterDateFrom = $request->input('date_from');
-        $filterDateTo   = $request->input('date_to');
-        $filterType     = $request->input('type'); // może być null
+        // FILTRY
+        $phone       = $request->input('phone');
+        $dateFrom    = $request->input('date_from');
+        $dateTo      = $request->input('date_to');
+        $minPoints   = $request->input('min_points');
+        $maxPoints   = $request->input('max_points');
+        $minAmount   = $request->input('min_amount');
+        $maxAmount   = $request->input('max_amount');
 
-        // ---------------- GŁÓWNE ZAPYTANIE ----------------
+        // QUERY główne
         $query = Transaction::with('client')
             ->where('program_id', $programId);
 
-        if ($filterPhone) {
-            $query->whereHas('client', function ($q) use ($filterPhone) {
-                $q->where('phone', $filterPhone);
-            });
+        if ($phone) {
+            $query->whereHas('client', fn($q) => $q->where('phone', $phone));
         }
-
-        if ($filterDateFrom) {
-            $query->whereDate('created_at', '>=', $filterDateFrom);
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
         }
-
-        if ($filterDateTo) {
-            $query->whereDate('created_at', '<=', $filterDateTo);
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
         }
-
-        if ($filterType) {
-            $query->where('type', $filterType);
+        if ($minPoints !== null && $minPoints !== '') {
+            $query->where('points', '>=', (int)$minPoints);
+        }
+        if ($maxPoints !== null && $maxPoints !== '') {
+            $query->where('points', '<=', (int)$maxPoints);
+        }
+        if ($minAmount !== null && $minAmount !== '') {
+            $query->where('amount', '>=', (float)$minAmount);
+        }
+        if ($maxAmount !== null && $maxAmount !== '') {
+            $query->where('amount', '<=', (float)$maxAmount);
         }
 
         $transactions = $query
@@ -135,43 +142,28 @@ class FirmController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // ---------------- STATYSTYKI DLA KAFELKÓW (CAŁY PROGRAM) ----------------
-        // żeby widok miał totalClients, totalTransactions, totalPoints itd.
-        $totalClients      = Client::where('program_id', $programId)->count();
-        $totalTransactions = Transaction::where('program_id', $programId)->count();
-        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
-        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
-
-        $bestDay = Transaction::selectRaw('DATE(created_at) AS day, COUNT(*) AS count')
-            ->where('program_id', $programId)
-            ->groupBy('day')
-            ->orderByDesc('count')
-            ->first()
-            ?->day;
-
-        // ---------------- PODSUMOWANIE DLA KONKRETNEGO KLIENTA ----------------
+        // Podsumowanie klienta
         $clientSummary = null;
-
-        if ($filterPhone) {
+        if ($phone) {
             $clientSummary = Transaction::where('program_id', $programId)
-                ->whereHas('client', function ($q) use ($filterPhone) {
-                    $q->where('phone', $filterPhone);
-                })
+                ->whereHas('client', fn($q) => $q->where('phone', $phone))
                 ->selectRaw('SUM(points) AS total_points, COUNT(*) AS total_transactions')
                 ->first();
         }
 
-        // ---------------- DANE DO WYKRESU (AKTYWNOŚĆ DZIENNA) ----------------
+        // Wykres (uwzględnia wszystkie filtry)
         $chartQuery = Transaction::selectRaw('DATE(created_at) AS date, SUM(points) AS points')
             ->where('program_id', $programId);
 
-        if ($filterDateFrom) {
-            $chartQuery->whereDate('created_at', '>=', $filterDateFrom);
+        if ($phone) {
+            $chartQuery->whereHas('client', fn($q) => $q->where('phone', $phone));
         }
-
-        if ($filterDateTo) {
-            $chartQuery->whereDate('created_at', '<=', $filterDateTo);
-        }
+        if ($dateFrom) $chartQuery->whereDate('created_at', '>=', $dateFrom);
+        if ($dateTo)   $chartQuery->whereDate('created_at', '<=', $dateTo);
+        if ($minPoints !== null && $minPoints !== '') $chartQuery->where('points', '>=', $minPoints);
+        if ($maxPoints !== null && $maxPoints !== '') $chartQuery->where('points', '<=', $maxPoints);
+        if ($minAmount !== null && $minAmount !== '') $chartQuery->where('amount', '>=', $minAmount);
+        if ($maxAmount !== null && $maxAmount !== '') $chartQuery->where('amount', '<=', $maxAmount);
 
         $chartData = $chartQuery
             ->groupBy('date')
@@ -179,21 +171,16 @@ class FirmController extends Controller
             ->get();
 
         return view('firm.transactions', [
-            // dane główne
             'transactions'    => $transactions,
-            'filterPhone'     => $filterPhone,
-            'filterDateFrom'  => $filterDateFrom,
-            'filterDateTo'    => $filterDateTo,
-            'filterType'      => $filterType,
+            'filterPhone'     => $phone,
+            'filterDateFrom'  => $dateFrom,
+            'filterDateTo'    => $dateTo,
+            'filterMinPoints' => $minPoints,
+            'filterMaxPoints' => $maxPoints,
+            'filterMinAmount' => $minAmount,
+            'filterMaxAmount' => $maxAmount,
             'clientSummary'   => $clientSummary,
             'chartData'       => $chartData,
-
-            // statystyki do kafelków w widoku (tak jak na dashboardzie)
-            'totalClients'      => $totalClients,
-            'totalTransactions' => $totalTransactions,
-            'totalPoints'       => $totalPoints,
-            'avgPoints'         => round($avgPoints, 2),
-            'bestDay'           => $bestDay,
         ]);
     }
 
@@ -205,14 +192,10 @@ class FirmController extends Controller
     public function scan($code)
     {
         $card = LoyaltyCard::where('qr_code', $code)->first();
-        if ($card) {
-            return view('firm.scan.card', compact('card'));
-        }
+        if ($card) return view('firm.scan.card', compact('card'));
 
         $voucher = GiftVoucher::where('qr_code', $code)->first();
-        if ($voucher) {
-            return view('firm.scan.voucher', compact('voucher'));
-        }
+        if ($voucher) return view('firm.scan.voucher', compact('voucher'));
 
         return "Nie znaleziono karty ani vouchera.";
     }
@@ -254,7 +237,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | VOUCHERY
+    | VOUCHERY — REALIZACJA
     |--------------------------------------------------------------------------
     */
     public function useVoucher($id)
@@ -276,7 +259,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | PUNKTY: FORMULARZ
+    | PUNKTY – FORMULARZ + ZAPIS
     |--------------------------------------------------------------------------
     */
     public function showPointsForm()
@@ -284,11 +267,6 @@ class FirmController extends Controller
         return view('firm.points');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PUNKTY: ZAPIS
-    |--------------------------------------------------------------------------
-    */
     public function addPoints(Request $request)
     {
         $data = $request->validate([
@@ -304,7 +282,7 @@ class FirmController extends Controller
             ->where('program_id', $programId)
             ->first();
 
-        if (! $client) {
+        if (!$client) {
             return back()->withErrors(['phone' => 'Nie znaleziono klienta.']);
         }
 
