@@ -90,19 +90,21 @@
         <div class="logo">🏢 Panel Firmy</div>
 
         <div class="menu">
-            <a href="/company/dashboard">📊 Dashboard</a>
+            <a href="{{ route('company.dashboard') }}">📊 Dashboard</a>
+
             <a href="#">🎁 Vouchery</a>
-            <a href="#">⭐ Karty lojalnościowe</a>
 
-            <a href="/company/points">💎 Dodaj punkty</a>
+            <!-- ✅ TO JEST KLUCZOWA POPRAWKA -->
+            <a href="{{ route('company.loyalty.cards') }}">⭐ Karty lojalnościowe</a>
 
-            <!-- NOWOŚĆ -->
-            <a href="/company/transactions">📜 Historia transakcji</a>
+            <a href="{{ route('company.points.form') }}">💎 Dodaj punkty</a>
+
+            <a href="{{ route('company.transactions') }}">📜 Historia transakcji</a>
 
             <a href="#">📈 Statystyki</a>
             <a href="#">⚙️ Ustawienia</a>
 
-            <a href="/company/logout" style="color:#d13c3c;">🚪 Wyloguj</a>
+            <a href="{{ route('company.logout') }}" style="color:#d13c3c;">🚪 Wyloguj</a>
         </div>
     </div>
 

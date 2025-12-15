@@ -38,6 +38,16 @@ Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
 
 /*
 |--------------------------------------------------------------------------
+| KARTY LOJALNOŚCIOWE – PANEL FIRMY (⬅️ TEGO BRAKOWAŁO)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/company/loyalty-cards', [FirmController::class, 'loyaltyCards'])
+    ->name('company.loyalty.cards');
+
+
+/*
+|--------------------------------------------------------------------------
 | PUNKTY LOJALNOŚCIOWE – formularz i zapis
 |--------------------------------------------------------------------------
 */
@@ -47,6 +57,16 @@ Route::get('/company/points', [FirmController::class, 'showPointsForm'])
 
 Route::post('/company/points/add', [FirmController::class, 'addPoints'])
     ->name('company.points.add');
+
+
+/*
+|--------------------------------------------------------------------------
+| HISTORIA TRANSAKCJI – PANEL FIRMY
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/company/transactions', [FirmController::class, 'transactions'])
+    ->name('company.transactions');
 
 
 /*
@@ -61,7 +81,7 @@ Route::get('/scan/{code}', [FirmController::class, 'scan'])
 
 /*
 |--------------------------------------------------------------------------
-| KARTY LOJALNOŚCIOWE – naklejki
+| KARTY LOJALNOŚCIOWE – AKCJE (naklejki / reset)
 |--------------------------------------------------------------------------
 */
 
@@ -80,16 +100,6 @@ Route::post('/firm/card/{id}/reset', [FirmController::class, 'resetCard'])
 
 Route::post('/firm/voucher/{id}/use', [FirmController::class, 'useVoucher'])
     ->name('firm.voucher.use');
-
-
-/*
-|--------------------------------------------------------------------------
-| HISTORIA TRANSAKCJI – PANEL FIRMY
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/company/transactions', [FirmController::class, 'transactions'])
-    ->name('company.transactions');
 
 
 /*

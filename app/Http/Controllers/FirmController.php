@@ -328,4 +328,29 @@ class FirmController extends Controller
 
         return back()->with('success', "Dodano {$pointsToAdd} pkt klientowi {$client->phone}");
     }
+/*
+|--------------------------------------------------------------------------
+| KARTY LOJALNOŚCIOWE — LISTA (PANEL FIRMY)
+|--------------------------------------------------------------------------
+*/
+public function loyaltyCards()
+{
+    $firmId = session('firm_id');
+
+    if (! $firmId) {
+        return redirect()->route('company.login');
+    }
+
+    $firm = \App\Models\Firm::findOrFail($firmId);
+
+    $cards = \App\Models\LoyaltyCard::with(['client', 'stamps'])
+        ->where('program_id', $firm->program_id)
+        ->orderByDesc('created_at')
+        ->get();
+
+    return view('firm.loyalty-cards.index', [
+        'cards' => $cards,
+        'firm'  => $firm,
+    ]);
+}
 }
