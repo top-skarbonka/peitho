@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\Client;
 use App\Models\Firm;
 use App\Models\Program;
@@ -16,7 +15,7 @@ class FirmController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | DASHBOARD — NIE RUSZAMY WYGLĄDU
+    | DASHBOARD
     |--------------------------------------------------------------------------
     */
     public function dashboard()
@@ -73,25 +72,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | SKAN QR — KARTA / VOUCHER
-    |--------------------------------------------------------------------------
-    */
-    public function scan($code)
-    {
-        if ($card = LoyaltyCard::where('qr_code', $code)->first()) {
-            return view('firm.scan.card', compact('card'));
-        }
-
-        if ($voucher = GiftVoucher::where('qr_code', $code)->first()) {
-            return view('firm.scan.voucher', compact('voucher'));
-        }
-
-        abort(404);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | KARTY LOJALNOŚCIOWE — LISTA (PANEL FIRMY)
+    | LISTA KART LOJALNOŚCIOWYCH (PANEL FIRMY)
     |--------------------------------------------------------------------------
     */
     public function loyaltyCards()
@@ -103,17 +84,28 @@ class FirmController extends Controller
 
         $firm = Firm::findOrFail($firmId);
 
-        $cards = LoyaltyCard::with(['client', 'stamps'])
+        $cards = LoyaltyCard::with(['client'])
             ->where('program_id', $firm->program_id)
             ->orderByDesc('created_at')
             ->get();
 
-        return view('firm.loyalty-cards.index', compact('cards'));
+        // 🔥 HISTORIA NAKLEJEK (ETAP 2B.1)
+        $stamps = LoyaltyStamp::with(['card.client'])
+            ->where('firm_id', $firmId)
+            ->orderByDesc('created_at')
+            ->limit(200)
+            ->get();
+
+        return view('firm.loyalty-cards.index', [
+            'cards'  => $cards,
+            'stamps' => $stamps,
+            'firm'   => $firm,
+        ]);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | KARTY LOJALNOŚCIOWE — DODAJ NAKLEJKĘ
+    | DODANIE NAKLEJKI
     |--------------------------------------------------------------------------
     */
     public function addStamp($cardId)
@@ -125,35 +117,29 @@ class FirmController extends Controller
 
         $card = LoyaltyCard::findOrFail($cardId);
 
-        $programId = Firm::findOrFail($firmId)->program_id;
-        if ($card->program_id !== $programId) {
-            abort(403);
-        }
-
         if ($card->current_stamps >= $card->max_stamps) {
             return back()->with('error', 'Karta jest już pełna.');
         }
 
-        DB::transaction(function () use ($card, $firmId) {
-            $card->increment('current_stamps');
+        $card->increment('current_stamps');
 
-            LoyaltyStamp::create([
-                'loyalty_card_id' => $card->id,
-                'firm_id'         => $firmId,
-                'description'     => 'Dodano naklejkę',
-            ]);
+        LoyaltyStamp::create([
+            'loyalty_card_id' => $card->id,
+            'firm_id'         => $firmId,
+            'description'     => 'Dodano naklejkę',
+        ]);
 
-            if ($card->current_stamps >= $card->max_stamps) {
-                $card->update(['status' => 'completed']);
-            }
-        });
+        // AUTO-COMPLETED
+        if ($card->current_stamps >= $card->max_stamps) {
+            $card->update(['status' => 'completed']);
+        }
 
         return back()->with('success', 'Naklejka dodana.');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | KARTY LOJALNOŚCIOWE — RESET PO NAGRODZIE
+    | RESET KARTY (NOWY CYKL)
     |--------------------------------------------------------------------------
     */
     public function resetCard($cardId)
@@ -165,59 +151,32 @@ class FirmController extends Controller
 
         $card = LoyaltyCard::findOrFail($cardId);
 
-        $programId = Firm::findOrFail($firmId)->program_id;
-        if ($card->program_id !== $programId) {
-            abort(403);
-        }
-
-        DB::transaction(function () use ($card, $firmId) {
-            $card->update([
-                'current_stamps' => 0,
-                'status'         => 'active',
-            ]);
-
-            LoyaltyStamp::create([
-                'loyalty_card_id' => $card->id,
-                'firm_id'         => $firmId,
-                'description'     => 'Reset karty po nagrodzie',
-            ]);
-        });
+        $card->update([
+            'current_stamps' => 0,
+            'status'         => 'active',
+        ]);
 
         return back()->with('success', 'Karta została zresetowana.');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | PUNKTY — FORMULARZ
+    | PUNKTY
     |--------------------------------------------------------------------------
     */
     public function showPointsForm()
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
-
         return view('firm.points');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PUNKTY — DODAWANIE
-    |--------------------------------------------------------------------------
-    */
     public function addPoints(Request $request)
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
-
         $request->validate([
             'phone'  => 'required',
             'amount' => 'required|numeric|min:0.01',
         ]);
 
+        $firmId = session('firm_id');
         $programId = Firm::findOrFail($firmId)->program_id;
 
         $client = Client::where('phone', $request->phone)
@@ -237,23 +196,5 @@ class FirmController extends Controller
         ]);
 
         return back()->with('success', 'Punkty dodane.');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | VOUCHERY
-    |--------------------------------------------------------------------------
-    */
-    public function useVoucher($id)
-    {
-        $voucher = GiftVoucher::findOrFail($id);
-
-        if ($voucher->status === 'used') {
-            return back()->with('error', 'Voucher został już użyty.');
-        }
-
-        $voucher->update(['status' => 'used']);
-
-        return back()->with('success', 'Voucher zrealizowany.');
     }
 }
