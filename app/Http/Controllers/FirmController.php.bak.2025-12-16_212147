@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Client;
+use App\Models\Firm;
+use App\Models\LoyaltyCard;
+use App\Models\LoyaltyStamp;
+use App\Models\Transaction;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class FirmController extends Controller
+{
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+    public function dashboard()
+    {
+        $firmId = session('firm_id');
+        if (! $firmId) {
+            return redirect()->route('company.login');
+        }
+
+        $firm = Firm::findOrFail($firmId);
+        $programId = $firm->program_id;
+
+        $totalClients      = Client::where('program_id', $programId)->count();
+        $totalTransactions = Transaction::where('program_id', $programId)->count();
+        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
+        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
+
+        $bestDay = Transaction::where('program_id', $programId)
+            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
+            ->groupBy('day')
+            ->orderByDesc('total')
+            ->value('day');
+
+        $daily = Transaction::where('program_id', $programId)
+            ->where('created_at', '>=', now()->subDays(14))
+            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $chartLabels = $daily->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))->toArray();
+        $chartValues = $daily->pluck('total')->toArray();
+
+        $monthly = Transaction::where('program_id', $programId)
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(points) as total'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $monthlyLabels = $monthly->pluck('month')->toArray();
+        $monthlyValues = $monthly->pluck('total')->toArray();
+
+        $hoursHeatmap = Transaction::where('program_id', $programId)
+            ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('SUM(points) as total'))
+            ->groupBy('hour')
+            ->pluck('total', 'hour')
+            ->toArray();
+
+        $topClients = Client::where('program_id', $programId)
+            ->orderByDesc('points')
+            ->limit(10)
+            ->get();
+
+        return view('firm.dashboard', compact(
+            'totalClients',
+            'totalTransactions',
+            'totalPoints',
+            'avgPoints',
+            'bestDay',
+            'chartLabels',
+            'chartValues',
+            'monthlyLabels',
+            'monthlyValues',
+            'hoursHeatmap',
+            'topClients'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HISTORIA TRANSAKCJI
+    |--------------------------------------------------------------------------
+    */
+    public function transactions(Request $request)
+    {
+        $firmId = session('firm_id');
+        if (! $firmId) {
+            return redirect()->route('company.login');
+        }
+
+        $firm = Firm::findOrFail($firmId);
+        $programId = $firm->program_id;
+
+        // FILTRY
+        $filterPhone    = $request->input('phone');
+        $filterDateFrom = $request->input('date_from');
+        $filterDateTo   = $request->input('date_to');
+        $filterType     = $request->input('type');
+
+        $query = Transaction::with('client')
+            ->where('program_id', $programId);
+
+        if ($filterPhone) {
+            $query->whereHas('client', function ($q) use ($filterPhone) {
+                $q->where('phone', 'like', '%' . $filterPhone . '%');
+            });
+        }
+
+        if ($filterDateFrom) {
+            $query->whereDate('created_at', '>=', $filterDateFrom);
+        }
+
+        if ($filterDateTo) {
+            $query->whereDate('created_at', '<=', $filterDateTo);
+        }
+
+        if ($filterType) {
+            $query->where('type', $filterType);
+        }
+
+        $transactions = $query
+            ->orderByDesc('created_at')
+            ->paginate(20)
+            ->withQueryString();
+
+        // STATYSTYKI
+        $totalClients      = Client::where('program_id', $programId)->count();
+        $totalTransactions = Transaction::where('program_id', $programId)->count();
+        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
+        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
+
+        $bestDay = Transaction::where('program_id', $programId)
+            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
+            ->groupBy('day')
+            ->orderByDesc('total')
+            ->value('day');
+
+        // 🔧 WAŻNE: placeholder pod wykres w historii
+$chartData = collect();
+        return view('firm.transactions', compact(
+            'transactions',
+            'filterPhone',
+            'filterDateFrom',
+            'filterDateTo',
+            'filterType',
+            'totalClients',
+            'totalTransactions',
+            'totalPoints',
+            'avgPoints',
+            'bestDay',
+            'chartData'
+        ));
+    }
+}

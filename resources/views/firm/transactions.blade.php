@@ -483,26 +483,18 @@
         </div>
     </div>
 
-    {{-- WYKRES + TIMELINE --}}
-    <div class="two-columns">
+{{-- WYKRES --}}
+<div class="chart-card">
+    <div class="section-title">📈 Aktywność transakcji</div>
 
-        {{-- LEWA: WYKRES --}}
-        <div class="card-inner">
-            @if($chartData->count())
-                <h2 style="font-size:18px; margin-bottom:6px;">
-                    📈 Aktywność dzienna (punkty / dzień)
-                </h2>
-                <p style="font-size:13px; color:#777; margin-bottom:10px;">
-                    Suma przyznanych punktów w poszczególnych dniach.
-                </p>
-                <canvas id="transactionsChart" height="130"></canvas>
-            @else
-                <p style="font-size:13px; color:#777;">
-                    Brak danych do wykresu.
-                </p>
-            @endif
-        </div>
-
+    @if(isset($chartData) && count($chartData))
+        <canvas id="transactionsChart" height="120"></canvas>
+    @else
+        <p style="color:#6b7280; font-size:14px;">
+            Brak danych do wykresu.
+        </p>
+    @endif
+</div>
         {{-- PRAWA: TIMELINE --}}
         <div class="card-inner">
             <h2 style="font-size:18px; margin-bottom:6px;">
