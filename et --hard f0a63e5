@@ -1,0 +1,22 @@
+[33mf0a63e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m012c7fd[m[33m ([m[1;33mtag: [m[1;33mv0.1-stable-2025-12-16[m[33m, [m[1;31morigin/dev[m[33m)[m HEAD@{1}: commit: FINAL 16.12: dashboard, historia transakcji, dodawanie punktów, logowanie – stabilna wersja
+[33mf0a63e5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m)[m HEAD@{2}: commit (cherry-pick): UX Update: Nowoczesny widok historii transakcji + filtry + statystyki + wykres + timeline
+[33m7da288b[m HEAD@{3}: reset: moving to HEAD
+[33m7da288b[m HEAD@{4}: checkout: moving from dev to dev
+[33m7da288b[m HEAD@{5}: reset: moving to 7da288b84d805d7e37810c9642f9ae549f2cdb2c
+[33m7da288b[m HEAD@{6}: checkout: moving from 52ae2bb592193bb4be2522cf3b46bda2ba33b875 to dev
+[33m52ae2bb[m HEAD@{7}: commit: FIX: restore routing + firm.auth middleware, stable company panel login
+[33mf74c00e[m HEAD@{8}: reset: moving to f74c00e
+[33m5e54e6a[m HEAD@{9}: reset: moving to 5e54e6a
+[33m7da288b[m HEAD@{10}: checkout: moving from dev to 7da288b
+[33m7da288b[m HEAD@{11}: commit: ETAP 2B.1: loyalty cards logic (stamps history + reset)
+[33m5e54e6a[m HEAD@{12}: commit: Loyalty cards backend stable: routes, firm + client controllers
+[33mf74c00e[m HEAD@{13}: commit: Karty lojalnościowe: działający panel firmy (lista kart, statystyki, postęp)
+[33mc976efb[m HEAD@{14}: reset: moving to c976efb
+[33mc976efb[m HEAD@{15}: reset: moving to c976efb
+[33mc976efb[m HEAD@{16}: commit: UX Update: Nowoczesny widok historii transakcji + filtry + statystyki + wykres + timeline
+[33m3e00410[m HEAD@{17}: commit: pierwsze statystyki
+[33m9756908[m HEAD@{18}: commit: dodawanie punktów działa – 11.12
+[33m2fa945d[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{19}: checkout: moving from main to dev
+[33m2fa945d[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{20}: Branch: renamed refs/heads/main to refs/heads/main
+[33m2fa945d[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{22}: commit (initial): chore: initial project setup for Peitho (structure, migrations, dashboard, auth)

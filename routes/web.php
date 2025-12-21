@@ -1,13 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\FirmController;
 use App\Http\Controllers\Auth\FirmAuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PublicClientController;
 
 /*
 |--------------------------------------------------------------------------
-| Strona główna
+| STRONA GŁÓWNA
 |--------------------------------------------------------------------------
 */
 Route::get('/', function () {
@@ -16,7 +18,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY
+| PANEL FIRMY – AUTH
 |--------------------------------------------------------------------------
 */
 Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
@@ -28,6 +30,11 @@ Route::post('/company/login', [FirmAuthController::class, 'login'])
 Route::get('/company/logout', [FirmAuthController::class, 'logout'])
     ->name('company.logout');
 
+/*
+|--------------------------------------------------------------------------
+| PANEL FIRMY – DASHBOARD
+|--------------------------------------------------------------------------
+*/
 Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
     ->name('company.dashboard');
 
@@ -42,7 +49,7 @@ Route::post('/company/points/add', [FirmController::class, 'addPoints'])
 
 /*
 |--------------------------------------------------------------------------
-| KARTY LOJALNOŚCIOWE — PANEL FIRMY
+| KARTY LOJALNOŚCIOWE – PANEL FIRMY
 |--------------------------------------------------------------------------
 */
 Route::get('/company/loyalty-cards', [FirmController::class, 'loyaltyCards'])
@@ -54,18 +61,24 @@ Route::post('/company/loyalty-cards/{card}/stamp', [FirmController::class, 'addS
 Route::post('/company/loyalty-cards/{card}/reset', [FirmController::class, 'resetCard'])
     ->name('company.loyalty.cards.reset');
 
-/*
-|--------------------------------------------------------------------------
-| SKAN QR
-|--------------------------------------------------------------------------
-*/
-Route::get('/scan/{code}', [FirmController::class, 'scan'])
-    ->name('firm.scan');
+Route::post('/company/loyalty-cards/{card}/redeem', [FirmController::class, 'redeemCard'])
+    ->name('company.loyalty.cards.redeem');
 
 /*
 |--------------------------------------------------------------------------
-| PANEL KLIENTA — KARTA LOJALNOŚCIOWA
+| PANEL KLIENTA – PODGLĄD KARTY
 |--------------------------------------------------------------------------
 */
 Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
     ->name('client.loyalty.card');
+
+/*
+|--------------------------------------------------------------------------
+| PUBLICZNY FORMULARZ ZAPISU KLIENTA (QR / LINK FIRMY)
+|--------------------------------------------------------------------------
+*/
+Route::get('/join/{firm}', [PublicClientController::class, 'showForm'])
+    ->name('public.join');
+
+Route::post('/join/{firm}', [PublicClientController::class, 'submitForm'])
+    ->name('public.join.submit');

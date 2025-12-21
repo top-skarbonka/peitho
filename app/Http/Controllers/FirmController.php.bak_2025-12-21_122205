@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Client;
+use App\Models\Firm;
+use App\Models\LoyaltyCard;
+use App\Models\LoyaltyStamp;
+use App\Models\Transaction;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class FirmController extends Controller
+{
+    /* =========================
+       DASHBOARD
+    ========================== */
+    public function dashboard()
+    {
+        $firmId = session('firm_id');
+        if (! $firmId) {
+            return redirect()->route('company.login');
+        }
+
+        $firm = Firm::findOrFail($firmId);
+        $programId = $firm->program_id;
+
+        $totalClients      = Client::where('program_id', $programId)->count();
+        $totalTransactions = Transaction::where('program_id', $programId)->count();
+        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
+        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
+
+        $bestDay = Transaction::where('program_id', $programId)
+            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
+            ->groupBy('day')
+            ->orderByDesc('total')
+            ->value('day');
+
+        return view('firm.dashboard', compact(
+            'totalClients',
+            'totalTransactions',
+            'totalPoints',
+            'avgPoints',
+            'bestDay'
+        ));
+    }
+
+    /* =========================
+       KARTY LOJALNOŚCIOWE
+    ========================== */
+    public function loyaltyCards()
+    {
+        $firmId = session('firm_id');
+        if (! $firmId) {
+            return redirect()->route('company.login');
+        }
+
+        $firm = Firm::findOrFail($firmId);
+
+        $cards = LoyaltyCard::with('client')
+            ->where('program_id', $firm->program_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('firm.loyalty-cards.index', compact('cards', 'firm'));
+    }
+
+    /* =========================
+       DODANIE NAKLEJKI
+    ========================== */
+    public function addStamp($cardId)
+    {
+        $firmId = session('firm_id');
+
+        $card = LoyaltyCard::findOrFail($cardId);
+
+        if ($card->status !== 'active') {
+            return back()->with('error', 'Ta karta nie jest aktywna.');
+        }
+
+        if ($card->current_stamps >= $card->max_stamps) {
+            return back()->with('error', 'Karta jest już pełna.');
+        }
+
+        $card->increment('current_stamps');
+
+        LoyaltyStamp::create([
+            'loyalty_card_id' => $card->id,
+            'firm_id'         => $firmId,
+            'description'     => 'Dodano naklejkę',
+        ]);
+
+        if ($card->current_stamps >= $card->max_stamps) {
+            $card->update(['status' => 'completed']);
+        }
+
+        return back()->with('success', 'Naklejka dodana.');
+    }
+
+    /* =========================
+       REALIZACJA NAGRODY
+    ========================== */
+    public function redeemCard($cardId)
+    {
+        $firmId = session('firm_id');
+        $card = LoyaltyCard::with('client')->findOrFail($cardId);
+
+        if ($card->status !== 'completed') {
+            return back()->with('error', 'Karta nie jest gotowa do realizacji.');
+        }
+
+        DB::transaction(function () use ($card, $firmId) {
+
+            Transaction::create([
+                'client_id'  => $card->client_id,
+                'firm_id'    => $firmId,
+                'program_id' => $card->program_id,
+                'points'     => 0,
+                'amount'     => 0,
+                'type'       => 'reward',
+                'note'       => 'Realizacja nagrody z karty lojalnościowej',
+            ]);
+
+            $card->update([
+                'status' => 'redeemed'
+            ]);
+        });
+
+        return back()->with('success', 'Nagroda została zrealizowana.');
+    }
+
+    /* =========================
+       RESET KARTY
+    ========================== */
+    public function resetCard($cardId)
+    {
+        $card = LoyaltyCard::findOrFail($cardId);
+
+        if ($card->status !== 'redeemed') {
+            return back()->with('error', 'Najpierw zrealizuj nagrodę.');
+        }
+
+        $card->update([
+            'current_stamps' => 0,
+            'status'         => 'active',
+        ]);
+
+        return back()->with('success', 'Karta rozpoczęła nowy cykl.');
+    }
