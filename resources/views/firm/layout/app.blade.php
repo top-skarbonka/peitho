@@ -2,116 +2,77 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Firmy — Peitho</title>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
+        * { box-sizing: border-box; }
         body {
-            background: linear-gradient(135deg, #f0f3ff, #e8ecff);
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+            background: linear-gradient(135deg, #f4f6ff, #eef1ff);
+            color: #1f2937;
+        }
+
+        .layout {
+            display: flex;
             min-height: 100vh;
-            display: flex;
         }
 
-        /* LEWY PANEL */
+        /* SIDEBAR */
         .sidebar {
-            width: 260px;
+            width: 240px;
             background: #ffffff;
-            padding: 30px 20px;
-            box-shadow: 6px 0 18px rgba(0,0,0,0.06);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0;
-            bottom: 0;
+            padding: 24px 20px;
+            box-shadow: 4px 0 24px rgba(0,0,0,.06);
         }
 
-        .logo {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 30px;
-            text-align: center;
-            color: #3c4aad;
+        .sidebar h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
         }
 
-        .menu a {
+        .sidebar a {
             display: block;
-            padding: 12px 15px;
-            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
             text-decoration: none;
-            margin-bottom: 8px;
-            font-size: 15px;
-            color: #3c3c3c;
-            transition: 0.2s;
+            color: #374151;
+            border-radius: 10px;
+            font-size: 14px;
         }
 
-        .menu a:hover {
-            background: #eef1ff;
-            color: #2c39d1;
-            transform: translateX(4px);
+        .sidebar a:hover {
+            background: #eef2ff;
+            color: #4338ca;
         }
 
-        /* GŁÓWNY PANEL */
+        /* CONTENT */
         .content {
-            margin-left: 260px;
-            padding: 40px;
-            width: calc(100% - 260px);
-        }
-
-        .card {
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 6px 25px rgba(0,0,0,0.08);
-            text-align: center;
-            animation: fadeIn 0.6s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
+            flex: 1;
+            padding: 28px 32px 40px;
         }
     </style>
 </head>
-
 <body>
 
-    <!-- LEWY PANEL -->
-    <div class="sidebar">
-        <div class="logo">🏢 Panel Firmy</div>
+<div class="layout">
+    <aside class="sidebar">
+        <h2>🏢 Panel Firmy</h2>
+        <a href="/company/dashboard">📊 Dashboard</a>
+        <a href="/company/vouchers">🎁 Vouchery</a>
+        <a href="/company/loyalty-cards">⭐ Karty lojalnościowe</a>
+        <a href="/company/points">💎 Dodaj punkty</a>
+        <a href="/company/transactions">📜 Historia transakcji</a>
+        <a href="/company/statistics">📈 Statystyki</a>
+        <a href="/company/settings">⚙️ Ustawienia</a>
+        <a href="/company/logout" style="color:#dc2626;">🚪 Wyloguj</a>
+    </aside>
 
-        <div class="menu">
-            <a href="{{ route('company.dashboard') }}">📊 Dashboard</a>
-
-            <a href="#">🎁 Vouchery</a>
-
-            <!-- ✅ TO JEST KLUCZOWA POPRAWKA -->
-            <a href="{{ route('company.loyalty.cards') }}">⭐ Karty lojalnościowe</a>
-
-            <a href="{{ route('company.points.form') }}">💎 Dodaj punkty</a>
-
-            <a href="{{ route('company.transactions') }}">📜 Historia transakcji</a>
-
-            <a href="#">📈 Statystyki</a>
-            <a href="#">⚙️ Ustawienia</a>
-
-            <a href="{{ route('company.logout') }}" style="color:#d13c3c;">🚪 Wyloguj</a>
-        </div>
-    </div>
-
-    <!-- GŁÓWNE OKNO -->
-    <div class="content">
+    <main class="content">
         @yield('content')
-    </div>
+    </main>
+</div>
 
 </body>
 </html>

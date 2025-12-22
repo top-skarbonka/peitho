@@ -82,3 +82,7 @@ Route::get('/join/{firm}', [PublicClientController::class, 'showForm'])
 
 Route::post('/join/{firm}', [PublicClientController::class, 'submitForm'])
     ->name('public.join.submit');
+Route::post(
+    '/company/loyalty-cards/{card}/stamp',
+    [\App\Http\Controllers\Firm\LoyaltyCardController::class, 'addStamp']
+)->name('firm.loyalty-cards.stamp');

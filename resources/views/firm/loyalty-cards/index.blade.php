@@ -1,85 +1,165 @@
 @extends('firm.layout.app')
 
 @section('content')
-<div style="max-width: 1100px; margin: 0 auto; padding: 24px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
-        <div>
-            <h1 style="margin:0; font-size: 26px;">⭐ Karty lojalnościowe</h1>
-            <p style="margin:6px 0 0; color:#666;">
-                Karta stałego klienta (wizyty / naklejki). Punkty Peitho działają osobno.
-            </p>
-        </div>
 
-        <button disabled
-            style="padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#f2f2f2; color:#777; cursor:not-allowed;">
-            Dodaj naklejkę (ETAP 2)
-        </button>
+<style>
+.page-wrap{
+  padding: 28px 28px 40px;
+}
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:24px;
+}
+.title{
+  font-size:34px;
+  font-weight:800;
+  margin:0;
+}
+.subtitle{
+  margin-top:6px;
+  color:rgba(0,0,0,.55);
+}
+.stats{
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+.stat{
+  background:#fff;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 12px 30px rgba(0,0,0,.06);
+}
+.stat-label{
+  font-size:13px;
+  color:#777;
+}
+.stat-value{
+  font-size:32px;
+  font-weight:800;
+}
+.card{
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 18px 50px rgba(0,0,0,.08);
+  overflow:hidden;
+}
+.card-head{
+  padding:16px 18px;
+  border-bottom:1px solid #eee;
+  font-weight:800;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:14px 18px;
+  border-top:1px solid #eee;
+}
+th{
+  font-size:13px;
+  color:#777;
+  text-align:left;
+}
+.badge{
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+.badge-active{ background:#ecebff; color:#3a2fff; }
+.badge-redeemed{ background:#e8f7ef; color:#1f8f4d; }
+.btn{
+  background:linear-gradient(135deg,#4a3aff,#9b59ff);
+  color:#fff;
+  border-radius:999px;
+  padding:10px 14px;
+  border:0;
+  cursor:pointer;
+  font-weight:800;
+}
+</style>
+
+<div class="page-wrap">
+
+  <div class="page-head">
+    <div>
+      <h1 class="title">⭐ Karty lojalnościowe</h1>
+      <p class="subtitle">Karty stałego klienta (wizyty / naklejki)</p>
     </div>
+  </div>
 
-    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px;">
-        <div style="border:1px solid #eee; border-radius:14px; padding:14px; background:#fff;">
-            <div style="color:#777; font-size:13px;">Karty</div>
-            <div style="font-size:28px; font-weight:700;">{{ $stats['cards'] ?? 0 }}</div>
-        </div>
-        <div style="border:1px solid #eee; border-radius:14px; padding:14px; background:#fff;">
-            <div style="color:#777; font-size:13px;">Naklejki łącznie</div>
-            <div style="font-size:28px; font-weight:700;">{{ $stats['stamps'] ?? 0 }}</div>
-        </div>
-        <div style="border:1px solid #eee; border-radius:14px; padding:14px; background:#fff;">
-            <div style="color:#777; font-size:13px;">Pełne karty</div>
-            <div style="font-size:28px; font-weight:700;">{{ $stats['full'] ?? 0 }}</div>
-        </div>
-        <div style="border:1px solid #eee; border-radius:14px; padding:14px; background:#fff;">
-            <div style="color:#777; font-size:13px;">Aktywne (30 dni)</div>
-            <div style="font-size:28px; font-weight:700;">{{ $stats['active_30'] ?? 0 }}</div>
-        </div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Karty</div>
+      <div class="stat-value">{{ $stats['cards'] ?? 0 }}</div>
     </div>
-
-    <div style="margin-top:18px; border:1px solid #eee; border-radius:14px; background:#fff; overflow:hidden;">
-        <div style="padding:14px; border-bottom:1px solid #eee; font-weight:700;">
-            Lista kart
-        </div>
-
-        <div style="overflow:auto;">
-            <table style="width:100%; border-collapse:collapse;">
-                <thead>
-                    <tr style="background:#fafafa; text-align:left;">
-                        <th style="padding:12px; border-bottom:1px solid #eee;">Klient</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">Postęp</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">Status</th>
-                        <th style="padding:12px; border-bottom:1px solid #eee;">Utworzono</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($cards as $card)
-                        <tr>
-                            <td style="padding:12px; border-bottom:1px solid #f1f1f1;">
-                                {{ $card->client->phone ?? ('ID klienta: '.$card->client_id) }}
-                            </td>
-                            <td style="padding:12px; border-bottom:1px solid #f1f1f1;">
-                                {{ $card->current_stamps }} / {{ $card->max_stamps }}
-                            </td>
-                            <td style="padding:12px; border-bottom:1px solid #f1f1f1;">
-                                {{ $card->status ?? 'active' }}
-                            </td>
-                            <td style="padding:12px; border-bottom:1px solid #f1f1f1; color:#666;">
-                                {{ $card->created_at }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" style="padding:14px; color:#666;">
-                                Brak kart lojalnościowych w tym programie.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <div class="stat">
+      <div class="stat-label">Naklejki łącznie</div>
+      <div class="stat-value">{{ $stats['stamps'] ?? 0 }}</div>
     </div>
-
-    <div style="margin-top:12px; color:#777; font-size:12px;">
-        ETAP 2: podpinamy przycisk „Dodaj naklejkę” + QR / wyszukiwanie po telefonie.
+    <div class="stat">
+      <div class="stat-label">Pełne karty</div>
+      <div class="stat-value">{{ $stats['full'] ?? 0 }}</div>
     </div>
+    <div class="stat">
+      <div class="stat-label">Aktywne (30 dni)</div>
+      <div class="stat-value">{{ $stats['active'] ?? 0 }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">Lista kart</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Klient</th>
+          <th>Postęp</th>
+          <th>Status</th>
+          <th>Utworzono</th>
+          <th>Akcja</th>
+        </tr>
+      </thead>
+      <tbody>
+        @forelse($cards as $card)
+          <tr>
+            <td>{{ $card->client->phone ?? '—' }}</td>
+            <td>{{ $card->current_stamps }} / {{ $card->max_stamps }}</td>
+            <td>
+              @if($card->status === 'active')
+                <span class="badge badge-active">active</span>
+              @elseif($card->status === 'redeemed')
+                <span class="badge badge-redeemed">redeemed</span>
+              @else
+                <span class="badge">—</span>
+              @endif
+            </td>
+            <td>{{ $card->created_at->format('Y-m-d H:i') }}</td>
+            <td>
+              @if($card->status === 'active')
+                <form method="POST" action="{{ route('firm.loyalty-cards.stamp', $card->id) }}">
+                  @csrf
+                  <button class="btn">+1 naklejka</button>
+                </form>
+              @else
+                —
+              @endif
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="5">Brak kart</td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+
 </div>
+
 @endsection
