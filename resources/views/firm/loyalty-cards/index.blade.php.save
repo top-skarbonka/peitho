@@ -1,0 +1,152 @@
+
+        tr:hover td {
+            background: #fafbff;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.active {
+            background: #e8f0ff;
+            color: #3b5cff;
+        }
+
+        .badge.redeemed {
+            background: #e8ffe8;
+            color: #2c8b2c;
+        }
+
+        .progress {
+            font-weight: 600;
+        }
+
+        /* BUTTON */
+        .btn {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg,#4a3aff,#8b6cff);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(74,58,255,.35);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+        }
+
+        @media (max-width: 700px) {
+            th:nth-child(4),
+            td:nth-child(4) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>⭐ Karty lojalnościowe</h1>
+    <div class="subtitle">
+        Karta stałego klienta (wizyty / naklejki). Punkty Peitho działają osobno.
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <span>Karty</span>
+            <strong>{{ $stats['cards'] ?? 0 }}</strong>
+        </div>
+        <div class="stat">
+            <span>Naklejki łącznie</span>
+            <strong>{{ $stats['stamps'] ?? 0 }}</strong>
+        </div>
+        <div class="stat">
+            <span>Pełne karty</span>
+            <strong>{{ $stats['completed'] ?? 0 }}</strong>
+        </div>
+        <div class="stat">
+            <span>Aktywne (30 dni)</span>
+            <strong>{{ $stats['active_30'] ?? 0 }}</strong>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Klient</th>
+                    <th>Postęp</th>
+                    <th>Status</th>
+                    <th>Utworzono</th>
+                    <th>Akcja</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            @forelse($cards as $card)
+                <tr>
+                    <td>{{ $card->client->phone ?? '—' }}</td>
+
+                    <td class="progress">
+                        {{ $card->current_stamps }} / {{ $card->max_stamps }}
+                    </td>
+
+                    <td>
+                        @if($card->status === 'active')
+                            <span class="badge active">active</span>
+                        @else
+                            <span class="badge redeemed">redeemed</span>
+                        @endif
+                    </td>
+
+                    <td>
+                        {{ $card->created_at->format('Y-m-d H:i') }}
+                    </td>
+
+                    <td>
+                        @if($card->status === 'active')
+                            <form method="POST"
+                                  action="{{ route('company.loyalty.cards.stamp', $card) }}">
+                                @csrf
+                                <button class="btn">
+                                    +1 naklejka
+                                </button>
+                            </form>
+                        @else
+                            —
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="empty">
+                        Brak kart lojalnościowych
+                    </td>
+                </tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

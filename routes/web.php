@@ -7,6 +7,9 @@ use App\Http\Controllers\Auth\FirmAuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\PublicClientController;
 
+use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminFirmController;
+
 /*
 |--------------------------------------------------------------------------
 | STRONA GŁÓWNA
@@ -18,7 +21,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – AUTH
+| PANEL FIRMY – LOGOWANIE
 |--------------------------------------------------------------------------
 */
 Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
@@ -82,7 +85,31 @@ Route::get('/join/{firm}', [PublicClientController::class, 'showForm'])
 
 Route::post('/join/{firm}', [PublicClientController::class, 'submitForm'])
     ->name('public.join.submit');
-Route::post(
-    '/company/loyalty-cards/{card}/stamp',
-    [\App\Http\Controllers\Firm\LoyaltyCardController::class, 'addStamp']
-)->name('firm.loyalty-cards.stamp');
+
+/*
+|--------------------------------------------------------------------------
+| PANEL ADMINA
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->group(function () {
+
+    // logowanie admina
+    Route::get('/login', [AdminAuthController::class, 'show'])
+        ->name('admin.login');
+
+    Route::post('/login', [AdminAuthController::class, 'login'])
+        ->name('admin.login.submit');
+
+    Route::post('/logout', [AdminAuthController::class, 'logout'])
+        ->name('admin.logout');
+
+    // tylko po zalogowaniu admina
+    Route::middleware('admin.simple')->group(function () {
+
+        Route::get('/firms/create', [AdminFirmController::class, 'create'])
+            ->name('admin.firms.create');
+
+        Route::post('/firms', [AdminFirmController::class, 'store'])
+            ->name('admin.firms.store');
+    });
+});

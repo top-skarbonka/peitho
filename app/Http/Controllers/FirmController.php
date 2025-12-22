@@ -210,34 +210,34 @@ class FirmController extends Controller
     | LISTA KART LOJALNOŚCIOWYCH (PANEL FIRMY)
     |--------------------------------------------------------------------------
     */
-    public function loyaltyCards()
-    {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+public function loyaltyCards(Request $request)
+{
+    $user = auth()->user();
 
-        $firm = Firm::findOrFail($firmId);
-
-        $cards = LoyaltyCard::with(['client'])
-            ->where('program_id', $firm->program_id)
-            ->orderByDesc('created_at')
-            ->get();
-
-        // historia naklejek (ostatnie)
-        $stamps = LoyaltyStamp::with(['card.client'])
-            ->where('firm_id', $firmId)
-            ->orderByDesc('created_at')
-            ->limit(200)
-            ->get();
-
-        return view('firm.loyalty-cards.index', [
-            'cards'  => $cards,
-            'stamps' => $stamps,
-            'firm'   => $firm,
-        ]);
+    if (!$user || !$user->firm) {
+        abort(403, 'Brak przypisanej firmy do konta');
     }
 
+    $firm = $user->firm;
+
+    $query = \App\Models\LoyaltyCard::where('firm_id', $firm->id)
+        ->withCount('stamps');
+
+    if ($request->filled('phone')) {
+        $query->where('phone', 'like', '%' . $request->phone . '%');
+    }
+
+    $cards = $query->orderBy('created_at', 'desc')->get();
+
+    $stats = [
+        'cards'    => $cards->count(),
+        'stamps'   => $cards->sum('stamps_count'),
+        'full'     => $cards->where('stamps_count', '>=', 10)->count(),
+        'active30' => $cards->where('created_at', '>=', now()->subDays(30))->count(),
+    ];
+
+    return view('firm.loyalty-cards.index', compact('cards', 'stats'));
+}
     /*
     |--------------------------------------------------------------------------
     | DODANIE NAKLEJKI
