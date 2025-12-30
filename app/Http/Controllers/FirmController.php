@@ -15,33 +15,46 @@ class FirmController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
+    | HELPERS — sesja firm_id
+    |--------------------------------------------------------------------------
+    */
+    private function currentFirm(): Firm
+    {
+        $firmId = session('firm_id');
+
+        if (! $firmId) {
+            abort(401);
+        }
+
+        return Firm::findOrFail($firmId);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | DASHBOARD
     |--------------------------------------------------------------------------
     */
     public function dashboard()
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+        $firm   = $this->currentFirm();
+        $firmId = $firm->id;
 
-        $firm = Firm::findOrFail($firmId);
-        $programId = $firm->program_id;
+        $totalTransactions = Transaction::where('firm_id', $firmId)->count();
+        $totalPoints       = (int) (Transaction::where('firm_id', $firmId)->sum('points') ?? 0);
+        $avgPoints         = (float) (Transaction::where('firm_id', $firmId)->avg('points') ?? 0);
 
-        $totalClients      = Client::where('program_id', $programId)->count();
-        $totalTransactions = Transaction::where('program_id', $programId)->count();
-        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
-        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
+        $totalClients = Transaction::where('firm_id', $firmId)
+            ->distinct('client_id')
+            ->count('client_id');
 
-        // 📆 Najaktywniejszy dzień (po sumie punktów)
-        $bestDay = Transaction::where('program_id', $programId)
+        $bestDay = Transaction::where('firm_id', $firmId)
             ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
             ->groupBy('day')
             ->orderByDesc('total')
             ->value('day');
 
-        // 📊 Wykres dzienny (ostatnie 14 dni)
-        $daily = Transaction::where('program_id', $programId)
+        // Dzienny wykres (ostatnie 14 dni)
+        $daily = Transaction::where('firm_id', $firmId)
             ->where('created_at', '>=', now()->subDays(14))
             ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
             ->groupBy('day')
@@ -51,8 +64,8 @@ class FirmController extends Controller
         $chartLabels = $daily->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))->values();
         $chartValues = $daily->pluck('total')->values();
 
-        // 📊 Wykres miesięczny
-        $monthly = Transaction::where('program_id', $programId)
+        // Miesięczny wykres
+        $monthly = Transaction::where('firm_id', $firmId)
             ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(points) as total'))
             ->groupBy('month')
             ->orderBy('month')
@@ -61,16 +74,33 @@ class FirmController extends Controller
         $monthlyLabels = $monthly->pluck('month')->values();
         $monthlyValues = $monthly->pluck('total')->values();
 
-        // ⏰ Heatmapa godzin
-        $hoursHeatmap = Transaction::where('program_id', $programId)
+        // HEATMAPA godzin — ZAWSZE 0..23 (żeby max() i foreach nigdy nie padły)
+        $hoursHeatmap = array_fill(0, 24, 0);
+
+        $rawHours = Transaction::where('firm_id', $firmId)
             ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('SUM(points) as total'))
             ->groupBy('hour')
             ->pluck('total', 'hour')
             ->toArray();
 
-        // 🏅 TOP klienci
-        $topClients = Client::where('program_id', $programId)
-            ->orderByDesc('points')
+        foreach ($rawHours as $h => $sum) {
+            $h = (int) $h;
+            if ($h >= 0 && $h <= 23) {
+                $hoursHeatmap[$h] = (int) $sum;
+            }
+        }
+
+        // TOP klienci (punkty w tej firmie)
+        $topClients = Client::select(
+                'clients.id',
+                'clients.phone',
+                'clients.points',
+                DB::raw('SUM(transactions.points) as firm_points')
+            )
+            ->join('transactions', 'transactions.client_id', '=', 'clients.id')
+            ->where('transactions.firm_id', $firmId)
+            ->groupBy('clients.id', 'clients.phone', 'clients.points')
+            ->orderByDesc('firm_points')
             ->limit(10)
             ->get();
 
@@ -91,153 +121,90 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | HISTORIA TRANSAKCJI (z filtrami + wykres + timeline)
+    | HISTORIA TRANSAKCJI
     |--------------------------------------------------------------------------
     */
     public function transactions(Request $request)
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+        $firmId = $this->currentFirm()->id;
 
-        $firm = Firm::findOrFail($firmId);
-        $programId = $firm->program_id;
+        $q = Transaction::where('firm_id', $firmId)
+            ->orderByDesc('created_at');
 
-        // Filtry do widoku (MUSZĄ być zawsze zdefiniowane)
-        $filterPhone    = $request->get('phone');
-        $filterDateFrom = $request->get('date_from');
-        $filterDateTo   = $request->get('date_to');
-        $filterType     = $request->get('type');
+        // jeśli masz w transactions tabeli pole client_id, to to działa:
+        // (jeśli nie masz relacji, nadal pokaże transakcje bez klienta)
+        $transactions = $q->paginate(20);
 
-        // Bazowy query (na listę)
-        $query = Transaction::with('client')
-            ->where('program_id', $programId);
-
-        if ($filterPhone) {
-            $query->whereHas('client', function ($q) use ($filterPhone) {
-                $q->where('phone', 'like', '%' . $filterPhone . '%');
-            });
-        }
-
-        if ($filterType) {
-            $query->where('type', $filterType);
-        }
-
-        if ($filterDateFrom) {
-            $query->whereDate('created_at', '>=', $filterDateFrom);
-        }
-
-        if ($filterDateTo) {
-            $query->whereDate('created_at', '<=', $filterDateTo);
-        }
-
-        $transactions = $query
-            ->orderByDesc('created_at')
-            ->paginate(20)
-            ->withQueryString();
-
-        // Statystyki globalne (kafelki)
-        $totalClients      = Client::where('program_id', $programId)->count();
-        $totalTransactions = Transaction::where('program_id', $programId)->count();
-        $totalPoints       = Transaction::where('program_id', $programId)->sum('points');
-        $avgPoints         = Transaction::where('program_id', $programId)->avg('points') ?? 0;
-
-        $bestDay = Transaction::where('program_id', $programId)
-            ->select(DB::raw('DATE(created_at) as day'), DB::raw('COUNT(*) as cnt'))
-            ->groupBy('day')
-            ->orderByDesc('cnt')
-            ->value('day');
-
-        // Podsumowanie klienta (jeśli filtr telefonu)
-        $clientSummary = null;
-        if ($filterPhone) {
-            $clientSummary = Transaction::where('program_id', $programId)
-                ->whereHas('client', function ($q) use ($filterPhone) {
-                    $q->where('phone', 'like', '%' . $filterPhone . '%');
-                })
-                ->selectRaw('COUNT(*) as total_transactions, COALESCE(SUM(points),0) as total_points')
-                ->first();
-        }
-
-        // Wykres (aktywność punktów w czasie) – bierzemy ten sam filtr co lista
-        $chartQuery = Transaction::where('program_id', $programId);
-
-        if ($filterPhone) {
-            $chartQuery->whereHas('client', function ($q) use ($filterPhone) {
-                $q->where('phone', 'like', '%' . $filterPhone . '%');
-            });
-        }
-        if ($filterType) {
-            $chartQuery->where('type', $filterType);
-        }
-        if ($filterDateFrom) {
-            $chartQuery->whereDate('created_at', '>=', $filterDateFrom);
-        }
-        if ($filterDateTo) {
-            $chartQuery->whereDate('created_at', '<=', $filterDateTo);
-        }
-
-        // domyślnie: ostatnie 14 dni, jeśli nie ma zakresu
-        if (! $filterDateFrom && ! $filterDateTo) {
-            $chartQuery->where('created_at', '>=', now()->subDays(14));
-        }
-
-        $chartData = $chartQuery
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(points) as points'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return view('firm.transactions', compact(
-            'transactions',
-            'filterPhone',
-            'filterDateFrom',
-            'filterDateTo',
-            'filterType',
-            'totalClients',
-            'totalTransactions',
-            'totalPoints',
-            'avgPoints',
-            'bestDay',
-            'clientSummary',
-            'chartData'
-        ));
+        return view('firm.transactions', compact('transactions'));
     }
 
     /*
     |--------------------------------------------------------------------------
-    | LISTA KART LOJALNOŚCIOWYCH (PANEL FIRMY)
+    | DODAJ PUNKTY — FORM
     |--------------------------------------------------------------------------
     */
-public function loyaltyCards(Request $request)
-{
-    $user = auth()->user();
-
-    if (!$user || !$user->firm) {
-        abort(403, 'Brak przypisanej firmy do konta');
+    public function showPointsForm()
+    {
+        $this->currentFirm(); // kontrola sesji
+        return view('firm.points');
     }
 
-    $firm = $user->firm;
+    /*
+    |--------------------------------------------------------------------------
+    | DODAJ PUNKTY — SUBMIT
+    |--------------------------------------------------------------------------
+    */
+    public function addPoints(Request $request)
+    {
+        $firmId = $this->currentFirm()->id;
 
-    $query = \App\Models\LoyaltyCard::where('firm_id', $firm->id)
-        ->withCount('stamps');
+        $data = $request->validate([
+            'phone'  => ['required', 'string', 'min:5', 'max:32'],
+            'points' => ['required', 'numeric', 'min:0.01'],
+        ]);
 
-    if ($request->filled('phone')) {
-        $query->where('phone', 'like', '%' . $request->phone . '%');
+        // znajdź lub utwórz klienta po telefonie
+        $client = Client::firstOrCreate(
+            ['phone' => $data['phone']],
+            ['points' => 0]
+        );
+
+        // dodaj transakcję
+        Transaction::create([
+            'firm_id'   => $firmId,
+            'client_id' => $client->id,
+            'points'    => $data['points'],
+        ]);
+
+        // aktualizuj punkty klienta (jeśli przechowujesz je na kliencie)
+        $client->increment('points', $data['points']);
+
+        return redirect()->route('company.dashboard')->with('success', 'Dodano punkty ✅');
     }
 
-    $cards = $query->orderBy('created_at', 'desc')->get();
+    /*
+    |--------------------------------------------------------------------------
+    | KARTY LOJALNOŚCIOWE
+    |--------------------------------------------------------------------------
+    */
+    public function loyaltyCards()
+    {
+        $firmId = $this->currentFirm()->id;
 
-    $stats = [
-        'cards'    => $cards->count(),
-        'stamps'   => $cards->sum('stamps_count'),
-        'full'     => $cards->where('stamps_count', '>=', 10)->count(),
-        'active30' => $cards->where('created_at', '>=', now()->subDays(30))->count(),
-    ];
+        $cards = LoyaltyCard::where('firm_id', $firmId)
+            ->withCount('stamps')
+            ->get();
 
-    return view('firm.loyalty-cards.index', compact('cards', 'stats'));
-}
+        $stats = [
+            'cards'    => $cards->count(),
+            'stamps'   => $cards->sum('stamps_count'),
+            'full'     => $cards->where('stamps_count', '>=', 10)->count(),
+            'active30' => $cards->where('created_at', '>=', now()->subDays(30))->count(),
+        ];
+
+        return view('firm.loyalty-cards.index', compact('cards', 'stats'));
+    }
+
     /*
     |--------------------------------------------------------------------------
     | DODANIE NAKLEJKI
@@ -245,16 +212,11 @@ public function loyaltyCards(Request $request)
     */
     public function addStamp($cardId)
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+        $firmId = $this->currentFirm()->id;
 
-        $card = LoyaltyCard::findOrFail($cardId);
-
-        if ($card->current_stamps >= $card->max_stamps) {
-            return back()->with('error', 'Karta jest już pełna.');
-        }
+        $card = LoyaltyCard::where('id', $cardId)
+            ->where('firm_id', $firmId)
+            ->firstOrFail();
 
         $card->increment('current_stamps');
 
@@ -264,81 +226,47 @@ public function loyaltyCards(Request $request)
             'description'     => 'Dodano naklejkę',
         ]);
 
-        if ($card->current_stamps >= $card->max_stamps) {
-            $card->update(['status' => 'completed']);
-        }
-
-        return back()->with('success', 'Naklejka dodana.');
+        return back()->with('success', 'Naklejka dodana ✅');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | RESET KARTY (NOWY CYKL)
+    | RESET KARTY
     |--------------------------------------------------------------------------
     */
     public function resetCard($cardId)
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+        $firmId = $this->currentFirm()->id;
 
-        $card = LoyaltyCard::findOrFail($cardId);
+        $card = LoyaltyCard::where('id', $cardId)
+            ->where('firm_id', $firmId)
+            ->firstOrFail();
 
-        $card->update([
-            'current_stamps' => 0,
-            'status'         => 'active',
-        ]);
+        $card->update(['current_stamps' => 0]);
 
-        return back()->with('success', 'Karta została zresetowana.');
+        return back()->with('success', 'Karta zresetowana ✅');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | PUNKTY
+    | REDEEM (wymiana nagrody)
     |--------------------------------------------------------------------------
     */
-    public function showPointsForm()
+    public function redeemCard($cardId)
     {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
+        $firmId = $this->currentFirm()->id;
 
-        return view('firm.points');
-    }
-
-    public function addPoints(Request $request)
-    {
-        $firmId = session('firm_id');
-        if (! $firmId) {
-            return redirect()->route('company.login');
-        }
-
-        $request->validate([
-            'phone'  => 'required',
-            'amount' => 'required|numeric|min:0.01',
-        ]);
-
-        $programId = Firm::findOrFail($firmId)->program_id;
-
-        $client = Client::where('phone', $request->phone)
-            ->where('program_id', $programId)
+        $card = LoyaltyCard::where('id', $cardId)
+            ->where('firm_id', $firmId)
             ->firstOrFail();
 
-        $points = (int) round(((float) $request->amount) * 0.5);
+        // prosta logika: jeśli masz >= 10 naklejek, zerujemy
+        if ((int) $card->current_stamps >= 10) {
+            $card->update(['current_stamps' => 0]);
+            return back()->with('success', 'Nagroda wydana ✅ Karta wyzerowana.');
+        }
 
-        $client->increment('points', $points);
-
-Transaction::create([
-    'client_id'  => $client->id,
-    'firm_id'    => $firmId,
-    'program_id' => $programId,
-    'points'     => $points,
-    'amount'     => (float) $request->amount,
-    'type'       => 'manual',
-    'note'       => $request->note ?: 'Ręczne naliczenie punktów',
-]);
-        return back()->with('success', 'Punkty dodane.');
+        return back()->with('error', 'Za mało naklejek na nagrodę.');
     }
 }
+

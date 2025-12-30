@@ -1,75 +1,63 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <title>Panel Firmy — Peitho</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@yield('title', 'Panel Firmy — Peitho')</title>
+
+    {{-- Tailwind --}}
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
-            background: linear-gradient(135deg, #f4f6ff, #eef1ff);
-            color: #1f2937;
-        }
-
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 240px;
-            background: #ffffff;
-            padding: 24px 20px;
-            box-shadow: 4px 0 24px rgba(0,0,0,.06);
-        }
-
-        .sidebar h2 {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        .sidebar a {
-            display: block;
-            padding: 10px 12px;
-            margin-bottom: 6px;
-            text-decoration: none;
-            color: #374151;
-            border-radius: 10px;
-            font-size: 14px;
-        }
-
-        .sidebar a:hover {
-            background: #eef2ff;
-            color: #4338ca;
-        }
-
-        /* CONTENT */
-        .content {
-            flex: 1;
-            padding: 28px 32px 40px;
-        }
+        body { background: #f5f7fb; }
     </style>
 </head>
-<body>
+<body class="text-slate-800">
 
-<div class="layout">
-    <aside class="sidebar">
-        <h2>🏢 Panel Firmy</h2>
-        <a href="/company/dashboard">📊 Dashboard</a>
-        <a href="/company/vouchers">🎁 Vouchery</a>
-        <a href="/company/loyalty-cards">⭐ Karty lojalnościowe</a>
-        <a href="/company/points">💎 Dodaj punkty</a>
-        <a href="/company/transactions">📜 Historia transakcji</a>
-        <a href="/company/statistics">📈 Statystyki</a>
-        <a href="/company/settings">⚙️ Ustawienia</a>
-        <a href="/company/logout" style="color:#dc2626;">🚪 Wyloguj</a>
+<div class="min-h-screen flex">
+    {{-- SIDEBAR --}}
+    <aside class="w-64 bg-white border-r border-slate-200 px-5 py-6">
+        <div class="text-lg font-semibold mb-6">🏢 Panel Firmy</div>
+
+        <nav class="space-y-1 text-sm">
+            <a href="/company/dashboard" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                📊 <span>Dashboard</span>
+            </a>
+
+            <a href="/company/vouchers" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                🎁 <span>Vouchery</span>
+            </a>
+
+            <a href="/company/loyalty-cards" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                ⭐ <span>Karty lojalnościowe</span>
+            </a>
+
+            <a href="/company/points" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                💎 <span>Dodaj punkty</span>
+            </a>
+
+            <a href="/company/transactions" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                📜 <span>Historia transakcji</span>
+            </a>
+
+            <a href="/company/statistics" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                📈 <span>Statystyki</span>
+            </a>
+
+            <a href="/company/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+                ⚙️ <span>Ustawienia</span>
+            </a>
+
+            <div class="pt-3 mt-3 border-t border-slate-200">
+                <a href="/company/logout" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600">
+                    🚪 <span>Wyloguj</span>
+                </a>
+            </div>
+        </nav>
     </aside>
 
-    <main class="content">
+    {{-- CONTENT --}}
+    <main class="flex-1 px-8 py-8">
         @yield('content')
     </main>
 </div>

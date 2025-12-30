@@ -21,6 +21,15 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
+| ALIAS login (żeby Laravel nie wariował)
+|--------------------------------------------------------------------------
+*/
+Route::get('/login', function () {
+    return redirect()->route('company.login');
+})->name('login');
+
+/*
+|--------------------------------------------------------------------------
 | PANEL FIRMY – LOGOWANIE
 |--------------------------------------------------------------------------
 */
@@ -35,7 +44,7 @@ Route::get('/company/logout', [FirmAuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – DASHBOARD
+| PANEL FIRMY – BEZ middleware (NA RAZIE!)
 |--------------------------------------------------------------------------
 */
 Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
@@ -50,11 +59,6 @@ Route::get('/company/points', [FirmController::class, 'showPointsForm'])
 Route::post('/company/points/add', [FirmController::class, 'addPoints'])
     ->name('company.points.add');
 
-/*
-|--------------------------------------------------------------------------
-| KARTY LOJALNOŚCIOWE – PANEL FIRMY
-|--------------------------------------------------------------------------
-*/
 Route::get('/company/loyalty-cards', [FirmController::class, 'loyaltyCards'])
     ->name('company.loyalty.cards');
 
@@ -69,7 +73,7 @@ Route::post('/company/loyalty-cards/{card}/redeem', [FirmController::class, 'red
 
 /*
 |--------------------------------------------------------------------------
-| PANEL KLIENTA – PODGLĄD KARTY
+| PANEL KLIENTA
 |--------------------------------------------------------------------------
 */
 Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
@@ -77,7 +81,7 @@ Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
 
 /*
 |--------------------------------------------------------------------------
-| PUBLICZNY FORMULARZ ZAPISU KLIENTA (QR / LINK FIRMY)
+| PUBLIC JOIN
 |--------------------------------------------------------------------------
 */
 Route::get('/join/{firm}', [PublicClientController::class, 'showForm'])
@@ -88,12 +92,11 @@ Route::post('/join/{firm}', [PublicClientController::class, 'submitForm'])
 
 /*
 |--------------------------------------------------------------------------
-| PANEL ADMINA
+| ADMIN
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
 
-    // logowanie admina
     Route::get('/login', [AdminAuthController::class, 'show'])
         ->name('admin.login');
 
@@ -103,7 +106,6 @@ Route::prefix('admin')->group(function () {
     Route::post('/logout', [AdminAuthController::class, 'logout'])
         ->name('admin.logout');
 
-    // tylko po zalogowaniu admina
     Route::middleware('admin.simple')->group(function () {
 
         Route::get('/firms/create', [AdminFirmController::class, 'create'])

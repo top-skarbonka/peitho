@@ -76,7 +76,12 @@ class FirmController extends Controller
         for ($h = 0; $h < 24; $h++) {
             $hours[$h] = $hoursRaw[$h]->total ?? 0;
         }
-
+public function dashboard()
+{
+    return view('firm.dashboard', [
+        'test' => 'DASHBOARD DZIAŁA 🎉'
+    ]);
+}
         return view('firm.dashboard', [
             'totalClients'      => $totalClients,
             'totalTransactions' => $totalTransactions,
