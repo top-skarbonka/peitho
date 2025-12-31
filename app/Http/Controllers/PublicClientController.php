@@ -6,46 +6,52 @@ use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PublicClientController extends Controller
 {
     /**
-     * PUBLICZNY FORMULARZ REJESTRACJI
+     * PUBLICZNY FORMULARZ REJESTRACJI KARTY
      * /register/card/{firm}
      */
     public function showForm(Firm $firm)
     {
-        return view('public.register-card', compact('firm'));
+        return view('public.join', compact('firm'));
     }
 
     /**
-     * ZAPIS KLIENTA + UTWORZENIE KARTY STAŁEGO KLIENTA
+     * ZAPIS KLIENTA + KARTY STAŁEGO KLIENTA
      */
     public function submitForm(Request $request, Firm $firm)
     {
         $data = $request->validate([
             'phone'       => ['required', 'string', 'min:5', 'max:32'],
-            'name'        => ['nullable', 'string', 'max:255'],
-            'postal_code' => ['nullable', 'string', 'max:10'],
+            'name'        => ['required', 'string', 'max:255'],
+            'postal_code' => ['nullable', 'string', 'max:12'],
         ]);
 
         /*
         |--------------------------------------------------------------------------
-        | KLIENT (globalny – po telefonie)
+        | KLIENT — MUSI MIEĆ program_id (bo kolumna NOT NULL)
         |--------------------------------------------------------------------------
         */
         $client = Client::firstOrCreate(
-            ['phone' => $data['phone']],
             [
-                'name'        => $data['name'] ?? null,
+                'phone'      => $data['phone'],
+                'program_id' => $firm->program_id,
+            ],
+            [
+                'name'        => $data['name'],
                 'postal_code' => $data['postal_code'] ?? null,
                 'points'      => 0,
+                'qr_code'     => (string) Str::uuid(),
             ]
         );
 
         /*
         |--------------------------------------------------------------------------
-        | KARTA STAŁEGO KLIENTA (TYLKO DLA TEJ FIRMY)
+        | KARTA STAŁEGO KLIENTA — POWIĄZANA Z TĄ FIRMĄ
         |--------------------------------------------------------------------------
         */
         $card = LoyaltyCard::firstOrCreate(
@@ -57,18 +63,21 @@ class PublicClientController extends Controller
                 'max_stamps'     => 10,
                 'current_stamps' => 0,
                 'status'         => 'active',
+                'qr_code'        => (string) Str::uuid(),
             ]
         );
 
         /*
         |--------------------------------------------------------------------------
-        | POTWIERDZENIE
+        | QR KOD KARTY
         |--------------------------------------------------------------------------
         */
-        return view('public.register-success', compact(
-            'firm',
-            'client',
-            'card'
-        ));
+        $qrSvg = QrCode::size(220)->generate(json_encode([
+            'firm_id'   => $firm->id,
+            'client_id' => $client->id,
+            'card_id'   => $card->id,
+        ]));
+
+        return view('public.card', compact('firm', 'client', 'card', 'qrSvg'));
     }
 }
