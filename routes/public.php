@@ -1,18 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PublicClientController;
-
 /*
 |--------------------------------------------------------------------------
-| PUBLICZNA REJESTRACJA KARTY STAŁEGO KLIENTA
+| Public routes – WYŁĄCZONE
 |--------------------------------------------------------------------------
-| Link generowany per firma:
-| /register/card/{firm}
+| Stare podejście: /register/card/{firm}
+| Nowe i jedyne obowiązujące:
+|   /register/card/{token}
+|
+| Ten plik celowo pusty, żeby NIE dublować routów.
+|--------------------------------------------------------------------------
 */
-
-Route::get('/register/card/{firm}', [PublicClientController::class, 'showForm'])
-    ->name('card.register.form');
-
-Route::post('/register/card/{firm}', [PublicClientController::class, 'submitForm'])
-    ->name('card.register.store');

@@ -11,9 +11,11 @@ class Firm extends Authenticatable
 
     protected $table = 'firms';
 
-    /**
-     * Pola masowo przypisywane
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Mass assignable fields
+    |--------------------------------------------------------------------------
+    */
     protected $fillable = [
         'firm_id',
         'name',
@@ -27,17 +29,34 @@ class Firm extends Authenticatable
         'program_id',
     ];
 
-    /**
-     * Pola ukryte
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Hidden fields
+    |--------------------------------------------------------------------------
+    */
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
-    /**
-     * Auth guard – firma loguje się jako firma
-     */
-    protected $guard = 'firm';
+    /*
+    |--------------------------------------------------------------------------
+    | Guard (auth)
+    |--------------------------------------------------------------------------
+    */
+    protected $guard = 'company';
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROUTE MODEL BINDING
+    |--------------------------------------------------------------------------
+    | Dzięki temu {firm} w URL działa po firm_id, a nie po id
+    | /register/card/{firm_id}
+    */
+    public function getRouteKeyName()
+    {
+        return 'firm_id';
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -57,6 +76,11 @@ class Firm extends Authenticatable
 
     public function vouchers()
     {
-        return $this->hasMany(GiftVoucher::class);
+        return $this->hasMany(Voucher::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
     }
 }

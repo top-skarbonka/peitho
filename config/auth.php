@@ -7,6 +7,7 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     */
+
     'defaults' => [
         'guard' => 'web',
         'passwords' => 'users',
@@ -17,25 +18,24 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     */
+
     'guards' => [
 
-        // standardowy web (jeśli kiedyś będzie potrzebny)
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
 
-        // 🔐 PANEL FIRMY
         'company' => [
             'driver' => 'session',
-            'provider' => 'firms',
+            'provider' => 'companies',
         ],
 
-        // 🔐 ADMIN
-        'admin' => [
+        'client' => [
             'driver' => 'session',
-            'provider' => 'admins',
+            'provider' => 'clients',
         ],
+
     ],
 
     /*
@@ -43,6 +43,7 @@ return [
     | User Providers
     |--------------------------------------------------------------------------
     */
+
     'providers' => [
 
         'users' => [
@@ -50,24 +51,24 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        // 👤 FIRMY
-        'firms' => [
+        'companies' => [
             'driver' => 'eloquent',
             'model' => App\Models\Firm::class,
         ],
 
-        // 👤 ADMIN
-        'admins' => [
+        'clients' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
+            'model' => App\Models\Client::class,
         ],
+
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Resetting Passwords
+    | Password Reset
     |--------------------------------------------------------------------------
     */
+
     'passwords' => [
 
         'users' => [
@@ -76,6 +77,14 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        'clients' => [
+            'provider' => 'clients',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
     ],
 
     /*
@@ -83,5 +92,7 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     */
+
     'password_timeout' => 10800,
+
 ];

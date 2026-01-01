@@ -4,45 +4,47 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Firm;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class FirmAuthController extends Controller
 {
-    // FORMULARZ LOGOWANIA FIRMY
     public function showLoginForm()
     {
-        return view('company.login');
+        return view('firm.auth.login');
     }
 
-    // LOGOWANIE FIRMY
     public function login(Request $request)
     {
-        $request->validate([
-            'firm_id' => 'required',
-            'password' => 'required',
+        $data = $request->validate([
+            'firm_id'  => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
-        $firm = Firm::where('firm_id', $request->firm_id)->first();
+        // UWAGA: logujemy NA GUARDZIE "company" i po polu firm_id
+        $ok = Auth::guard('company')->attempt([
+            'firm_id'  => $data['firm_id'],
+            'password' => $data['password'],
+        ]);
 
-        if (!$firm || !Hash::check($request->password, $firm->password)) {
-            return back()->withErrors([
-                'error' => 'Nieprawidłowy ID firmy lub hasło.',
-            ]);
+        if (!$ok) {
+            return back()
+                ->withInput($request->only('firm_id'))
+                ->withErrors(['firm_id' => 'Błędne ID firmy lub hasło.']);
         }
 
-        // Logowanie – zapiszemy ID firmy w sesji
-        session(['firm_id' => $firm->id]);
+        // Bezpieczna sesja
+        $request->session()->regenerate();
 
         return redirect()->route('company.dashboard');
     }
 
-    // WYLOGOWANIE FIRMY
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->forget('firm_id');
-        session()->flush();
+        Auth::guard('company')->logout();
 
-        return redirect('/company/login')->with('success', 'Zostałeś wylogowany.');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('company.login');
     }
 }

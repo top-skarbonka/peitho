@@ -2,8 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| CONTROLLERS
+|--------------------------------------------------------------------------
+*/
 use App\Http\Controllers\FirmController;
 use App\Http\Controllers\Auth\FirmAuthController;
+
+use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\PublicClientController;
 
@@ -21,7 +28,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| ALIAS login (żeby Laravel nie wariował)
+| ALIAS /login (Laravel default)
 |--------------------------------------------------------------------------
 */
 Route::get('/login', function () {
@@ -30,7 +37,7 @@ Route::get('/login', function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – LOGOWANIE
+| PANEL FIRMY – LOGOWANIE / WYLOGOWANIE
 |--------------------------------------------------------------------------
 */
 Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
@@ -39,56 +46,82 @@ Route::get('/company/login', [FirmAuthController::class, 'showLoginForm'])
 Route::post('/company/login', [FirmAuthController::class, 'login'])
     ->name('company.login.submit');
 
-Route::get('/company/logout', [FirmAuthController::class, 'logout'])
+Route::post('/company/logout', [FirmAuthController::class, 'logout'])
     ->name('company.logout');
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – BEZ middleware (NA RAZIE!)
+| PANEL FIRMY – ZABEZPIECZONY (auth:company)
 |--------------------------------------------------------------------------
 */
-Route::get('/company/dashboard', [FirmController::class, 'dashboard'])
-    ->name('company.dashboard');
+Route::prefix('company')
+    ->middleware('auth:company')
+    ->group(function () {
 
-Route::get('/company/transactions', [FirmController::class, 'transactions'])
-    ->name('company.transactions');
+        Route::get('/dashboard', [FirmController::class, 'dashboard'])
+            ->name('company.dashboard');
 
-Route::get('/company/points', [FirmController::class, 'showPointsForm'])
-    ->name('company.points.form');
+        Route::get('/transactions', [FirmController::class, 'transactions'])
+            ->name('company.transactions');
 
-Route::post('/company/points/add', [FirmController::class, 'addPoints'])
-    ->name('company.points.add');
+        Route::get('/points', [FirmController::class, 'showPointsForm'])
+            ->name('company.points.form');
 
-Route::get('/company/loyalty-cards', [FirmController::class, 'loyaltyCards'])
-    ->name('company.loyalty.cards');
+        Route::post('/points/add', [FirmController::class, 'addPoints'])
+            ->name('company.points.add');
 
-Route::post('/company/loyalty-cards/{card}/stamp', [FirmController::class, 'addStamp'])
-    ->name('company.loyalty.cards.stamp');
+        Route::get('/loyalty-cards', [FirmController::class, 'loyaltyCards'])
+            ->name('company.loyalty.cards');
 
-Route::post('/company/loyalty-cards/{card}/reset', [FirmController::class, 'resetCard'])
-    ->name('company.loyalty.cards.reset');
+        Route::post('/loyalty-cards/{card}/stamp', [FirmController::class, 'addStamp'])
+            ->name('company.loyalty.cards.stamp');
 
-Route::post('/company/loyalty-cards/{card}/redeem', [FirmController::class, 'redeemCard'])
-    ->name('company.loyalty.cards.redeem');
+        Route::post('/loyalty-cards/{card}/reset', [FirmController::class, 'resetCard'])
+            ->name('company.loyalty.cards.reset');
+
+        Route::post('/loyalty-cards/{card}/redeem', [FirmController::class, 'redeemCard'])
+            ->name('company.loyalty.cards.redeem');
+
+        Route::post('/loyalty-cards/generate-link', [FirmController::class, 'generateRegistrationLink'])
+            ->name('company.loyalty.cards.generate');
+    });
 
 /*
 |--------------------------------------------------------------------------
-| PANEL KLIENTA
+| PUBLIC – REJESTRACJA KARTY (TOKEN)
 |--------------------------------------------------------------------------
 */
-Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
-    ->name('client.loyalty.card');
+Route::get('/register/card/{token}', [PublicClientController::class, 'showRegisterForm'])
+    ->name('client.register.form');
+
+Route::post('/register/card/{token}', [PublicClientController::class, 'register'])
+    ->name('client.register.submit');
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC JOIN
+| LOGOWANIE KLIENTA
 |--------------------------------------------------------------------------
 */
-Route::get('/join/{firm}', [PublicClientController::class, 'showForm'])
-    ->name('public.join');
+Route::get('/client/login', [ClientAuthController::class, 'showLoginForm'])
+    ->name('client.login');
 
-Route::post('/join/{firm}', [PublicClientController::class, 'submitForm'])
-    ->name('public.join.submit');
+Route::post('/client/login', [ClientAuthController::class, 'login'])
+    ->name('client.login.submit');
+
+Route::post('/client/logout', [ClientAuthController::class, 'logout'])
+    ->name('client.logout');
+
+/*
+|--------------------------------------------------------------------------
+| PANEL KLIENTA (mini panel – karta)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth:client')->group(function () {
+
+    Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
+        ->name('client.loyalty.card');
+
+});
 
 /*
 |--------------------------------------------------------------------------

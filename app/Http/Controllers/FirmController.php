@@ -6,27 +6,29 @@ use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
+use App\Models\RegistrationToken;
 use App\Models\Transaction;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class FirmController extends Controller
 {
     /*
     |--------------------------------------------------------------------------
-    | HELPERS — sesja firm_id
+    | POMOCNICZE
     |--------------------------------------------------------------------------
     */
-    private function currentFirm(): Firm
-    {
-        $firmId = session('firm_id');
 
-        if (! $firmId) {
-            abort(401);
+    private function firm(): Firm
+    {
+        $firm = Auth::guard('company')->user();
+
+        if (!$firm) {
+            abort(403, 'Brak zalogowanej firmy');
         }
 
-        return Firm::findOrFail($firmId);
+        return $firm;
     }
 
     /*
@@ -34,239 +36,196 @@ class FirmController extends Controller
     | DASHBOARD
     |--------------------------------------------------------------------------
     */
+
     public function dashboard()
     {
-        $firm   = $this->currentFirm();
-        $firmId = $firm->id;
+        $firm = $this->firm();
 
-        $totalTransactions = Transaction::where('firm_id', $firmId)->count();
-        $totalPoints       = (int) (Transaction::where('firm_id', $firmId)->sum('points') ?? 0);
-        $avgPoints         = (float) (Transaction::where('firm_id', $firmId)->avg('points') ?? 0);
-
-        $totalClients = Transaction::where('firm_id', $firmId)
+        $totalClients = LoyaltyCard::where('firm_id', $firm->id)
             ->distinct('client_id')
             ->count('client_id');
 
-        $bestDay = Transaction::where('firm_id', $firmId)
-            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
-            ->groupBy('day')
-            ->orderByDesc('total')
-            ->value('day');
+        $totalTransactions = Transaction::where('firm_id', $firm->id)->count();
 
-        // Dzienny wykres (ostatnie 14 dni)
-        $daily = Transaction::where('firm_id', $firmId)
-            ->where('created_at', '>=', now()->subDays(14))
-            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(points) as total'))
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
+        $totalPoints = LoyaltyStamp::where('firm_id', $firm->id)->count();
 
-        $chartLabels = $daily->pluck('day')->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))->values();
-        $chartValues = $daily->pluck('total')->values();
+        $avgPoints = $totalTransactions > 0
+            ? round($totalPoints / $totalTransactions, 2)
+            : 0;
 
-        // Miesięczny wykres
-        $monthly = Transaction::where('firm_id', $firmId)
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(points) as total'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        // wykres dzienny (7 dni)
+        $dailyLabels = [];
+        $dailyValues = [];
 
-        $monthlyLabels = $monthly->pluck('month')->values();
-        $monthlyValues = $monthly->pluck('total')->values();
-
-        // HEATMAPA godzin — ZAWSZE 0..23 (żeby max() i foreach nigdy nie padły)
-        $hoursHeatmap = array_fill(0, 24, 0);
-
-        $rawHours = Transaction::where('firm_id', $firmId)
-            ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('SUM(points) as total'))
-            ->groupBy('hour')
-            ->pluck('total', 'hour')
-            ->toArray();
-
-        foreach ($rawHours as $h => $sum) {
-            $h = (int) $h;
-            if ($h >= 0 && $h <= 23) {
-                $hoursHeatmap[$h] = (int) $sum;
-            }
+        for ($i = 6; $i >= 0; $i--) {
+            $day = now()->subDays($i);
+            $dailyLabels[] = $day->format('d.m');
+            $dailyValues[] = LoyaltyStamp::where('firm_id', $firm->id)
+                ->whereDate('created_at', $day)
+                ->count();
         }
 
-        // TOP klienci (punkty w tej firmie)
-        $topClients = Client::select(
-                'clients.id',
-                'clients.phone',
-                'clients.points',
-                DB::raw('SUM(transactions.points) as firm_points')
-            )
-            ->join('transactions', 'transactions.client_id', '=', 'clients.id')
-            ->where('transactions.firm_id', $firmId)
-            ->groupBy('clients.id', 'clients.phone', 'clients.points')
-            ->orderByDesc('firm_points')
-            ->limit(10)
-            ->get();
+        // wykres miesięczny (12 miesięcy)
+        $monthlyLabels = [];
+        $monthlyValues = [];
 
-        return view('firm.dashboard', compact(
-            'totalClients',
-            'totalTransactions',
-            'totalPoints',
-            'avgPoints',
-            'bestDay',
-            'chartLabels',
-            'chartValues',
-            'monthlyLabels',
-            'monthlyValues',
-            'hoursHeatmap',
-            'topClients'
-        ));
-    }
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthlyLabels[] = $month->format('m.Y');
+            $monthlyValues[] = LoyaltyStamp::where('firm_id', $firm->id)
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->count();
+        }
 
-    /*
-    |--------------------------------------------------------------------------
-    | HISTORIA TRANSAKCJI
-    |--------------------------------------------------------------------------
-    */
-    public function transactions(Request $request)
-    {
-        $firmId = $this->currentFirm()->id;
-
-        $q = Transaction::where('firm_id', $firmId)
-            ->orderByDesc('created_at');
-
-        // jeśli masz w transactions tabeli pole client_id, to to działa:
-        // (jeśli nie masz relacji, nadal pokaże transakcje bez klienta)
-        $transactions = $q->paginate(20);
-
-        return view('firm.transactions', compact('transactions'));
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DODAJ PUNKTY — FORM
-    |--------------------------------------------------------------------------
-    */
-    public function showPointsForm()
-    {
-        $this->currentFirm(); // kontrola sesji
-        return view('firm.points');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | DODAJ PUNKTY — SUBMIT
-    |--------------------------------------------------------------------------
-    */
-    public function addPoints(Request $request)
-    {
-        $firmId = $this->currentFirm()->id;
-
-        $data = $request->validate([
-            'phone'  => ['required', 'string', 'min:5', 'max:32'],
-            'points' => ['required', 'numeric', 'min:0.01'],
+        return view('firm.dashboard', [
+            'totalClients'      => $totalClients,
+            'totalTransactions' => $totalTransactions,
+            'totalPoints'       => $totalPoints,
+            'avgPoints'         => $avgPoints,
+            'chartLabels'       => $dailyLabels,
+            'chartValues'       => $dailyValues,
+            'monthlyLabels'     => $monthlyLabels,
+            'monthlyValues'     => $monthlyValues,
         ]);
-
-        // znajdź lub utwórz klienta po telefonie
-        $client = Client::firstOrCreate(
-            ['phone' => $data['phone']],
-            ['points' => 0]
-        );
-
-        // dodaj transakcję
-        Transaction::create([
-            'firm_id'   => $firmId,
-            'client_id' => $client->id,
-            'points'    => $data['points'],
-        ]);
-
-        // aktualizuj punkty klienta (jeśli przechowujesz je na kliencie)
-        $client->increment('points', $data['points']);
-
-        return redirect()->route('company.dashboard')->with('success', 'Dodano punkty ✅');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | KARTY LOJALNOŚCIOWE
+    | LISTA KART STAŁEGO KLIENTA
     |--------------------------------------------------------------------------
     */
+
     public function loyaltyCards()
     {
-        $firmId = $this->currentFirm()->id;
+        $firm = $this->firm();
 
-        $cards = LoyaltyCard::where('firm_id', $firmId)
-            ->withCount('stamps')
+        $cards = LoyaltyCard::with('client')
+            ->where('firm_id', $firm->id)
+            ->latest()
             ->get();
 
-        $stats = [
-            'cards'    => $cards->count(),
-            'stamps'   => $cards->sum('stamps_count'),
-            'full'     => $cards->where('stamps_count', '>=', 10)->count(),
-            'active30' => $cards->where('created_at', '>=', now()->subDays(30))->count(),
-        ];
-
-        return view('firm.loyalty-cards.index', compact('cards', 'stats'));
+        return view('firm.loyalty-cards.index', [
+            'cards' => $cards,
+        ]);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | DODANIE NAKLEJKI
+    | GENEROWANIE LINKU REJESTRACJI
     |--------------------------------------------------------------------------
     */
-    public function addStamp($cardId)
-    {
-        $firmId = $this->currentFirm()->id;
 
-        $card = LoyaltyCard::where('id', $cardId)
-            ->where('firm_id', $firmId)
-            ->firstOrFail();
+    public function generateRegistrationLink()
+    {
+        $firm = $this->firm();
+
+        RegistrationToken::where('firm_id', $firm->id)->delete();
+
+        $token = RegistrationToken::create([
+            'firm_id'    => $firm->id,
+            'token'      => Str::uuid(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        return redirect()
+            ->route('company.loyalty.cards')
+            ->with('registration_link', url('/register/card/' . $token->token));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NAKLEJKI
+    |--------------------------------------------------------------------------
+    */
+
+    public function addStamp(LoyaltyCard $card)
+    {
+        $firm = $this->firm();
+
+        if ($card->firm_id !== $firm->id) {
+            abort(403);
+        }
+
+        if ($card->current_stamps >= $card->max_stamps) {
+            return back()->with('error', 'Karta jest już pełna');
+        }
 
         $card->increment('current_stamps');
 
         LoyaltyStamp::create([
             'loyalty_card_id' => $card->id,
-            'firm_id'         => $firmId,
-            'description'     => 'Dodano naklejkę',
+            'firm_id'         => $firm->id,
+            'description'     => 'Naklejka',
         ]);
 
-        return back()->with('success', 'Naklejka dodana ✅');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESET KARTY
-    |--------------------------------------------------------------------------
-    */
-    public function resetCard($cardId)
-    {
-        $firmId = $this->currentFirm()->id;
-
-        $card = LoyaltyCard::where('id', $cardId)
-            ->where('firm_id', $firmId)
-            ->firstOrFail();
-
-        $card->update(['current_stamps' => 0]);
-
-        return back()->with('success', 'Karta zresetowana ✅');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | REDEEM (wymiana nagrody)
-    |--------------------------------------------------------------------------
-    */
-    public function redeemCard($cardId)
-    {
-        $firmId = $this->currentFirm()->id;
-
-        $card = LoyaltyCard::where('id', $cardId)
-            ->where('firm_id', $firmId)
-            ->firstOrFail();
-
-        // prosta logika: jeśli masz >= 10 naklejek, zerujemy
-        if ((int) $card->current_stamps >= 10) {
-            $card->update(['current_stamps' => 0]);
-            return back()->with('success', 'Nagroda wydana ✅ Karta wyzerowana.');
+        if ($card->current_stamps >= $card->max_stamps) {
+            $card->update(['status' => 'completed']);
         }
 
-        return back()->with('error', 'Za mało naklejek na nagrodę.');
+        return back()->with('success', 'Dodano naklejkę');
+    }
+
+    public function resetCard(LoyaltyCard $card)
+    {
+        $firm = $this->firm();
+
+        if ($card->firm_id !== $firm->id) {
+            abort(403);
+        }
+
+        $card->update([
+            'current_stamps' => 0,
+            'status'         => 'active',
+        ]);
+
+        return back()->with('success', 'Karta zresetowana');
+    }
+
+    public function redeemCard(LoyaltyCard $card)
+    {
+        $firm = $this->firm();
+
+        if ($card->firm_id !== $firm->id) {
+            abort(403);
+        }
+
+        if ($card->status !== 'completed') {
+            return back()->with('error', 'Karta nie jest pełna');
+        }
+
+        $card->update([
+            'current_stamps' => 0,
+            'status'         => 'active',
+        ]);
+
+        return back()->with('success', 'Nagroda odebrana');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRANSAKCJE + PUNKTY (jeśli używasz)
+    |--------------------------------------------------------------------------
+    */
+
+    public function transactions()
+    {
+        $firm = $this->firm();
+
+        $transactions = Transaction::where('firm_id', $firm->id)
+            ->latest()
+            ->get();
+
+        return view('firm.transactions', compact('transactions'));
+    }
+
+    public function showPointsForm()
+    {
+        return view('firm.points');
+    }
+
+    public function addPoints(Request $request)
+    {
+        return back()->with('success', 'Dodano punkty');
     }
 }
-

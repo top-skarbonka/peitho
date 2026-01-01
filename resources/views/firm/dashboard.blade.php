@@ -27,7 +27,7 @@
 
         <div class="bg-white rounded-xl p-6 shadow">
             <p class="text-slate-500 text-sm">Suma punktów</p>
-            <p class="text-3xl font-bold">{{ number_format($totalPoints,0,' ',' ') }}</p>
+            <p class="text-3xl font-bold">{{ number_format($avgPoints, 2, ',', ' ') }}</p>
         </div>
 
         <div class="bg-white rounded-xl p-6 shadow">

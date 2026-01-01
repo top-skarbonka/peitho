@@ -5,79 +5,62 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
+use App\Models\RegistrationToken;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class PublicClientController extends Controller
 {
-    /**
-     * PUBLICZNY FORMULARZ REJESTRACJI KARTY
-     * /register/card/{firm}
-     */
-    public function showForm(Firm $firm)
+    public function showRegisterForm(string $token)
     {
-        return view('public.join', compact('firm'));
+        $tokenRow = RegistrationToken::where('token', $token)
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
+        $firm = Firm::findOrFail($tokenRow->firm_id);
+
+        return view('client.register', [
+            'token' => $token,
+            'firm'  => $firm,
+        ]);
     }
 
-    /**
-     * ZAPIS KLIENTA + KARTY STAŁEGO KLIENTA
-     */
-    public function submitForm(Request $request, Firm $firm)
+    public function register(Request $request, string $token)
     {
+        $tokenRow = RegistrationToken::where('token', $token)
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
         $data = $request->validate([
-            'phone'       => ['required', 'string', 'min:5', 'max:32'],
-            'name'        => ['required', 'string', 'max:255'],
-            'postal_code' => ['nullable', 'string', 'max:12'],
+            'phone'    => ['required', 'string', 'max:20'],
+            'password' => ['required', 'string', 'min:4'],
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | KLIENT — MUSI MIEĆ program_id (bo kolumna NOT NULL)
-        |--------------------------------------------------------------------------
-        */
+        // 1️⃣ Klient
         $client = Client::firstOrCreate(
-            [
-                'phone'      => $data['phone'],
-                'program_id' => $firm->program_id,
-            ],
-            [
-                'name'        => $data['name'],
-                'postal_code' => $data['postal_code'] ?? null,
-                'points'      => 0,
-                'qr_code'     => (string) Str::uuid(),
-            ]
+            ['phone' => $data['phone']],
+            ['password' => Hash::make($data['password'])]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | KARTA STAŁEGO KLIENTA — POWIĄZANA Z TĄ FIRMĄ
-        |--------------------------------------------------------------------------
-        */
-        $card = LoyaltyCard::firstOrCreate(
+        // 2️⃣ Karta stałego klienta
+        LoyaltyCard::firstOrCreate(
             [
                 'client_id' => $client->id,
-                'firm_id'   => $firm->id,
+                'firm_id'   => $tokenRow->firm_id,
             ],
             [
-                'max_stamps'     => 10,
                 'current_stamps' => 0,
+                'max_stamps'     => 10,
                 'status'         => 'active',
-                'qr_code'        => (string) Str::uuid(),
             ]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | QR KOD KARTY
-        |--------------------------------------------------------------------------
-        */
-        $qrSvg = QrCode::size(220)->generate(json_encode([
-            'firm_id'   => $firm->id,
-            'client_id' => $client->id,
-            'card_id'   => $card->id,
-        ]));
+        // 3️⃣ AUTO-LOGIN KLIENTA ✅
+        Auth::guard('client')->login($client);
+        $request->session()->regenerate();
 
-        return view('public.card', compact('firm', 'client', 'card', 'qrSvg'));
+        // 4️⃣ PROSTO DO KARTY
+        return redirect()->route('client.loyalty.card');
     }
 }

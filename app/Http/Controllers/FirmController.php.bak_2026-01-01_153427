@@ -1,0 +1,219 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Client;
+use App\Models\Firm;
+use App\Models\LoyaltyCard;
+use App\Models\LoyaltyStamp;
+use App\Models\RegistrationToken;
+use App\Models\Transaction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+class FirmController extends Controller
+{
+    /**
+     * Pomocniczo: zawsze bierzemy zalogowaną firmę z guarda "company"
+     */
+    private function company(): ?Firm
+    {
+        return Auth::guard('company')->user();
+    }
+
+    /**
+     * Dashboard firmy
+     */
+    public function dashboard()
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        // Minimalne KPI (żeby view nie wywalało błędów)
+        $totalClients = Client::where('firm_id', $firm->id)->count();
+        $totalCards   = LoyaltyCard::where('firm_id', $firm->id)->count();
+
+        return view('firm.dashboard', compact('firm', 'totalClients', 'totalCards'));
+    }
+
+    /**
+     * Historia transakcji
+     */
+    public function transactions()
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        $transactions = Transaction::where('firm_id', $firm->id)
+            ->latest()
+            ->paginate(25);
+
+        return view('firm.transactions.index', compact('firm', 'transactions'));
+    }
+
+    /**
+     * Formularz dodawania punktów
+     */
+    public function showPointsForm()
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        return view('firm.points.form', compact('firm'));
+    }
+
+    /**
+     * Dodawanie punktów klientowi
+     */
+    public function addPoints(Request $request)
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        $data = $request->validate([
+            'phone'  => ['required', 'string', 'min:5', 'max:32'],
+            'points' => ['required', 'integer', 'min:1', 'max:100000'],
+        ]);
+
+        $client = Client::firstOrCreate(
+            ['phone' => $data['phone'], 'firm_id' => $firm->id],
+            ['points' => 0]
+        );
+
+        $client->increment('points', (int) $data['points']);
+
+        return back()->with('success', 'Punkty dodane.');
+    }
+
+    /**
+     * Lista kart stałego klienta (panel firmy)
+     */
+    public function loyaltyCards()
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        $cards = LoyaltyCard::where('firm_id', $firm->id)
+            ->latest()
+            ->get();
+
+        $stats = [
+            'cards'    => $cards->count(),
+            'stamps'   => (int) $cards->sum('current_stamps'),
+            'full'     => $cards->filter(fn ($c) => (int) $c->current_stamps >= (int) ($c->max_stamps ?? 10))->count(),
+            'active30' => $cards->filter(fn ($c) => $c->created_at && $c->created_at >= now()->subDays(30))->count(),
+        ];
+
+        // Link z sesji (jeśli wygenerowany tokenem)
+        $registration_link = session('registration_link');
+
+        return view('firm.loyalty-cards.index', compact('cards', 'stats', 'registration_link'));
+    }
+
+    /**
+     * Generowanie linku rejestracji (TOKEN) – opcja A
+     * WAŻNE: ta funkcja MUSI być wewnątrz klasy (to naprawia parse error!)
+     */
+    public function generateRegistrationLink()
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            abort(403);
+        }
+
+        // porządek: wyczyść stare tokeny tej firmy
+        RegistrationToken::where('firm_id', $firm->id)->delete();
+
+        $token = RegistrationToken::create([
+            'firm_id'    => $firm->id,
+            'token'      => (string) Str::uuid(),
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        return redirect()
+            ->route('company.loyalty.cards')
+            ->with('registration_link', url('/register/card/' . $token->token));
+    }
+
+    /**
+     * Dodanie "naklejki" (stamp)
+     */
+    public function addStamp(LoyaltyCard $card)
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        if ((int) $card->firm_id !== (int) $firm->id) {
+            abort(403);
+        }
+
+        $max = (int) ($card->max_stamps ?? 10);
+
+        if ((int) $card->current_stamps < $max) {
+            $card->increment('current_stamps');
+
+            LoyaltyStamp::create([
+                'loyalty_card_id' => $card->id,
+                'firm_id'         => $firm->id,
+            ]);
+        }
+
+        return back()->with('success', 'Dodano naklejkę.');
+    }
+
+    /**
+     * Reset karty
+     */
+    public function resetCard(LoyaltyCard $card)
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        if ((int) $card->firm_id !== (int) $firm->id) {
+            abort(403);
+        }
+
+        $card->update([
+            'current_stamps' => 0,
+            'status'         => 'active',
+        ]);
+
+        return back()->with('success', 'Karta zresetowana.');
+    }
+
+    /**
+     * Realizacja nagrody / oznaczenie jako zrealizowana
+     */
+    public function redeemCard(LoyaltyCard $card)
+    {
+        $firm = $this->company();
+        if (! $firm) {
+            return redirect()->route('company.login');
+        }
+
+        if ((int) $card->firm_id !== (int) $firm->id) {
+            abort(403);
+        }
+
+        $card->update([
+            'status' => 'redeemed',
+        ]);
+
+        return back()->with('success', 'Karta zrealizowana.');
+    }
+}
