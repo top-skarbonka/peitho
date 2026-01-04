@@ -11,7 +11,7 @@
 ">
 
     <div style="
-        background: #fff;
+        background: #ffffff;
         width: 100%;
         max-width: 420px;
         border-radius: 16px;
@@ -39,7 +39,11 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('client.register.submit', $token) }}">
+        <form method="POST"
+              action="{{ $token
+                ? route('client.register.submit', $token)
+                : route('client.register.by_firm.submit', $firm->id) }}">
+
             @csrf
 
             {{-- IMIĘ --}}
@@ -59,7 +63,9 @@
             >
 
             {{-- TELEFON --}}
-            <label style="font-weight:600;">Numer telefonu <span style="color:red">*</span></label>
+            <label style="font-weight:600;">
+                Numer telefonu <span style="color:red">*</span>
+            </label>
             <input
                 type="text"
                 name="phone"
@@ -98,6 +104,7 @@
                 type="password"
                 name="password"
                 placeholder="Minimum 4 znaki"
+                required
                 style="
                     width:100%;
                     padding:12px;
@@ -129,7 +136,12 @@
             </div>
 
             {{-- REGULAMIN --}}
-            <label style="display:flex; gap:10px; font-size:14px; margin-bottom:18px;">
+            <label style="
+                display:flex;
+                gap:10px;
+                font-size:14px;
+                margin-bottom:18px;
+            ">
                 <input type="checkbox" required>
                 <span>Akceptuję regulamin programu lojalnościowego</span>
             </label>

@@ -51,7 +51,7 @@ Route::post('/company/logout', [FirmAuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – ZABEZPIECZONY (auth:company)
+| PANEL FIRMY – ZABEZPIECZONY
 |--------------------------------------------------------------------------
 */
 Route::prefix('company')
@@ -88,7 +88,7 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – REJESTRACJA KARTY (TOKEN)
+| PUBLIC – REJESTRACJA KLIENTA PRZEZ TOKEN (KAMPANIE)
 |--------------------------------------------------------------------------
 */
 Route::get('/register/card/{token}', [PublicClientController::class, 'showRegisterForm'])
@@ -96,6 +96,17 @@ Route::get('/register/card/{token}', [PublicClientController::class, 'showRegist
 
 Route::post('/register/card/{token}', [PublicClientController::class, 'register'])
     ->name('client.register.submit');
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC – STAŁY LINK REJESTRACJI (QR NA ZAWSZE)
+|--------------------------------------------------------------------------
+*/
+Route::get('/join/{firm}', [PublicClientController::class, 'showRegisterFormByFirm'])
+    ->name('client.register.by_firm');
+
+Route::post('/join/{firm}', [PublicClientController::class, 'registerByFirm'])
+    ->name('client.register.by_firm.submit');
 
 /*
 |--------------------------------------------------------------------------
@@ -113,7 +124,7 @@ Route::post('/client/logout', [ClientAuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| PANEL KLIENTA (mini panel – karta)
+| PANEL KLIENTA
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:client')->group(function () {

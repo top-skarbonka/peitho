@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Hash;
 
 class PublicClientController extends Controller
 {
+    /**
+     * REJESTRACJA PRZEZ TOKEN (KAMPANIE / PROMOCJE)
+     */
     public function showRegisterForm(string $token)
     {
         $tokenRow = RegistrationToken::where('token', $token)
@@ -28,21 +31,18 @@ class PublicClientController extends Controller
 
     public function register(Request $request, string $token)
     {
-        // 🔐 Token
         $tokenRow = RegistrationToken::where('token', $token)
             ->where('expires_at', '>', now())
             ->firstOrFail();
 
         $firm = Firm::findOrFail($tokenRow->firm_id);
-        $programId = $firm->program_id; // ✅ KLUCZOWE
+        $programId = $firm->program_id;
 
-        // ✅ Walidacja
         $data = $request->validate([
             'phone'    => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:4'],
         ]);
 
-        // 🚫 OPCJA A — blokada duplikatu karty w tej firmie
         $existingClient = Client::where('phone', $data['phone'])->first();
 
         if ($existingClient) {
@@ -51,8 +51,7 @@ class PublicClientController extends Controller
                 ->exists();
 
             if ($alreadyHasCard) {
-                return redirect()
-                    ->back()
+                return back()
                     ->withInput()
                     ->withErrors([
                         'phone' => 'Ten numer telefonu ma już kartę w tej firmie. Zaloguj się.',
@@ -60,7 +59,6 @@ class PublicClientController extends Controller
             }
         }
 
-        // 1️⃣ Klient (ZAWSZE z program_id)
         $client = Client::firstOrCreate(
             ['phone' => $data['phone']],
             [
@@ -69,7 +67,6 @@ class PublicClientController extends Controller
             ]
         );
 
-        // 2️⃣ Karta stałego klienta
         LoyaltyCard::firstOrCreate(
             [
                 'client_id' => $client->id,
@@ -82,12 +79,22 @@ class PublicClientController extends Controller
             ]
         );
 
-        // 3️⃣ AUTO-LOGIN KLIENTA (przygotowanie pod OPCJĘ B)
         Auth::guard('client')->login($client);
 
-        // 4️⃣ Usuwamy token
         $tokenRow->delete();
 
         return redirect()->route('client.loyalty.card');
+    }
+
+    /**
+     * STAŁY LINK / QR – BEZ TOKENA (NA ZAWSZE)
+     * /join/{firm}
+     */
+    public function showRegisterFormByFirm(Firm $firm)
+    {
+        return view('client.register', [
+            'firm'  => $firm,
+            'token' => null,
+        ]);
     }
 }
