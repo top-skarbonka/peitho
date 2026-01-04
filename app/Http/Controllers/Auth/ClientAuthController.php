@@ -17,7 +17,7 @@ class ClientAuthController extends Controller
     }
 
     /**
-     * Logowanie klienta (telefon + hasło)
+     * Logowanie klienta (PHONE + PASSWORD)
      */
     public function login(Request $request)
     {
@@ -31,14 +31,13 @@ class ClientAuthController extends Controller
             'password' => $data['password'],
         ]);
 
-        if (!$ok) {
-            return back()
-                ->withInput($request->only('phone'))
-                ->withErrors([
-                    'phone' => 'Nieprawidłowy numer telefonu lub hasło.',
-                ]);
+        if (! $ok) {
+            return back()->withErrors([
+                'phone' => 'Nieprawidłowy numer telefonu lub hasło',
+            ]);
         }
 
+        // Bezpieczna sesja
         $request->session()->regenerate();
 
         return redirect()->route('client.loyalty.card');
