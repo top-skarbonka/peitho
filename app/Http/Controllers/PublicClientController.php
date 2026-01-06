@@ -13,7 +13,10 @@ use Illuminate\Support\Facades\Hash;
 class PublicClientController extends Controller
 {
     /**
-     * REJESTRACJA PRZEZ TOKEN (KAMPANIE / PROMOCJE)
+     * ==================================
+     * FLOW B — REJESTRACJA PRZEZ TOKEN
+     * /register/card/{token}
+     * ==================================
      */
     public function showRegisterForm(string $token)
     {
@@ -24,8 +27,8 @@ class PublicClientController extends Controller
         $firm = Firm::findOrFail($tokenRow->firm_id);
 
         return view('client.register', [
-            'token' => $token,
             'firm'  => $firm,
+            'token' => $token,
         ]);
     }
 
@@ -36,34 +39,17 @@ class PublicClientController extends Controller
             ->firstOrFail();
 
         $firm = Firm::findOrFail($tokenRow->firm_id);
-        $programId = $firm->program_id;
 
         $data = $request->validate([
             'phone'    => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:4'],
         ]);
 
-        $existingClient = Client::where('phone', $data['phone'])->first();
-
-        if ($existingClient) {
-            $alreadyHasCard = LoyaltyCard::where('client_id', $existingClient->id)
-                ->where('firm_id', $firm->id)
-                ->exists();
-
-            if ($alreadyHasCard) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        'phone' => 'Ten numer telefonu ma już kartę w tej firmie. Zaloguj się.',
-                    ]);
-            }
-        }
-
         $client = Client::firstOrCreate(
             ['phone' => $data['phone']],
             [
                 'password'   => Hash::make($data['password']),
-                'program_id' => $programId,
+                'program_id' => $firm->program_id,
             ]
         );
 
@@ -87,8 +73,10 @@ class PublicClientController extends Controller
     }
 
     /**
-     * STAŁY LINK / QR – BEZ TOKENA (NA ZAWSZE)
+     * ==================================
+     * FLOW A — STAŁY LINK DLA FIRMY
      * /join/{firm}
+     * ==================================
      */
     public function showRegisterFormByFirm(Firm $firm)
     {
@@ -96,5 +84,41 @@ class PublicClientController extends Controller
             'firm'  => $firm,
             'token' => null,
         ]);
+    }
+
+    public function registerByFirm(Request $request, Firm $firm)
+    {
+        $data = $request->validate([
+            'phone'       => ['required', 'string', 'max:20'],
+            'password'    => ['required', 'string', 'min:4'],
+            'name'        => ['nullable', 'string', 'max:120'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $client = Client::firstOrCreate(
+            ['phone' => $data['phone']],
+            [
+                'password'    => Hash::make($data['password']),
+                'program_id'  => $firm->program_id,
+                'name'        => $data['name'] ?? null,
+                'postal_code' => $data['postal_code'] ?? null,
+            ]
+        );
+
+        LoyaltyCard::firstOrCreate(
+            [
+                'client_id' => $client->id,
+                'firm_id'   => $firm->id,
+            ],
+            [
+                'current_stamps' => 0,
+                'max_stamps'     => 10,
+                'status'         => 'active',
+            ]
+        );
+
+        Auth::guard('client')->login($client);
+
+        return redirect()->route('client.loyalty.card');
     }
 }

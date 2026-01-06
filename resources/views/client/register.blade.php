@@ -42,7 +42,7 @@
         <form method="POST"
               action="{{ $token
                 ? route('client.register.submit', $token)
-                : route('client.register.by_firm.submit', $firm->id) }}">
+                : route('client.register.by_firm.submit', $firm) }}">
 
             @csrf
 
