@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\LoyaltyCard;
 use Illuminate\Support\Facades\Auth;
-
-// jeśli masz zainstalowane simplesoftwareio/simple-qrcode:
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ClientController extends Controller
 {
     /**
-     * MINI PANEL KLIENTA → jedna karta → mobile-first
+     * Widok karty lojalnościowej klienta (mobile-first)
+     * Szablon wybierany z firms.card_template (classic/elegant/gold/modern)
      */
     public function loyaltyCard()
     {
@@ -21,7 +20,6 @@ class ClientController extends Controller
             return redirect()->route('client.login');
         }
 
-        // Jedna (najnowsza) karta klienta
         $card = LoyaltyCard::with('firm')
             ->where('client_id', $client->id)
             ->latest()
@@ -31,17 +29,18 @@ class ClientController extends Controller
             abort(404, 'Brak przypisanej karty lojalnościowej');
         }
 
-        // Wymuszamy 12 okienek (jak w projekcie)
+        // 🔢 LICZBA OKIENEK (ZGODNIE Z PROJEKTEM)
         $maxStamps = 12;
-        $current   = (int) ($card->current_stamps ?? 0);
+
+        // 🔵 ILE JUŻ ZEBRANE
+        $current = (int) ($card->current_stamps ?? 0);
         if ($current < 0) $current = 0;
         if ($current > $maxStamps) $current = $maxStamps;
 
-        // Kod do pokazania (8 cyfr jak na wzorze)
+        // 🔢 KOD DO POKAZANIA (8 CYFR)
         $displayCode = str_pad((string) $card->id, 8, '0', STR_PAD_LEFT);
 
-        // QR – w białym kwadracie, centrowany
-        // Zawartość QR: możesz tu dać np. card->qr_code jeśli masz, albo URL do weryfikacji.
+        // 📦 QR (SVG)
         $qrPayload = $card->qr_code ?: ('CARD:' . $card->id);
 
         $qr = QrCode::format('svg')
@@ -49,14 +48,26 @@ class ClientController extends Controller
             ->margin(0)
             ->generate($qrPayload);
 
-        return view('client.card.show', [
+        // ✅ WYBÓR SZABLONU (zabezpieczony allow-listą)
+        $template = $card->firm->card_template ?? 'gold';
+
+        $allowed = ['classic', 'elegant', 'gold', 'modern', 'show'];
+        if (! in_array($template, $allowed, true)) {
+            $template = 'gold';
+        }
+
+        // Widok:
+        // resources/views/client/card/{template}.blade.php
+        return view("client.card.$template", [
             'card'        => $card,
             'client'      => $client,
             'maxStamps'   => $maxStamps,
             'current'     => $current,
             'displayCode' => $displayCode,
             'qr'          => $qr,
+
+            // Dodatkowo: dane firmy do ikon/stopki (jeśli są w DB)
+            'firm'        => $card->firm,
         ]);
     }
 }
-

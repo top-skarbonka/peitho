@@ -24,30 +24,42 @@ class AdminFirmController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|email',
-            'city'        => 'required|string|max:255',
-            'address'     => 'required|string|max:255',
-            'postal_code' => 'required|string|max:20',
-            'nip'         => 'nullable|string|max:20',
-            'phone'       => 'nullable|string|max:20',
+            'name'           => 'required|string|max:255',
+            'email'          => 'required|email',
+            'city'           => 'required|string|max:255',
+            'address'        => 'required|string|max:255',
+            'postal_code'    => 'required|string|max:20',
+            'nip'            => 'nullable|string|max:20',
+            'phone'          => 'nullable|string|max:20',
+
+            // ⬇️ NOWE
+            'card_template'  => 'required|in:classic,modern,elegant',
+            'facebook_url'   => 'nullable|url',
+            'instagram_url'  => 'nullable|url',
+            'google_url'     => 'nullable|url',
         ]);
 
-        // dane logowania
         $password = Str::random(10);
-        $firmId   = Str::slug($request->name) . '-' . rand(1000, 9999);
+        $slug = Str::slug($request->name) . '-' . rand(1000, 9999);
 
         $firm = Firm::create([
-            'firm_id'     => $firmId,
-            'name'        => $request->name,
-            'email'       => $request->email,
-            'password'    => Hash::make($password),
-            'city'        => $request->city,
-            'address'     => $request->address,
-            'postal_code' => $request->postal_code,
-            'nip'         => $request->nip,
-            'phone'       => $request->phone,
-            'program_id'  => 1,
+            'firm_id'        => $slug,
+            'slug'           => $slug,
+            'name'           => $request->name,
+            'email'          => $request->email,
+            'password'       => Hash::make($password),
+            'city'           => $request->city,
+            'address'        => $request->address,
+            'postal_code'    => $request->postal_code,
+            'nip'            => $request->nip,
+            'phone'          => $request->phone,
+            'program_id'     => 1,
+
+            // 🎨 NOWE POLA
+            'card_template'  => $request->card_template,
+            'facebook_url'   => $request->facebook_url,
+            'instagram_url'  => $request->instagram_url,
+            'google_url'     => $request->google_url,
         ]);
 
         return redirect()
@@ -56,6 +68,7 @@ class AdminFirmController extends Controller
                 'firm_id'  => $firm->firm_id,
                 'email'    => $firm->email,
                 'password' => $password,
+                'link'     => url('/join/' . $firm->slug),
             ]);
     }
 }

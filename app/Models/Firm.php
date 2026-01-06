@@ -21,13 +21,14 @@ class Firm extends Authenticatable
         'postal_code',
         'nip',
         'phone',
+
+        // 🔑 NOWE
+        'card_template',
+        'facebook_url',
+        'instagram_url',
+        'google_url',
     ];
 
-    /**
-     * 🔑 KLUCZOWE
-     * Route Model Binding po SLUGU
-     * /join/{firm} => /join/damian-1
-     */
     public function getRouteKeyName()
     {
         return 'slug';

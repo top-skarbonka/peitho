@@ -1,117 +1,78 @@
-@extends('layouts.app')
+@extends('layouts.public')
 
 @section('content')
-<div style="
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#f4f6fb;
-">
-    <div style="
-        width:420px;
-        background:#fff;
-        border-radius:16px;
-        padding:32px;
-        box-shadow:0 20px 40px rgba(0,0,0,.12);
-    ">
+<div style="max-width:720px;margin:40px auto;padding:30px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)">
 
-        <h2 style="text-align:center; margin-bottom:8px;">
-            🏢 Rejestracja firmy
-        </h2>
+    <h2 style="margin-bottom:6px;">➕ Rejestracja nowej firmy</h2>
+    <p style="color:#666;margin-bottom:24px;">Panel administratora</p>
 
-        <p style="text-align:center; color:#666; margin-bottom:24px;">
-            Formularz wewnętrzny (panel admina)
-        </p>
+    {{-- SUCCESS --}}
+    @if(session('success'))
+        <div style="background:#e7fff1;border:1px solid #86efac;padding:14px;border-radius:10px;margin-bottom:20px;">
+            <strong>Firma utworzona</strong><br><br>
+            <b>ID firmy:</b> {{ session('success.firm_id') }}<br>
+            <b>Email:</b> {{ session('success.email') }}<br>
+            <b>Hasło:</b> {{ session('success.password') }}
+        </div>
+    @endif
 
-        {{-- ✅ KOMUNIKAT PO UTWORZENIU FIRMY --}}
-        @if(session('success'))
-            <div style="
-                background:#e6fffa;
-                border:1px solid #38b2ac;
-                color:#065f46;
-                padding:16px;
-                border-radius:12px;
-                margin-bottom:20px;
-                font-size:14px;
-            ">
-                <strong>✅ Firma została utworzona</strong><br><br>
+    {{-- ERRORS --}}
+    @if($errors->any())
+        <div style="background:#ffecec;border:1px solid #ffb3b3;padding:12px;border-radius:10px;margin-bottom:20px;">
+            {{ $errors->first() }}
+        </div>
+    @endif
 
-                <div><b>ID firmy:</b> {{ session('success.firm_id') }}</div>
-                <div><b>Email:</b> {{ session('success.email') ?? '—' }}</div>
-                <div><b>Hasło:</b> {{ session('success.password') }}</div>
+    <form method="POST" action="{{ route('admin.firms.store') }}">
+        @csrf
 
-                <hr style="margin:12px 0">
+        <h4>🏢 Dane firmy</h4>
 
-                <small>
-                    Logowanie firmy:<br>
-                    <code>{{ url('/company/login') }}</code>
-                </small>
-            </div>
-        @endif
+        <input name="name" placeholder="Nazwa firmy" required style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="email" placeholder="Email" required style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="phone" placeholder="Telefon" style="width:100%;padding:12px;margin-bottom:10px">
 
-        {{-- ❌ BŁĘDY WALIDACJI --}}
-        @if ($errors->any())
-            <div style="
-                background:#fff5f5;
-                border:1px solid #e53e3e;
-                color:#742a2a;
-                padding:12px;
-                border-radius:12px;
-                margin-bottom:16px;
-                font-size:14px;
-            ">
-                <ul style="margin:0; padding-left:18px;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <input name="city" placeholder="Miasto" required style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="address" placeholder="Adres" required style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="postal_code" placeholder="Kod pocztowy" required style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="nip" placeholder="NIP (opcjonalnie)" style="width:100%;padding:12px;margin-bottom:20px">
 
-        <form method="POST" action="{{ route('admin.firms.store') }}">
-            @csrf
+        <hr style="margin:24px 0">
 
-            <input class="input" name="name" placeholder="Nazwa firmy" required>
-            <input class="input" name="city" placeholder="Miasto" required>
-            <input class="input" name="address" placeholder="Ulica i numer" required>
-            <input class="input" name="postal_code" placeholder="Kod pocztowy" required>
-            <input class="input" name="nip" placeholder="NIP">
-            <input class="input" name="email" placeholder="Adres e-mail" required>
-            <input class="input" name="phone" placeholder="Numer telefonu">
+        <h4>🎨 Wygląd karty lojalnościowej</h4>
 
-            <button type="submit" style="
-                width:100%;
-                margin-top:20px;
-                padding:14px;
-                border-radius:12px;
-                border:none;
-                background:#5b4df5;
-                color:#fff;
-                font-size:16px;
-                font-weight:600;
-                cursor:pointer;
-            ">
-                💾 Zarejestruj firmę
-            </button>
-        </form>
+    <label class="block text-sm font-medium mb-1">Szablon karty</label>
 
-    </div>
+    <select name="card_template"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2">
+        <option value="gold" {{ old('card_template','gold')=='gold' ? 'selected' : '' }}>Gold (premium)</option>
+        <option value="elegant" {{ old('card_template')=='elegant' ? 'selected' : '' }}>Elegant</option>
+        <option value="modern" {{ old('card_template')=='modern' ? 'selected' : '' }}>Modern</option>
+        <option value="classic" {{ old('card_template')=='classic' ? 'selected' : '' }}>Classic</option>        </select>
+
+        <hr style="margin:24px 0">
+
+        <h4>🔗 Linki social / opinie</h4>
+
+        <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
+        <input name="google_review_url" placeholder="Google – opinie (URL)" style="width:100%;padding:12px;margin-bottom:20px">
+
+        <button type="submit" style="
+            width:100%;
+            padding:14px;
+            border:none;
+            border-radius:14px;
+            font-size:16px;
+            font-weight:700;
+            color:#fff;
+            background:linear-gradient(135deg,#6a5af9,#ff5fa2);
+            cursor:pointer;
+        ">
+            🚀 Utwórz firmę
+        </button>
+
+    </form>
+
 </div>
-
-<style>
-.input{
-    width:100%;
-    padding:12px 14px;
-    margin-bottom:12px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    font-size:14px;
-}
-.input:focus{
-    outline:none;
-    border-color:#5b4df5;
-    box-shadow:0 0 0 2px rgba(91,77,245,.15);
-}
-</style>
 @endsection
