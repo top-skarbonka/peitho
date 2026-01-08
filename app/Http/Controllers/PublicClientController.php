@@ -5,119 +5,62 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
-use App\Models\RegistrationToken;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class PublicClientController extends Controller
 {
     /**
-     * ==================================
-     * FLOW B — REJESTRACJA PRZEZ TOKEN
-     * /register/card/{token}
-     * ==================================
+     * GET /join/{slug}
      */
-    public function showRegisterForm(string $token)
+    public function showRegisterFormByFirm(string $slug)
     {
-        $tokenRow = RegistrationToken::where('token', $token)
-            ->where('expires_at', '>', now())
-            ->firstOrFail();
-
-        $firm = Firm::findOrFail($tokenRow->firm_id);
+        $firm = Firm::where('slug', $slug)->firstOrFail();
 
         return view('client.register', [
-            'firm'  => $firm,
-            'token' => $token,
+            'firm' => $firm
         ]);
-    }
-
-    public function register(Request $request, string $token)
-    {
-        $tokenRow = RegistrationToken::where('token', $token)
-            ->where('expires_at', '>', now())
-            ->firstOrFail();
-
-        $firm = Firm::findOrFail($tokenRow->firm_id);
-
-        $data = $request->validate([
-            'phone'    => ['required', 'string', 'max:20'],
-            'password' => ['required', 'string', 'min:4'],
-        ]);
-
-        $client = Client::firstOrCreate(
-            ['phone' => $data['phone']],
-            [
-                'password'   => Hash::make($data['password']),
-                'program_id' => $firm->program_id,
-            ]
-        );
-
-        LoyaltyCard::firstOrCreate(
-            [
-                'client_id' => $client->id,
-                'firm_id'   => $firm->id,
-            ],
-            [
-                'current_stamps' => 0,
-                'max_stamps'     => 10,
-                'status'         => 'active',
-            ]
-        );
-
-        Auth::guard('client')->login($client);
-
-        $tokenRow->delete();
-
-        return redirect()->route('client.loyalty.card');
     }
 
     /**
-     * ==================================
-     * FLOW A — STAŁY LINK DLA FIRMY
-     * /join/{firm}
-     * ==================================
+     * POST /join/{firm_id}
      */
-    public function showRegisterFormByFirm(Firm $firm)
+    public function registerByFirm(Request $request, int $firm_id)
     {
-        return view('client.register', [
-            'firm'  => $firm,
-            'token' => null,
-        ]);
-    }
+        $firm = Firm::findOrFail($firm_id);
 
-    public function registerByFirm(Request $request, Firm $firm)
-    {
-        $data = $request->validate([
-            'phone'       => ['required', 'string', 'max:20'],
-            'password'    => ['required', 'string', 'min:4'],
-            'name'        => ['nullable', 'string', 'max:120'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
+        $request->validate([
+            'phone' => 'required|min:6',
+            'password' => 'required|min:4',
         ]);
 
-        $client = Client::firstOrCreate(
-            ['phone' => $data['phone']],
-            [
-                'password'    => Hash::make($data['password']),
-                'program_id'  => $firm->program_id,
-                'name'        => $data['name'] ?? null,
-                'postal_code' => $data['postal_code'] ?? null,
-            ]
-        );
+        // 🔒 blokada duplikatu
+        if (Client::where('phone', $request->phone)->where('firm_id', $firm->id)->exists()) {
+            return back()->withErrors([
+                'phone' => 'Ten numer telefonu ma już kartę w tej firmie.',
+            ])->withInput();
+        }
 
-        LoyaltyCard::firstOrCreate(
-            [
-                'client_id' => $client->id,
-                'firm_id'   => $firm->id,
-            ],
-            [
-                'current_stamps' => 0,
-                'max_stamps'     => 10,
-                'status'         => 'active',
-            ]
-        );
+        // ✅ KLIENT
+        $client = Client::create([
+            'firm_id' => $firm->id,
+            'program_id' => $firm->program_id,
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'postal_code' => $request->postal_code,
+            'password' => Hash::make($request->password),
+            'sms_marketing_consent' => $request->boolean('sms_marketing_consent'),
+        ]);
 
-        Auth::guard('client')->login($client);
+        // ✅ KARTA
+        LoyaltyCard::create([
+            'client_id' => $client->id,
+            'firm_id' => $firm->id,
+            'program_id' => $firm->program_id,
+            'stamps' => $firm->start_stamps ?? 0,
+        ]);
+
+        auth('client')->login($client);
 
         return redirect()->route('client.loyalty.card');
     }

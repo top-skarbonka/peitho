@@ -102,12 +102,11 @@ Route::post('/register/card/{token}', [PublicClientController::class, 'register'
 | PUBLIC – STAŁY LINK REJESTRACJI (QR NA ZAWSZE)
 |--------------------------------------------------------------------------
 */
-Route::get('/join/{firm}', [PublicClientController::class, 'showRegisterFormByFirm'])
+Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormByFirm'])
     ->name('client.register.by_firm');
 
-Route::post('/join/{firm}', [PublicClientController::class, 'registerByFirm'])
+Route::post('/join/{firm_id}', [PublicClientController::class, 'registerByFirm'])
     ->name('client.register.by_firm.submit');
-
 /*
 |--------------------------------------------------------------------------
 | LOGOWANIE KLIENTA
