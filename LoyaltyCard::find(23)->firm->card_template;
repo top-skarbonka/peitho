@@ -1,0 +1,24 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#6189
+    [34mall[39m: [
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6194
+        [34mid[39m: [35m23[39m,
+        [34mfirm_id[39m: [35m11[39m,
+        [34mprogram_id[39m: [36mnull[39m,
+        [34mclient_id[39m: [35m26[39m,
+        [34mmax_stamps[39m: [35m10[39m,
+        [34mcurrent_stamps[39m: [35m8[39m,
+        [34mreward[39m: [36mnull[39m,
+        [34mstatus[39m: "[32mactive[39m",
+        [34mqr_code[39m: [36mnull[39m,
+        [34mcreated_at[39m: "[32m2026-01-07 18:44:06[39m",
+        [34mupdated_at[39m: "[32m2026-01-14 21:33:06[39m",
+        [34mphone[39m: [36mnull[39m,
+        [34memail[39m: [36mnull[39m,
+        [34mpostal_code[39m: [36mnull[39m,
+        [34mpassword[39m: [36mnull[39m,
+        [34mqr_token[39m: [36mnull[39m,
+        [34mremember_token[39m: [36mnull[39m,
+      },
+    ],
+  }
+

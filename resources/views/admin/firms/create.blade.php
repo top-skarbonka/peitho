@@ -57,7 +57,20 @@
         <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
         <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
         <input name="google_review_url" placeholder="Google – opinie (URL)" style="width:100%;padding:12px;margin-bottom:20px">
-
+<div class="form-group">
+    <label for="google_url">Strona WWW firmy</label>
+    <input
+        type="url"
+        name="google_url"
+        id="google_url"
+        class="form-control"
+        placeholder="https://www.twojafirma.pl"
+        value="{{ old('google_url') }}"
+    >
+    <small class="text-muted">
+        Adres strony WWW – pojawi się jako przycisk 🌐 WWW na karcie klienta
+    </small>
+</div>
         <button type="submit" style="
             width:100%;
             padding:14px;
