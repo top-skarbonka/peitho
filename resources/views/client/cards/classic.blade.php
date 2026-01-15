@@ -83,31 +83,49 @@ body{
 /* ===== STAMPS ===== */
 .stickers-grid{
     display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:12px;
-    margin-bottom:18px;
+    grid-template-columns:repeat(5, 1fr);
+    gap:14px;
+    max-width:320px;
+    margin:0 auto 18px;
     padding-bottom:18px;
     border-bottom:1px solid #eee;
+    justify-items:center;
 }
 
 .sticker{
-    width:100%;
-    aspect-ratio:1;
-    border-radius:50%;
-    background:#ececec;
+    width:46px;
+    height:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:34px;
+    color:#d1d5db;
+    opacity:.55;
     transform:scale(.7);
-    opacity:.4;
 }
 
 .sticker.active{
-    background:#1fb655;
+    color:#facc15;
+    opacity:1;
+    text-shadow:
+        0 0 6px rgba(250,204,21,.55),
+        0 0 14px rgba(250,204,21,.35);
     animation:stampPop .45s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+
+.sticker.last{
+    animation:blink 1.8s ease-in-out infinite;
 }
 
 @keyframes stampPop{
     0%{ transform:scale(.6); opacity:0; }
-    70%{ transform:scale(1.15); opacity:1; }
+    70%{ transform:scale(1.2); opacity:1; }
     100%{ transform:scale(1); opacity:1; }
+}
+
+@keyframes blink{
+    0%,100%{ filter:brightness(1); }
+    50%{ filter:brightness(1.7); }
 }
 
 /* ===== QR ===== */
@@ -155,29 +173,6 @@ body{
     transition:width .6s ease;
 }
 
-/* ===== SOCIAL ===== */
-.social-buttons{
-    display:flex;
-    gap:12px;
-    margin-top:14px;
-}
-.social-btn{
-    flex:1;
-    background:#fff;
-    border-radius:999px;
-    padding:12px 18px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    font-weight:600;
-    text-decoration:none;
-    color:#111;
-}
-.social-btn i{ font-size:1.3rem; }
-.social-fb i{ color:#1877f2; }
-.social-ig i{ color:#e1306c; }
-
 /* ===== TIMELINE ===== */
 details{ margin-top:10px; }
 summary{ cursor:pointer; font-weight:600; }
@@ -207,8 +202,29 @@ summary{ cursor:pointer; font-weight:600; }
     font-weight:800;
     color:#fff;
 }
-.timeline-text{ text-align:left; }
-.timeline-text small{ opacity:.85; font-size:13px; }
+
+/* ===== TOAST ===== */
+.toast{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) scale(.9);
+    background:linear-gradient(180deg,#fff4b0,#facc15,#f59e0b);
+    color:#3b2f00;
+    padding:16px 26px;
+    border-radius:999px;
+    font-weight:800;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    opacity:0;
+    pointer-events:none;
+    transition:all .35s ease;
+    z-index:9999;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+}
 </style>
 </head>
 
@@ -223,7 +239,6 @@ summary{ cursor:pointer; font-weight:600; }
 </div>
 @endif
 
-{{-- KARTA --}}
 <div class="card">
     <div class="icon-box">🎁</div>
     <h1>{{ $firm->name }}</h1>
@@ -231,7 +246,7 @@ summary{ cursor:pointer; font-weight:600; }
 
     <div class="stickers-grid">
         @for($i=1;$i<=$maxStamps;$i++)
-            <div class="sticker"></div>
+            <div class="sticker">★</div>
         @endfor
     </div>
 
@@ -242,57 +257,30 @@ summary{ cursor:pointer; font-weight:600; }
     </div>
 </div>
 
-{{-- ✅ NAJPIERW: DANE FIRMY --}}
 <div class="glass-box">
-    <div>
-        <i class="fa-solid fa-phone"></i> {{ $firm->phone }}<br>
-        <i class="fa-solid fa-location-dot"></i> {{ $firm->address }}
-    </div>
-
-    <div class="social-buttons">
-        @if($firm->facebook_url)
-        <a href="{{ $firm->facebook_url }}" class="social-btn social-fb">
-            <i class="fab fa-facebook"></i> Facebook
-        </a>
-        @endif
-        @if($firm->instagram_url)
-        <a href="{{ $firm->instagram_url }}" class="social-btn social-ig">
-            <i class="fab fa-instagram"></i> Instagram
-        </a>
-        @endif
-    </div>
+    <i class="fa-solid fa-phone"></i> {{ $firm->phone }}<br>
+    <i class="fa-solid fa-location-dot"></i> {{ $firm->address }}
 </div>
 
-{{-- ✅ POTEM: POSTĘP DO NAGRODY --}}
 <div class="glass-box">
     <strong>🎯 Postęp do nagrody</strong>
-
     <div style="margin-top:6px;">
-        Masz <strong>{{ $current }}</strong> / 10 naklejek
+        Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} naklejek
     </div>
-
     <div class="progress-bar">
-        <div class="progress-fill" style="width: {{ min(100, ($current/10)*100) }}%"></div>
+        <div class="progress-fill" style="width: {{ ($current/$maxStamps)*100 }}%"></div>
     </div>
-
-    @if($current < 10)
-        Brakuje jeszcze <strong>{{ 10 - $current }}</strong> do nagrody 🎁
-    @else
-        🎉 Nagroda gotowa!
-    @endif
 </div>
 
-{{-- HISTORIA (ZW IJANA) --}}
 @if($card->stamps->count())
 <div class="glass-box">
     <details>
         <summary>📊 Ostatnie wizyty</summary>
-
         <div class="timeline">
             @foreach($card->stamps->sortByDesc('created_at')->take(3) as $stamp)
             <div class="timeline-item">
                 <div class="timeline-dot">✔</div>
-                <div class="timeline-text">
+                <div>
                     <div>Ostatnia wizyta</div>
                     <small>{{ $stamp->created_at->format('d.m.Y H:i') }}</small>
                 </div>
@@ -305,14 +293,31 @@ summary{ cursor:pointer; font-weight:600; }
 
 </div>
 
+<div id="toast" class="toast">⭐ Dodano nową naklejkę!</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const total = {{ $current }};
-    document.querySelectorAll('.sticker').forEach((el, i) => {
+    const stickers = document.querySelectorAll('.sticker');
+    const toast = document.getElementById('toast');
+
+    stickers.forEach((el, i) => {
         if(i < total){
-            setTimeout(() => el.classList.add('active'), i * 120);
+            setTimeout(() => {
+                el.classList.add('active');
+                if(i === total - 1){
+                    el.classList.add('last');
+                }
+            }, i * 120);
         }
     });
+
+    const prev = localStorage.getItem('looply_stamps');
+    if(prev !== null && parseInt(prev) < total){
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+    localStorage.setItem('looply_stamps', total);
 });
 </script>
 
