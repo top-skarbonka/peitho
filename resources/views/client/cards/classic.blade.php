@@ -36,15 +36,6 @@ body{
     color:#fff;
     margin-bottom:16px;
 }
-.status-msg h2{
-    font-size:1.05rem;
-    font-weight:600;
-}
-.status-msg p{
-    color:#00ff9c;
-    font-size:.9rem;
-    margin-top:4px;
-}
 
 /* ===== CARD ===== */
 .card{
@@ -67,11 +58,6 @@ body{
     font-size:26px;
 }
 
-.card h1{
-    font-size:1.45rem;
-    color:#222;
-}
-
 .subtitle{
     color:#888;
     font-size:.9rem;
@@ -80,10 +66,10 @@ body{
     padding-bottom:18px;
 }
 
-/* ===== STAMPS ===== */
+/* ===== GWIAZDKI ===== */
 .stickers-grid{
     display:grid;
-    grid-template-columns:repeat(5, 1fr);
+    grid-template-columns:repeat(5,1fr);
     gap:14px;
     max-width:320px;
     margin:0 auto 18px;
@@ -113,39 +99,18 @@ body{
     animation:stampPop .45s cubic-bezier(.34,1.56,.64,1) forwards;
 }
 
-.sticker.last{
-    animation:blink 1.8s ease-in-out infinite;
-}
-
 @keyframes stampPop{
     0%{ transform:scale(.6); opacity:0; }
     70%{ transform:scale(1.2); opacity:1; }
     100%{ transform:scale(1); opacity:1; }
 }
 
-@keyframes blink{
-    0%,100%{ filter:brightness(1); }
-    50%{ filter:brightness(1.7); }
-}
-
 /* ===== QR ===== */
-.qr-section{
-    padding-top:6px;
-}
-.qr-section svg{
-    width:150px;
-    height:150px;
-}
-.code-label{
-    color:#777;
-    font-size:.8rem;
-    margin-top:8px;
-}
+.qr-section svg{ width:150px; height:150px; }
 .code-number{
     font-size:1.7rem;
     font-weight:800;
     letter-spacing:2px;
-    color:#222;
 }
 
 /* ===== GLASS BOX ===== */
@@ -170,74 +135,62 @@ body{
     height:100%;
     background:linear-gradient(90deg,#22c55e,#4ade80);
     border-radius:999px;
-    transition:width .6s ease;
 }
 
 /* ===== TIMELINE ===== */
-details{ margin-top:10px; }
-summary{ cursor:pointer; font-weight:600; }
-
-.timeline{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    margin-top:14px;
-}
 .timeline-item{
     display:flex;
-    align-items:center;
     gap:12px;
     background:rgba(255,255,255,.25);
     padding:12px 14px;
     border-radius:16px;
 }
-.timeline-dot{
-    width:36px;
-    height:36px;
-    border-radius:50%;
-    background:#22c55e;
+
+/* ===== UX ETAP II ===== */
+.reward-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-weight:800;
-    color:#fff;
-}
-
-/* ===== TOAST ===== */
-.toast{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%) scale(.9);
-    background:linear-gradient(180deg,#fff4b0,#facc15,#f59e0b);
-    color:#3b2f00;
-    padding:16px 26px;
-    border-radius:999px;
-    font-weight:800;
-    box-shadow:0 20px 50px rgba(0,0,0,.35);
-    opacity:0;
-    pointer-events:none;
-    transition:all .35s ease;
     z-index:9999;
+    animation:fadeIn .4s ease;
 }
 
-.toast.show{
-    opacity:1;
-    transform:translate(-50%,-50%) scale(1);
+.reward-box{
+    background:#fff;
+    border-radius:28px;
+    padding:30px 24px;
+    text-align:center;
+    box-shadow:0 30px 80px rgba(0,0,0,.4);
+    animation:pop .45s cubic-bezier(.34,1.56,.64,1);
 }
+
+.reward-box h2{
+    font-size:1.5rem;
+    margin-bottom:10px;
+}
+
+.confetti span{
+    position:absolute;
+    width:8px;
+    height:14px;
+    background:var(--c);
+    animation:fall 1.6s linear forwards;
+}
+
+@keyframes fall{
+    to{ transform:translateY(100vh) rotate(360deg); opacity:0; }
+}
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes pop{ from{transform:scale(.7)} to{transform:scale(1)} }
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
-@if($current >= $maxStamps)
-<div class="status-msg">
-    <h2>Masz {{ $current }} z {{ $maxStamps }} naklejek</h2>
-    <p>🎉 Nagroda gotowa do odbioru!</p>
-</div>
-@endif
 
 <div class="card">
     <div class="icon-box">🎁</div>
@@ -252,7 +205,6 @@ summary{ cursor:pointer; font-weight:600; }
 
     <div class="qr-section">
         {!! $qr !!}
-        <div class="code-label">Kod</div>
         <div class="code-number">{{ $displayCode }}</div>
     </div>
 </div>
@@ -264,9 +216,7 @@ summary{ cursor:pointer; font-weight:600; }
 
 <div class="glass-box">
     <strong>🎯 Postęp do nagrody</strong>
-    <div style="margin-top:6px;">
-        Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} naklejek
-    </div>
+    <div>Masz <strong>{{ $current }}</strong> / {{ $maxStamps }}</div>
     <div class="progress-bar">
         <div class="progress-fill" style="width: {{ ($current/$maxStamps)*100 }}%"></div>
     </div>
@@ -276,48 +226,37 @@ summary{ cursor:pointer; font-weight:600; }
 <div class="glass-box">
     <details>
         <summary>📊 Ostatnie wizyty</summary>
-        <div class="timeline">
-            @foreach($card->stamps->sortByDesc('created_at')->take(3) as $stamp)
-            <div class="timeline-item">
-                <div class="timeline-dot">✔</div>
-                <div>
-                    <div>Ostatnia wizyta</div>
-                    <small>{{ $stamp->created_at->format('d.m.Y H:i') }}</small>
-                </div>
-            </div>
-            @endforeach
+        @foreach($card->stamps->sortByDesc('created_at')->take(3) as $stamp)
+        <div class="timeline-item">
+            ✔ {{ $stamp->created_at->format('d.m.Y H:i') }}
         </div>
+        @endforeach
     </details>
 </div>
 @endif
 
 </div>
 
-<div id="toast" class="toast">⭐ Dodano nową naklejkę!</div>
+@if($current == $maxStamps)
+<div class="reward-overlay">
+    <div class="reward-box">
+        <h2>🎉 Nagroda gotowa do odbioru!</h2>
+        <p>Pokaż kartę obsłudze</p>
+    </div>
+    <div class="confetti">
+        @for($i=0;$i<80;$i++)
+            <span style="left:{{ rand(0,100) }}%;--c:{{ collect(['#facc15','#ec4899','#22c55e'])->random() }}"></span>
+        @endfor
+    </div>
+</div>
+@endif
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const total = {{ $current }};
-    const stickers = document.querySelectorAll('.sticker');
-    const toast = document.getElementById('toast');
-
-    stickers.forEach((el, i) => {
-        if(i < total){
-            setTimeout(() => {
-                el.classList.add('active');
-                if(i === total - 1){
-                    el.classList.add('last');
-                }
-            }, i * 120);
-        }
+document.addEventListener('DOMContentLoaded',()=>{
+    const total={{ $current }};
+    document.querySelectorAll('.sticker').forEach((el,i)=>{
+        if(i<total){ setTimeout(()=>el.classList.add('active'),i*120); }
     });
-
-    const prev = localStorage.getItem('looply_stamps');
-    if(prev !== null && parseInt(prev) < total){
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 2000);
-    }
-    localStorage.setItem('looply_stamps', total);
 });
 </script>
 
