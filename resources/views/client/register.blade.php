@@ -39,7 +39,6 @@
             </div>
         @endif
 
-        {{-- FORMULARZ – STAŁY LINK /join/{slug} --}}
         <form method="POST"
               action="{{ route('client.register.by_firm.submit', ['firm_id' => $firm->id]) }}">
             @csrf
@@ -121,14 +120,44 @@
                 background:#f8f7ff;
                 margin-bottom:16px;
             ">
-                <label style="display:block; cursor:pointer;">
-                    <input type="checkbox" name="sms_marketing_consent" value="1" checked>
-                    <strong>✨ Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
+                <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+                    <input
+                        type="checkbox"
+                        name="sms_marketing_consent"
+                        value="1"
+                        style="
+                            width:44px;
+                            height:24px;
+                            appearance:none;
+                            background:#ddd;
+                            border-radius:20px;
+                            position:relative;
+                            outline:none;
+                            cursor:pointer;
+                            transition:.3s;
+                        "
+                        oninput="this.style.background=this.checked?'#6a5af9':'#ddd';this.nextElementSibling.style.transform=this.checked?'translateX(20px)':'translateX(0)'"
+                    >
+                    <span style="
+                        position:relative;
+                        left:-44px;
+                        top:2px;
+                        width:20px;
+                        height:20px;
+                        background:#fff;
+                        border-radius:50%;
+                        display:inline-block;
+                        transition:.3s;
+                        pointer-events:none;
+                    "></span>
 
-                    <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
-                        📢 Będziesz pierwszy/a, który/a dowie się o rabatach, promocjach i gratisach<br>
-                        📩 Maksymalnie kilka SMS-ów miesięcznie<br>
-                        🌍 Od firm z Twojej okolicy oraz wybranych marek ogólnopolskich
+                    <div>
+                        <strong>✨ Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
+                        <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
+                            📢 Informacje o rabatach i gratisach<br>
+                            📩 Maksymalnie kilka SMS-ów miesięcznie<br>
+                            🌍 Od firm z Twojej okolicy
+                        </div>
                     </div>
                 </label>
             </div>
@@ -139,9 +168,23 @@
                 gap:10px;
                 font-size:14px;
                 margin-bottom:18px;
+                align-items:flex-start;
             ">
                 <input type="checkbox" required>
-                <span>Akceptuję regulamin programu lojalnościowego</span>
+                <span>
+                    Akceptuję
+                    <a href="/docs/regulamin.pdf"
+                       target="_blank"
+                       style="color:#6a5af9; font-weight:600; text-decoration:underline;">
+                        regulamin
+                    </a>
+                    oraz
+                    <a href="/docs/polityka%20prywatnosci.pdf"
+                       target="_blank"
+                       style="color:#6a5af9; font-weight:600; text-decoration:underline;">
+                        politykę prywatności
+                    </a>
+                </span>
             </label>
 
             <button type="submit" style="
