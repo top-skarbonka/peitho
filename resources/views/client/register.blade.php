@@ -24,18 +24,32 @@
             {{ $firm->name }}
         </p>
 
-        {{-- KOMUNIKATY --}}
+        {{-- KOMUNIKATY BŁĘDÓW --}}
         @if ($errors->any())
             <div style="
-                background:#ffecec;
+                background:#fff4f4;
                 border:1px solid #ffb3b3;
-                color:#a40000;
-                padding:10px;
-                border-radius:8px;
-                margin-bottom:16px;
+                color:#8a0000;
+                padding:14px;
+                border-radius:10px;
+                margin-bottom:18px;
                 font-size:14px;
             ">
-                {{ $errors->first() }}
+                <strong style="display:block; margin-bottom:6px;">
+                    ⚠️ Coś poszło nie tak
+                </strong>
+
+                <ul style="margin:0; padding-left:18px;">
+                    @foreach ($errors->all() as $error)
+                        <li style="margin-bottom:4px;">
+                            {{ $error }}
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div style="margin-top:8px; font-size:13px; color:#555;">
+                    Popraw zaznaczone pola i spróbuj ponownie.
+                </div>
             </div>
         @endif
 
@@ -45,71 +59,29 @@
 
             {{-- IMIĘ --}}
             <label style="font-weight:600;">Imię (opcjonalnie)</label>
-            <input
-                type="text"
-                name="name"
-                value="{{ old('name') }}"
-                placeholder="Np. Anna"
-                style="
-                    width:100%;
-                    padding:12px;
-                    border-radius:10px;
-                    border:1px solid #ddd;
-                    margin-bottom:14px;
-                "
-            >
+            <input type="text" name="name" value="{{ old('name') }}"
+                   placeholder="Np. Anna"
+                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
 
             {{-- TELEFON --}}
             <label style="font-weight:600;">
                 Numer telefonu <span style="color:red">*</span>
             </label>
-            <input
-                type="text"
-                name="phone"
-                value="{{ old('phone') }}"
-                placeholder="Np. 500600700"
-                required
-                style="
-                    width:100%;
-                    padding:14px;
-                    border-radius:12px;
-                    border:2px solid #6a5af9;
-                    margin-bottom:14px;
-                    font-size:16px;
-                "
-            >
+            <input type="text" name="phone" value="{{ old('phone') }}" required
+                   placeholder="Np. 500600700"
+                   style="width:100%;padding:14px;border-radius:12px;border:2px solid #6a5af9;margin-bottom:14px;font-size:16px;">
 
             {{-- KOD POCZTOWY --}}
             <label style="font-weight:600;">Kod pocztowy (opcjonalnie)</label>
-            <input
-                type="text"
-                name="postal_code"
-                value="{{ old('postal_code') }}"
-                placeholder="00-000"
-                style="
-                    width:100%;
-                    padding:12px;
-                    border-radius:10px;
-                    border:1px solid #ddd;
-                    margin-bottom:14px;
-                "
-            >
+            <input type="text" name="postal_code" value="{{ old('postal_code') }}"
+                   placeholder="00-000"
+                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
 
             {{-- HASŁO --}}
             <label style="font-weight:600;">Hasło</label>
-            <input
-                type="password"
-                name="password"
-                placeholder="Minimum 4 znaki"
-                required
-                style="
-                    width:100%;
-                    padding:12px;
-                    border-radius:10px;
-                    border:1px solid #ddd;
-                    margin-bottom:14px;
-                "
-            >
+            <input type="password" name="password" required
+                   placeholder="Minimum 4 znaki"
+                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
 
             {{-- ZGODA MARKETINGOWA --}}
             <div style="
@@ -125,32 +97,7 @@
                         type="checkbox"
                         name="sms_marketing_consent"
                         value="1"
-                        style="
-                            width:44px;
-                            height:24px;
-                            appearance:none;
-                            background:#ddd;
-                            border-radius:20px;
-                            position:relative;
-                            outline:none;
-                            cursor:pointer;
-                            transition:.3s;
-                        "
-                        oninput="this.style.background=this.checked?'#6a5af9':'#ddd';this.nextElementSibling.style.transform=this.checked?'translateX(20px)':'translateX(0)'"
                     >
-                    <span style="
-                        position:relative;
-                        left:-44px;
-                        top:2px;
-                        width:20px;
-                        height:20px;
-                        background:#fff;
-                        border-radius:50%;
-                        display:inline-block;
-                        transition:.3s;
-                        pointer-events:none;
-                    "></span>
-
                     <div>
                         <strong>✨ Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
                         <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
@@ -162,7 +109,7 @@
                 </label>
             </div>
 
-            {{-- REGULAMIN --}}
+            {{-- REGULAMIN + POLITYKA --}}
             <label style="
                 display:flex;
                 gap:10px;
@@ -175,13 +122,13 @@
                     Akceptuję
                     <a href="/docs/regulamin.pdf"
                        target="_blank"
-                       style="color:#6a5af9; font-weight:600; text-decoration:underline;">
+                       style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         regulamin
                     </a>
                     oraz
                     <a href="/docs/polityka%20prywatnosci.pdf"
                        target="_blank"
-                       style="color:#6a5af9; font-weight:600; text-decoration:underline;">
+                       style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         politykę prywatności
                     </a>
                 </span>
@@ -203,12 +150,7 @@
 
         </form>
 
-        <p style="
-            text-align:center;
-            font-size:13px;
-            color:#888;
-            margin-top:16px;
-        ">
+        <p style="text-align:center;font-size:13px;color:#888;margin-top:16px;">
             Dane są bezpieczne. Możesz zrezygnować w każdej chwili.
         </p>
 

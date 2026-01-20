@@ -7,13 +7,13 @@ use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 
 class PublicClientController extends Controller
 {
     /**
      * ============================
      * GET /join/{slug}
-     * STAŁY LINK REJESTRACJI
      * ============================
      */
     public function showRegisterFormByFirm(string $slug)
@@ -22,28 +22,30 @@ class PublicClientController extends Controller
 
         return view('client.register', [
             'firm' => $firm,
-            'token' => null, // jawnie – brak tokenu
         ]);
     }
 
     /**
      * ============================
      * POST /join/{firm}
-     * REJESTRACJA KLIENTA
      * ============================
      */
     public function registerByFirm(Request $request, int $firm)
     {
         $firm = Firm::findOrFail($firm);
 
-        $request->validate([
-            'phone'    => 'required|min:6',
-            'password' => 'required|min:4',
+        // ✅ TWARDO DEFINIUJEMY CO PRZYCHODZI
+        $validated = $request->validate([
+            'phone'                  => 'required|min:6',
+            'password'               => 'required|min:4',
+            'name'                   => 'nullable|string|max:255',
+            'postal_code'            => 'nullable|string|max:20',
+            'sms_marketing_consent'  => 'nullable|in:1',
         ]);
 
         // 🔒 1 numer = 1 karta w tej firmie
         if (
-            Client::where('phone', $request->phone)
+            Client::where('phone', $validated['phone'])
                 ->where('firm_id', $firm->id)
                 ->exists()
         ) {
@@ -54,26 +56,30 @@ class PublicClientController extends Controller
                 ->withInput();
         }
 
+        $now = Carbon::now();
+
         // ✅ KLIENT
         $client = Client::create([
-            'firm_id'               => $firm->id,
-            'program_id'            => $firm->program_id,
-            'name'                  => $request->name,
-            'phone'                 => $request->phone,
-            'postal_code'           => $request->postal_code,
-            'password'              => Hash::make($request->password),
-            'sms_marketing_consent' => $request->boolean('sms_marketing_consent'),
+            'firm_id'                    => $firm->id,
+            'program_id'                 => $firm->program_id,
+            'name'                       => $validated['name'] ?? null,
+            'phone'                      => $validated['phone'],
+            'postal_code'                => $validated['postal_code'] ?? null,
+            'password'                   => Hash::make($validated['password']),
+
+            // ✅ ZGODA SMS – DOBROWOLNA
+            'sms_marketing_consent'      => isset($validated['sms_marketing_consent']),
+            'sms_marketing_consent_at'   => isset($validated['sms_marketing_consent']) ? $now : null,
         ]);
 
-        // ✅ KARTA LOJALNOŚCIOWA
+        // ✅ KARTA
         LoyaltyCard::create([
-            'client_id' => $client->id,
-            'firm_id'   => $firm->id,
-            'program_id'=> $firm->program_id,
-            'stamps'    => $firm->start_stamps ?? 0,
+            'client_id'   => $client->id,
+            'firm_id'     => $firm->id,
+            'program_id'  => $firm->program_id,
+            'stamps'      => $firm->start_stamps ?? 0,
         ]);
 
-        // 🔐 logowanie klienta
         auth('client')->login($client);
 
         return redirect()->route('client.loyalty.card');
@@ -81,8 +87,7 @@ class PublicClientController extends Controller
 
     /**
      * ============================
-     * WIDOK KARTY KLIENTA
-     * TU JEST KLUCZ DO SZABLONÓW
+     * KARTA KLIENTA
      * ============================
      */
     public function loyaltyCard()
@@ -95,7 +100,6 @@ class PublicClientController extends Controller
             ->where('firm_id', $firm->id)
             ->firstOrFail();
 
-        // 🔥 WYBÓR SZABLONU
         $template = $firm->card_template ?? 'classic';
 
         return view('client.cards.' . $template, [
