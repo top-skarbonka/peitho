@@ -13,22 +13,28 @@ class Client extends Authenticatable
     protected $table = 'clients';
 
     /**
-     * ✅ KLUCZOWA POPRAWKA:
-     * musimy pozwolić na masowe ustawianie program_id (i opcjonalnie firm_id),
-     * bo register używa updateOrCreate / create.
+     * ✅ Pola masowo zapisywane (RODO + rejestracja)
      */
     protected $fillable = [
-        'phone',
-        'password',
-        'program_id',
         'firm_id',
+        'program_id',
 
-        // jeśli masz te kolumny i czasem je ustawiasz:
+        'name',
         'email',
+        'phone',
         'city',
         'postal_code',
-        'points',
+
+        'password',
         'password_set',
+
+        // ✅ ZGODY RODO
+        'sms_marketing_consent',
+        'sms_marketing_consent_at',
+        'terms_accepted_at',
+
+        // inne
+        'points',
         'activation_token',
         'activation_token_expires_at',
     ];
@@ -38,8 +44,14 @@ class Client extends Authenticatable
         'remember_token',
     ];
 
+    /**
+     * ✅ Rzutowania – ważne przy RODO
+     */
     protected $casts = [
-        'password' => 'hashed',
-        'activation_token_expires_at' => 'datetime',
+        'password'                     => 'hashed',
+        'sms_marketing_consent'         => 'boolean',
+        'sms_marketing_consent_at'      => 'datetime',
+        'terms_accepted_at'             => 'datetime',
+        'activation_token_expires_at'   => 'datetime',
     ];
 }

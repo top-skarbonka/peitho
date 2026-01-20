@@ -34,13 +34,12 @@ class PublicClientController extends Controller
     {
         $firm = Firm::findOrFail($firm);
 
-        // ✅ TWARDO DEFINIUJEMY CO PRZYCHODZI
         $validated = $request->validate([
-            'phone'                  => 'required|min:6',
-            'password'               => 'required|min:4',
-            'name'                   => 'nullable|string|max:255',
-            'postal_code'            => 'nullable|string|max:20',
-            'sms_marketing_consent'  => 'nullable|in:1',
+            'phone'                 => 'required|min:6',
+            'password'              => 'required|min:4',
+            'name'                  => 'nullable|string|max:255',
+            'postal_code'           => 'nullable|string|max:20',
+            'sms_marketing_consent' => 'nullable|in:1',
         ]);
 
         // 🔒 1 numer = 1 karta w tej firmie
@@ -58,26 +57,27 @@ class PublicClientController extends Controller
 
         $now = Carbon::now();
 
-        // ✅ KLIENT
+        // ✅ KLIENT (RODO KOMPLET)
         $client = Client::create([
-            'firm_id'                    => $firm->id,
-            'program_id'                 => $firm->program_id,
-            'name'                       => $validated['name'] ?? null,
-            'phone'                      => $validated['phone'],
-            'postal_code'                => $validated['postal_code'] ?? null,
-            'password'                   => Hash::make($validated['password']),
+            'firm_id'                  => $firm->id,
+            'program_id'               => $firm->program_id,
+            'name'                     => $validated['name'] ?? null,
+            'phone'                    => $validated['phone'],
+            'postal_code'              => $validated['postal_code'] ?? null,
+            'password'                 => Hash::make($validated['password']),
 
-            // ✅ ZGODA SMS – DOBROWOLNA
-            'sms_marketing_consent'      => isset($validated['sms_marketing_consent']),
-            'sms_marketing_consent_at'   => isset($validated['sms_marketing_consent']) ? $now : null,
+            // ✅ ZGODY
+            'sms_marketing_consent'    => isset($validated['sms_marketing_consent']),
+            'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
+            'terms_accepted_at'        => $now,
         ]);
 
         // ✅ KARTA
         LoyaltyCard::create([
-            'client_id'   => $client->id,
-            'firm_id'     => $firm->id,
-            'program_id'  => $firm->program_id,
-            'stamps'      => $firm->start_stamps ?? 0,
+            'client_id'  => $client->id,
+            'firm_id'    => $firm->id,
+            'program_id' => $firm->program_id,
+            'stamps'     => $firm->start_stamps ?? 0,
         ]);
 
         auth('client')->login($client);
