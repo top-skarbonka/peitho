@@ -16,6 +16,7 @@ use App\Http\Controllers\PublicClientController;
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminFirmController;
+use App\Http\Controllers\Admin\ConsentExportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,7 +89,7 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – REJESTRACJA KLIENTA PRZEZ TOKEN (KAMPANIE)
+| PUBLIC – REJESTRACJA KLIENTA (TOKEN)
 |--------------------------------------------------------------------------
 */
 Route::get('/register/card/{token}', [PublicClientController::class, 'showRegisterForm'])
@@ -99,7 +100,7 @@ Route::post('/register/card/{token}', [PublicClientController::class, 'register'
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – STAŁY LINK REJESTRACJI (QR NA ZAWSZE)
+| PUBLIC – STAŁY LINK (QR)
 |--------------------------------------------------------------------------
 */
 Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormByFirm'])
@@ -107,6 +108,7 @@ Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormB
 
 Route::post('/join/{firm_id}', [PublicClientController::class, 'registerByFirm'])
     ->name('client.register.by_firm.submit');
+
 /*
 |--------------------------------------------------------------------------
 | LOGOWANIE KLIENTA
@@ -156,5 +158,16 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/firms', [AdminFirmController::class, 'store'])
             ->name('admin.firms.store');
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🧩 EKSPORT ZGÓD – UODO (CSV) – BEZPIECZNY (POST)
+        |--------------------------------------------------------------------------
+        */
+        Route::post(
+            '/consents/export/csv',
+            [ConsentExportController::class, 'exportCsv']
+        )->name('admin.consents.export.csv');
+
     });
 });

@@ -1,10 +1,27 @@
 @extends('layouts.public')
 
 @section('content')
-<div style="max-width:720px;margin:40px auto;padding:30px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+<div style="max-width:760px;margin:40px auto;padding:30px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)">
 
-    <h2 style="margin-bottom:6px;">➕ Rejestracja nowej firmy</h2>
-    <p style="color:#666;margin-bottom:24px;">Panel administratora</p>
+    <h2 style="margin-bottom:6px;">➕ Panel administratora</h2>
+    <p style="color:#666;margin-bottom:24px;">Rejestracja firm i zgodność z RODO</p>
+
+    {{-- TABS --}}
+    <div style="display:flex;gap:10px;margin-bottom:24px;">
+        <button type="button"
+                onclick="showTab('firm')"
+                id="tab-btn-firm"
+                style="flex:1;padding:12px;border-radius:12px;border:2px solid #6a5af9;background:#6a5af9;color:#fff;font-weight:700;">
+            🏢 Rejestracja firmy
+        </button>
+
+        <button type="button"
+                onclick="showTab('consents')"
+                id="tab-btn-consents"
+                style="flex:1;padding:12px;border-radius:12px;border:2px solid #ddd;background:#fff;color:#333;font-weight:700;">
+            🧩 Eksport zgód (UODO)
+        </button>
+    </div>
 
     {{-- SUCCESS --}}
     @if(session('success'))
@@ -23,69 +40,84 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('admin.firms.store') }}">
-        @csrf
+    {{-- TAB: FIRMA --}}
+    <div id="tab-firm">
 
-        <h4>🏢 Dane firmy</h4>
+        <form method="POST" action="{{ route('admin.firms.store') }}">
+            @csrf
 
-        <input name="name" placeholder="Nazwa firmy" required style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="email" placeholder="Email" required style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="phone" placeholder="Telefon" style="width:100%;padding:12px;margin-bottom:10px">
+            <h4>🏢 Dane firmy</h4>
 
-        <input name="city" placeholder="Miasto" required style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="address" placeholder="Adres" required style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="postal_code" placeholder="Kod pocztowy" required style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="nip" placeholder="NIP (opcjonalnie)" style="width:100%;padding:12px;margin-bottom:20px">
+            <input name="name" placeholder="Nazwa firmy" required style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="email" placeholder="Email" required style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="phone" placeholder="Telefon" style="width:100%;padding:12px;margin-bottom:10px">
 
-        <hr style="margin:24px 0">
+            <input name="city" placeholder="Miasto" required style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="address" placeholder="Adres" required style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="postal_code" placeholder="Kod pocztowy" required style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="nip" placeholder="NIP (opcjonalnie)" style="width:100%;padding:12px;margin-bottom:20px">
 
-        <h4>🎨 Wygląd karty lojalnościowej</h4>
+            <hr style="margin:24px 0">
 
-    <label class="block text-sm font-medium mb-1">Szablon karty</label>
+            <h4>🎨 Wygląd karty lojalnościowej</h4>
 
-    <select name="card_template"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2">
-        <option value="gold" {{ old('card_template','gold')=='gold' ? 'selected' : '' }}>Gold (premium)</option>
-        <option value="elegant" {{ old('card_template')=='elegant' ? 'selected' : '' }}>Elegant</option>
-        <option value="modern" {{ old('card_template')=='modern' ? 'selected' : '' }}>Modern</option>
-        <option value="classic" {{ old('card_template')=='classic' ? 'selected' : '' }}>Classic</option>        </select>
+            <select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
+                <option value="gold">Gold (premium)</option>
+                <option value="elegant">Elegant</option>
+                <option value="modern">Modern</option>
+                <option value="classic">Classic</option>
 
-        <hr style="margin:24px 0">
+                {{-- 🌸 NOWA BRANŻA --}}
+                <option value="florist">Kwiaciarnia 🌸</option>
+            </select>
 
-        <h4>🔗 Linki social / opinie</h4>
+            <hr style="margin:24px 0">
 
-        <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-        <input name="google_review_url" placeholder="Google – opinie (URL)" style="width:100%;padding:12px;margin-bottom:20px">
-<div class="form-group">
-    <label for="google_url">Strona WWW firmy</label>
-    <input
-        type="url"
-        name="google_url"
-        id="google_url"
-        class="form-control"
-        placeholder="https://www.twojafirma.pl"
-        value="{{ old('google_url') }}"
-    >
-    <small class="text-muted">
-        Adres strony WWW – pojawi się jako przycisk 🌐 WWW na karcie klienta
-    </small>
+            <h4>🔗 Linki</h4>
+
+            <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="google_review_url" placeholder="Google – opinie (URL)" style="width:100%;padding:12px;margin-bottom:10px">
+            <input name="google_url" placeholder="Strona WWW firmy" style="width:100%;padding:12px;margin-bottom:20px">
+
+            <button type="submit" style="width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6a5af9,#ff5fa2);">
+                🚀 Utwórz firmę
+            </button>
+        </form>
+    </div>
+
+    {{-- TAB: CONSENTS --}}
+    <div id="tab-consents" style="display:none;">
+
+        <h4>🧩 Eksport zgód marketingowych (RODO / UODO)</h4>
+
+        <form method="POST" action="{{ route('admin.consents.export.csv') }}">
+            @csrf
+
+            <select name="firm_id" required style="width:100%;padding:12px;margin-bottom:16px;">
+                <option value="">— wybierz firmę —</option>
+                @foreach(\App\Models\Firm::orderBy('name')->get() as $firm)
+                    <option value="{{ $firm->id }}">
+                        {{ $firm->name }} (ID: {{ $firm->id }})
+                    </option>
+                @endforeach
+            </select>
+
+            <input type="password" name="password" required placeholder="Hasło admina"
+                   style="width:100%;padding:12px;margin-bottom:16px;">
+
+            <button type="submit" style="width:100%;padding:14px;border-radius:14px;background:#22c55e;color:#fff;font-weight:700;">
+                ⬇️ Pobierz CSV (UODO)
+            </button>
+        </form>
+    </div>
+
 </div>
-        <button type="submit" style="
-            width:100%;
-            padding:14px;
-            border:none;
-            border-radius:14px;
-            font-size:16px;
-            font-weight:700;
-            color:#fff;
-            background:linear-gradient(135deg,#6a5af9,#ff5fa2);
-            cursor:pointer;
-        ">
-            🚀 Utwórz firmę
-        </button>
 
-    </form>
-
-</div>
+<script>
+function showTab(tab){
+    document.getElementById('tab-firm').style.display = tab === 'firm' ? 'block' : 'none';
+    document.getElementById('tab-consents').style.display = tab === 'consents' ? 'block' : 'none';
+}
+</script>
 @endsection

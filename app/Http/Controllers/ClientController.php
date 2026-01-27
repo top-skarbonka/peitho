@@ -10,7 +10,6 @@ class ClientController extends Controller
 {
     /**
      * Widok karty lojalnościowej klienta (mobile-first)
-     * Szablon wybierany z firms.card_template
      */
     public function loyaltyCard()
     {
@@ -21,7 +20,7 @@ class ClientController extends Controller
             return redirect()->route('client.login');
         }
 
-        // 🎫 KARTA LOJALNOŚCIOWA + RELACJE
+        // 🎫 KARTA + RELACJE
         $card = LoyaltyCard::with(['firm', 'stamps'])
             ->where('client_id', $client->id)
             ->latest()
@@ -31,30 +30,27 @@ class ClientController extends Controller
             abort(404, 'Brak przypisanej karty lojalnościowej');
         }
 
-        // 🔢 LICZBA WYMAGANYCH PIECZĄTEK (Z FIRMY)
+        // 🔢 MAKS. PIECZĄTEK
         $maxStamps = (int) ($card->firm->stamps_required ?? 10);
         if ($maxStamps < 1) {
             $maxStamps = 10;
         }
 
-        // 🔵 ILE JUŻ ZEBRANE (COUNT RELACJI stamps)
-        $current = $card->stamps->count();
-        if ($current > $maxStamps) {
-            $current = $maxStamps;
-        }
+        // 🔵 AKTUALNY STAN
+        $current = min($card->stamps->count(), $maxStamps);
 
-        // 📊 STATYSTYKI (DO BOXA POD KARTĄ)
+        // 📊 STATYSTYKI
         $stats = [
-            'stamps'        => $current,
-            'required'      => $maxStamps,
-            'reward_ready'  => $current >= $maxStamps,
-            'last_visit'    => optional($card->stamps->last())->created_at?->format('d.m.Y'),
+            'stamps'       => $current,
+            'required'     => $maxStamps,
+            'reward_ready' => $current >= $maxStamps,
+            'last_visit'   => optional($card->stamps->last())->created_at?->format('d.m.Y'),
         ];
 
-        // 🔢 KOD DO WYŚWIETLENIA (8 CYFR)
+        // 🔢 KOD
         $displayCode = str_pad((string) $card->id, 8, '0', STR_PAD_LEFT);
 
-        // 📦 QR (SVG)
+        // 📦 QR
         $qrPayload = $card->qr_code ?: ('CARD:' . $card->id);
 
         $qr = QrCode::format('svg')
@@ -62,9 +58,16 @@ class ClientController extends Controller
             ->margin(0)
             ->generate($qrPayload);
 
-        // 🎨 WYBÓR SZABLONU
+        // 🎨 SZABLON KARTY — TU BYŁ PROBLEM
         $template = $card->firm->card_template ?? 'classic';
-        $allowed  = ['classic', 'elegant', 'gold', 'modern'];
+
+        $allowed = [
+            'classic',
+            'modern',
+            'elegant',
+            'gold',
+            'florist', // 🌸 KWIACIARNIA — DODANE
+        ];
 
         if (! in_array($template, $allowed, true)) {
             $template = 'classic';

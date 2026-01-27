@@ -22,15 +22,39 @@ class Firm extends Authenticatable
         'nip',
         'phone',
 
-        // 🔑 NOWE
+        // 🎨 karta
         'card_template',
+
+        // 🔗 linki
         'facebook_url',
         'instagram_url',
         'google_url',
+
+        // 🖼 logo
+        'logo_path',
     ];
 
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * Routing po slugu
+     */
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    /**
+     * Pełny URL logo (jeśli istnieje)
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo_path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->logo_path);
     }
 }
