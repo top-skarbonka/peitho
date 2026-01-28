@@ -54,4 +54,12 @@ class Client extends Authenticatable
         'terms_accepted_at'             => 'datetime',
         'activation_token_expires_at'   => 'datetime',
     ];
+
+    /**
+     * 🔗 RELACJA: klient → firma
+     */
+    public function firm()
+    {
+        return $this->belongsTo(Firm::class);
+    }
 }

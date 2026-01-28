@@ -53,8 +53,8 @@
             </div>
         @endif
 
-        <form method="POST"
-              action="{{ route('client.register.by_firm.submit', ['firm_id' => $firm->id]) }}">
+<form method="POST"
+      action="{{ route('client.register.by_firm.submit', ['slug' => $firm->slug]) }}">
             @csrf
 
             {{-- IMIĘ --}}

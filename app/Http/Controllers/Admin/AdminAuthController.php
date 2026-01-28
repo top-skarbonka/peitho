@@ -27,8 +27,7 @@ class AdminAuthController extends Controller
 
         session(['admin_ok' => true]);
 
-        return redirect()->route('admin.firms.create');
-    }
+return redirect()->route('admin.dashboard');    }
 
     public function logout()
     {

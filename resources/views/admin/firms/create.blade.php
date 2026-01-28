@@ -43,7 +43,10 @@
     {{-- TAB: FIRMA --}}
     <div id="tab-firm">
 
-        <form method="POST" action="{{ route('admin.firms.store') }}">
+        {{-- ⬇️ WAŻNE: multipart --}}
+        <form method="POST"
+              action="{{ route('admin.firms.store') }}"
+              enctype="multipart/form-data">
             @csrf
 
             <h4>🏢 Dane firmy</h4>
@@ -59,15 +62,21 @@
 
             <hr style="margin:24px 0">
 
+            <h4>🖼 Logo firmy</h4>
+            <input type="file"
+                   name="logo"
+                   accept="image/*"
+                   style="width:100%;padding:12px;margin-bottom:20px">
+
+            <hr style="margin:24px 0">
+
             <h4>🎨 Wygląd karty lojalnościowej</h4>
 
             <select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
-                <option value="gold">Gold (premium)</option>
-                <option value="elegant">Elegant</option>
-                <option value="modern">Modern</option>
                 <option value="classic">Classic</option>
-
-                {{-- 🌸 NOWA BRANŻA --}}
+                <option value="modern">Modern</option>
+                <option value="elegant">Elegant</option>
+                <option value="gold">Gold</option>
                 <option value="florist">Kwiaciarnia 🌸</option>
             </select>
 
@@ -77,10 +86,10 @@
 
             <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
             <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="google_review_url" placeholder="Google – opinie (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="google_url" placeholder="Strona WWW firmy" style="width:100%;padding:12px;margin-bottom:20px">
+            <input name="google_url" placeholder="Google / opinie / strona" style="width:100%;padding:12px;margin-bottom:20px">
 
-            <button type="submit" style="width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6a5af9,#ff5fa2);">
+            <button type="submit"
+                    style="width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6a5af9,#ff5fa2);">
                 🚀 Utwórz firmę
             </button>
         </form>
@@ -88,28 +97,8 @@
 
     {{-- TAB: CONSENTS --}}
     <div id="tab-consents" style="display:none;">
-
         <h4>🧩 Eksport zgód marketingowych (RODO / UODO)</h4>
-
-        <form method="POST" action="{{ route('admin.consents.export.csv') }}">
-            @csrf
-
-            <select name="firm_id" required style="width:100%;padding:12px;margin-bottom:16px;">
-                <option value="">— wybierz firmę —</option>
-                @foreach(\App\Models\Firm::orderBy('name')->get() as $firm)
-                    <option value="{{ $firm->id }}">
-                        {{ $firm->name }} (ID: {{ $firm->id }})
-                    </option>
-                @endforeach
-            </select>
-
-            <input type="password" name="password" required placeholder="Hasło admina"
-                   style="width:100%;padding:12px;margin-bottom:16px;">
-
-            <button type="submit" style="width:100%;padding:14px;border-radius:14px;background:#22c55e;color:#fff;font-weight:700;">
-                ⬇️ Pobierz CSV (UODO)
-            </button>
-        </form>
+        <p style="color:#666">Ten moduł już działa ✔</p>
     </div>
 
 </div>

@@ -27,12 +27,12 @@ class PublicClientController extends Controller
 
     /**
      * ============================
-     * POST /join/{firm}
+     * POST /join/{slug}
      * ============================
      */
-    public function registerByFirm(Request $request, int $firm)
+    public function registerByFirm(Request $request, string $slug)
     {
-        $firm = Firm::findOrFail($firm);
+        $firm = Firm::where('slug', $slug)->firstOrFail();
 
         $validated = $request->validate([
             'phone'                 => 'required|min:6',
@@ -42,22 +42,18 @@ class PublicClientController extends Controller
             'sms_marketing_consent' => 'nullable|in:1',
         ]);
 
-        // 🔒 1 numer = 1 karta w tej firmie
-        if (
-            Client::where('phone', $validated['phone'])
-                ->where('firm_id', $firm->id)
-                ->exists()
-        ) {
+        // 🔴 BLOKADA DUPLIKATU TELEFONU (GLOBALNIE)
+        if (Client::where('phone', $validated['phone'])->exists()) {
             return back()
                 ->withErrors([
-                    'phone' => 'Ten numer telefonu ma już kartę w tej firmie.',
+                    'phone' => 'Ten numer telefonu jest już zarejestrowany w systemie.',
                 ])
                 ->withInput();
         }
 
         $now = Carbon::now();
 
-        // ✅ KLIENT (RODO KOMPLET)
+        // 👤 KLIENT
         $client = Client::create([
             'firm_id'                  => $firm->id,
             'program_id'               => $firm->program_id,
@@ -72,7 +68,7 @@ class PublicClientController extends Controller
             'terms_accepted_at'        => $now,
         ]);
 
-        // ✅ KARTA
+        // 💳 KARTA LOJALNOŚCIOWA
         LoyaltyCard::create([
             'client_id'  => $client->id,
             'firm_id'    => $firm->id,

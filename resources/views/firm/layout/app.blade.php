@@ -9,12 +9,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        /* ===== GLOBAL ===== */
         body {
             background: #f5f7fb;
         }
 
-        /* ===== SAAS HELPERS (NIE PSUJĄ TAILWIND) ===== */
         .page-header h1 {
             font-size: 26px;
             font-weight: 700;
@@ -129,39 +127,44 @@
         <div class="text-lg font-semibold mb-6">🏢 Panel Firmy</div>
 
         <nav class="space-y-1 text-sm">
-            <a href="/company/dashboard" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+
+            <a href="{{ route('company.dashboard') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
                 📊 <span>Dashboard</span>
             </a>
 
-            <a href="/company/vouchers" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                🎁 <span>Vouchery</span>
-            </a>
-
-            <a href="/company/loyalty-cards" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+            <a href="{{ route('company.loyalty.cards') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
                 ⭐ <span>Karty stałego klienta</span>
             </a>
 
-            <a href="/company/points" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+            <a href="{{ route('company.points.form') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
                 💎 <span>Dodaj punkty</span>
             </a>
 
-            <a href="/company/transactions" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+            <a href="{{ route('company.transactions') }}"
+               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
                 📜 <span>Historia transakcji</span>
             </a>
 
-            <a href="/company/statistics" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                📈 <span>Statystyki</span>
+            {{-- 🔐 ZMIANA HASŁA --}}
+<a href="/company/change-password" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
+    🔐 <span>Zmień hasło</span>
+</a>                🔐 <span>Zmień hasło</span>
             </a>
 
-            <a href="/company/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                ⚙️ <span>Ustawienia</span>
-            </a>
-
+            {{-- WYLOGOWANIE --}}
             <div class="pt-3 mt-3 border-t border-slate-200">
-                <a href="/company/logout" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600">
-                    🚪 <span>Wyloguj</span>
-                </a>
+                <form method="POST" action="{{ route('company.logout') }}">
+                    @csrf
+                    <button type="submit"
+                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600">
+                        🚪 <span>Wyloguj</span>
+                    </button>
+                </form>
             </div>
+
         </nav>
     </aside>
 
