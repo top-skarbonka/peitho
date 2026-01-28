@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Route;
 */
 use App\Http\Controllers\FirmController;
 use App\Http\Controllers\Auth\FirmAuthController;
-use App\Http\Controllers\Auth\FirmPasswordController;
 
 use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\ClientController;
@@ -17,7 +16,6 @@ use App\Http\Controllers\PublicClientController;
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminFirmController;
-use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ConsentExportController;
 
 /*
@@ -31,7 +29,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| ALIAS /login
+| ALIAS /login (Laravel default)
 |--------------------------------------------------------------------------
 */
 Route::get('/login', function () {
@@ -54,25 +52,11 @@ Route::post('/company/logout', [FirmAuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – ZMIANA HASŁA (DOBROWOLNA)
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth:company')->group(function () {
-
-    Route::get('/company/change-password', [FirmPasswordController::class, 'show'])
-        ->name('company.password.form');
-
-    Route::post('/company/change-password', [FirmPasswordController::class, 'update'])
-        ->name('company.password.update');
-});
-
-/*
-|--------------------------------------------------------------------------
 | PANEL FIRMY – ZABEZPIECZONY
 |--------------------------------------------------------------------------
 */
 Route::prefix('company')
-    ->middleware(['auth:company'])
+    ->middleware('auth:company')
     ->group(function () {
 
         Route::get('/dashboard', [FirmController::class, 'dashboard'])
@@ -105,13 +89,24 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – REJESTRACJA KLIENTA (PO SLUGU)
+| PUBLIC – REJESTRACJA KLIENTA (TOKEN)
 |--------------------------------------------------------------------------
 */
-Route::get('/join/{slug}', [PublicClientController::class, 'showRegisterFormByFirm'])
+Route::get('/register/card/{token}', [PublicClientController::class, 'showRegisterForm'])
+    ->name('client.register.form');
+
+Route::post('/register/card/{token}', [PublicClientController::class, 'register'])
+    ->name('client.register.submit');
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC – STAŁY LINK (QR)
+|--------------------------------------------------------------------------
+*/
+Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormByFirm'])
     ->name('client.register.by_firm');
 
-Route::post('/join/{slug}', [PublicClientController::class, 'registerByFirm'])
+Route::post('/join/{firm_id}', [PublicClientController::class, 'registerByFirm'])
     ->name('client.register.by_firm.submit');
 
 /*
@@ -137,11 +132,12 @@ Route::middleware('auth:client')->group(function () {
 
     Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
         ->name('client.loyalty.card');
+
 });
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN
+| ADMIN – LOGOWANIE
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
@@ -154,11 +150,16 @@ Route::prefix('admin')->group(function () {
 
     Route::post('/logout', [AdminAuthController::class, 'logout'])
         ->name('admin.logout');
+});
 
-    Route::middleware('admin.simple')->group(function () {
-
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])
-            ->name('admin.dashboard');
+/*
+|--------------------------------------------------------------------------
+| ADMIN – PANEL (ZABEZPIECZONY)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')
+    ->middleware(['admin.simple'])
+    ->group(function () {
 
         Route::get('/firms', [AdminFirmController::class, 'index'])
             ->name('admin.firms.index');
@@ -172,12 +173,17 @@ Route::prefix('admin')->group(function () {
         Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])
             ->name('admin.firms.edit');
 
-        Route::post('/firms/{firm}/update', [AdminFirmController::class, 'update'])
+        Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 
+        /*
+        |--------------------------------------------------------------------------
+        | EKSPORT ZGÓD – UODO (CSV)
+        |--------------------------------------------------------------------------
+        */
         Route::post(
             '/consents/export/csv',
             [ConsentExportController::class, 'exportCsv']
         )->name('admin.consents.export.csv');
+
     });
-});
