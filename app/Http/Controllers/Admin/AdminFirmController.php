@@ -57,7 +57,7 @@ class AdminFirmController extends Controller
             'name'          => $request->name,
             'email'         => $request->email,
             'password'      => Hash::make($plainPassword),
-            'password_changed_at' => null, // 🔴 WYMUSZENIE ZMIANY HASŁA
+            'password_changed_at' => null,
             'city'          => $request->city,
             'address'       => $request->address,
             'postal_code'   => $request->postal_code,
@@ -66,7 +66,6 @@ class AdminFirmController extends Controller
             'card_template' => $request->card_template,
         ]);
 
-        // ✉️ Mail do firmy
         Mail::to($firm->email)->send(
             new FirmCreatedMail($firm, $plainPassword)
         );
@@ -87,10 +86,14 @@ class AdminFirmController extends Controller
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
+$cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
 
         $clientsCount = LoyaltyCard::where('firm_id', $firm->id)
             ->distinct('client_id')
             ->count('client_id');
+
+        // 🔴 TO BYŁ BRAKUJĄCY ELEMENT
+        $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
 
         $from = Carbon::now()->startOfMonth();
         $to   = Carbon::now()->endOfMonth();
@@ -110,12 +113,13 @@ class AdminFirmController extends Controller
             'totalStamps',
             'monthStamps',
             'clientsCount',
+            'cardsCount',
             'stampsByDay'
         ));
     }
 
     /**
-     * 🔄 Aktualizacja (DANE + OPCJONALNIE HASŁO)
+     * 🔄 Aktualizacja danych firmy
      */
     public function update(Request $request, Firm $firm)
     {
@@ -134,7 +138,6 @@ class AdminFirmController extends Controller
             ])
         );
 
-        // 🔐 JEŚLI ADMIN USTAWI HASŁO → WYMUSZAMY ZMIANĘ
         if ($request->filled('password')) {
             $firm->password = Hash::make($request->password);
             $firm->password_changed_at = null;
