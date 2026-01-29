@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Firm;
-use App\Models\Client;
 use App\Models\LoyaltyStamp;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,52 +12,83 @@ class AdminDashboardController extends Controller
 {
     public function index()
     {
-        $from = Carbon::now()->startOfMonth();
-        $to   = Carbon::now()->endOfMonth();
+        $today = Carbon::today();
+        $from  = Carbon::now()->startOfMonth();
+        $to    = Carbon::now()->endOfMonth();
 
-        // 🔢 liczniki globalne
-        $firmsCount   = Firm::count();
-        $clientsCount = Client::count();
-        $stampsCount  = LoyaltyStamp::count();
+        /* =========================
+         * KPI
+         * ========================= */
+        $firmsTotal  = Firm::count();
+        $firmsToday  = Firm::whereDate('created_at', $today)->count();
+        $stampsTotal = LoyaltyStamp::count();
+        $stampsToday = LoyaltyStamp::whereDate('created_at', $today)->count();
 
-        $firmsThisMonth   = Firm::whereBetween('created_at', [$from, $to])->count();
-        $clientsThisMonth = Client::whereBetween('created_at', [$from, $to])->count();
+        /* =========================
+         * STATUS FIRMY
+         * ========================= */
+        $activeCount = Firm::where('last_activity_at', '>=', now()->subDays(7))->count();
 
-        // 📊 wykres
+        $contactCount = Firm::whereBetween(
+            'last_activity_at',
+            [now()->subDays(14), now()->subDays(8)]
+        )->count();
+
+        $dangerCount = Firm::where('last_activity_at', '<=', now()->subDays(15))->count();
+
+        /* =========================
+         * FIRMY DO REAKCJI
+         * ========================= */
+        $needActionFirms = Firm::where('last_activity_at', '<=', now()->subDays(8))
+            ->orderBy('last_activity_at')
+            ->limit(10)
+            ->get();
+
+        /* =========================
+         * WYKRES
+         * ========================= */
         $stampsByDay = LoyaltyStamp::select(
                 DB::raw('DATE(created_at) as day'),
                 DB::raw('COUNT(*) as total')
             )
             ->whereBetween('created_at', [$from, $to])
-            ->groupBy(DB::raw('DATE(created_at)'))
+            ->groupBy('day')
             ->orderBy('day')
             ->get();
 
-        // 🏆 TOP FIRMY (POPRAWNE GROUP BY)
+        /* =========================
+         * TOP FIRMY
+         * ========================= */
         $topFirms = Firm::select(
                 'firms.id',
                 'firms.name',
                 'firms.slug',
-                DB::raw('COUNT(DISTINCT loyalty_stamps.id) as total_stamps'),
-                DB::raw('SUM(CASE WHEN loyalty_stamps.created_at BETWEEN "'.$from.'" AND "'.$to.'" THEN 1 ELSE 0 END) as month_stamps'),
-                DB::raw('COUNT(DISTINCT clients.id) as total_clients'),
-                DB::raw('SUM(CASE WHEN clients.created_at BETWEEN "'.$from.'" AND "'.$to.'" THEN 1 ELSE 0 END) as month_clients')
+                DB::raw('COUNT(loyalty_stamps.id) as total_stamps')
             )
-            ->leftJoin('loyalty_stamps', 'loyalty_stamps.firm_id', '=', 'firms.id')
-            ->leftJoin('clients', 'clients.firm_id', '=', 'firms.id')
+            ->leftJoin('loyalty_cards', 'loyalty_cards.firm_id', '=', 'firms.id')
+            ->leftJoin('loyalty_stamps', 'loyalty_stamps.loyalty_card_id', '=', 'loyalty_cards.id')
             ->groupBy('firms.id', 'firms.name', 'firms.slug')
             ->orderByDesc('total_stamps')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
+        /* =========================
+         * VIEW
+         * ========================= */
         return view('admin.dashboard', compact(
-            'firmsCount',
-            'clientsCount',
-            'stampsCount',
-            'firmsThisMonth',
-            'clientsThisMonth',
+            'firmsTotal',
+            'firmsToday',
+            'stampsTotal',
+            'stampsToday',
+            'activeCount',
+            'contactCount',
+            'dangerCount',
+            'needActionFirms',
             'stampsByDay',
-            'topFirms'
+            'topFirms',
+            'today',
+            'from',
+            'to'
         ));
     }
 }

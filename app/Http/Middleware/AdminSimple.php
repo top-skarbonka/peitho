@@ -3,13 +3,13 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class AdminSimple
 {
-    public function handle(Request $request, Closure $next)
+    public function handle($request, Closure $next)
     {
-        if (!$request->session()->get('admin_ok')) {
+        if (!Session::get('admin_logged')) {
             return redirect()->route('admin.login');
         }
 

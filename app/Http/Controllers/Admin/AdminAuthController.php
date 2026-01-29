@@ -19,31 +19,25 @@ class AdminAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $adminPassword = env('ADMIN_PASSWORD');
-
-        if (!$adminPassword) {
-            return back()->withErrors([
-                'password' => 'Brak ADMIN_PASSWORD w .env'
-            ]);
-        }
-
-        if ($request->password !== $adminPassword) {
+        if ($request->password !== env('ADMIN_PASSWORD')) {
             return back()->withErrors([
                 'password' => 'Nieprawidłowe hasło administratora'
             ]);
         }
 
-        // ✅ Logujemy admina w sesji
-        Session::put('admin_logged_in', true);
+        // 🔐 ZAPIS SESJI ADMINA
+        Session::put('admin_logged', true);
 
-        // ✅ KLUCZOWA LINIA — redirect do ISTNIEJĄCEJ trasy
-        return redirect()->route('admin.firms.index');
+        return redirect()->route('admin.dashboard');
     }
 
     public function logout()
     {
-        Session::forget('admin_logged_in');
+        Session::forget('admin_logged');
+        Session::invalidate();
+        Session::regenerateToken();
 
         return redirect()->route('admin.login');
     }
 }
+

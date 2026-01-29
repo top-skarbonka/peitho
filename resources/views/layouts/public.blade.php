@@ -5,8 +5,7 @@
     <title>Peitho</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{-- Font --}}
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -28,14 +27,14 @@
         }
 
         /* =========================
-           🧠 ADMIN BAR – SaaS STYLE
+           ADMIN BAR – STABILNY
         ========================== */
         .admin-bar {
             position: sticky;
             top: 0;
             z-index: 999;
             backdrop-filter: blur(14px);
-            background: rgba(17, 24, 39, 0.85);
+            background: rgba(17, 24, 39, 0.9);
             border-bottom: 1px solid rgba(255,255,255,.08);
             padding: 14px 24px;
         }
@@ -94,7 +93,6 @@
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all .15s ease;
         }
 
         .admin-logout button:hover {
@@ -104,42 +102,41 @@
 </head>
 <body>
 
-{{-- 🔐 ADMIN PANEL --}}
-@if(session('admin_ok'))
-    <div class="admin-bar">
-        <div class="admin-bar-inner">
+{{-- ADMIN BAR
+     NIE MA IFÓW
+     BEZ SESJI
+     CHRONI GO middleware admin.simple
+--}}
+<div class="admin-bar">
+    <div class="admin-bar-inner">
 
-            <div class="admin-left">
-                <div class="admin-logo">🛠 Peitho Admin</div>
+        <div class="admin-left">
+            <div class="admin-logo">🛠 Peitho Admin</div>
 
-                {{-- 📊 DASHBOARD --}}
-                <a href="{{ route('admin.dashboard') }}" class="admin-link">
-                    📊 Dashboard
-                </a>
+            <a href="{{ route('admin.dashboard') }}" class="admin-link">
+                📊 Dashboard
+            </a>
 
-                {{-- 🏢 FIRMY --}}
-                <a href="{{ route('admin.firms.index') }}" class="admin-link">
-                    🏢 Firmy
-                </a>
+            <a href="{{ route('admin.firms.index') }}" class="admin-link">
+                🏢 Firmy
+            </a>
 
-                {{-- ➕ NOWA FIRMA --}}
-                <a href="{{ route('admin.firms.create') }}" class="admin-link primary">
-                    ➕ Nowa firma
-                </a>
-            </div>
-
-            <div class="admin-right admin-logout">
-                <form method="POST" action="{{ route('admin.logout') }}">
-                    @csrf
-                    <button type="submit">Wyloguj</button>
-                </form>
-            </div>
-
+            <a href="{{ route('admin.firms.create') }}" class="admin-link primary">
+                ➕ Nowa firma
+            </a>
         </div>
-    </div>
-@endif
 
-{{-- TREŚĆ STRONY --}}
+        <div class="admin-right admin-logout">
+            <form method="POST" action="{{ route('admin.logout') }}">
+                @csrf
+                <button type="submit">Wyloguj</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{{-- TREŚĆ --}}
 @yield('content')
 
 </body>
