@@ -61,7 +61,11 @@
           action="{{ route('admin.firms.update', $firm) }}"
           enctype="multipart/form-data">
         @csrf
-
+<form method="POST"
+      action="{{ route('admin.firms.update', $firm) }}"
+      enctype="multipart/form-data">
+    @csrf
+    @method('PUT')
         {{-- PODSTAWOWE DANE --}}
         <h4 style="margin-bottom:10px;">🏢 Dane firmy</h4>
 

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 
 class AdminAuthController extends Controller
 {
@@ -16,22 +16,34 @@ class AdminAuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'password' => 'required'
+            'password' => ['required', 'string'],
         ]);
 
-        if ($request->password !== config('app.admin_password')) {
+        $adminPassword = env('ADMIN_PASSWORD');
+
+        if (!$adminPassword) {
             return back()->withErrors([
-                'password' => 'Nieprawidłowe hasło admina'
+                'password' => 'Brak ADMIN_PASSWORD w .env'
             ]);
         }
 
-        session(['admin_ok' => true]);
+        if ($request->password !== $adminPassword) {
+            return back()->withErrors([
+                'password' => 'Nieprawidłowe hasło administratora'
+            ]);
+        }
 
-return redirect()->route('admin.dashboard');    }
+        // ✅ Logujemy admina w sesji
+        Session::put('admin_logged_in', true);
+
+        // ✅ KLUCZOWA LINIA — redirect do ISTNIEJĄCEJ trasy
+        return redirect()->route('admin.firms.index');
+    }
 
     public function logout()
     {
-        session()->forget('admin_ok');
+        Session::forget('admin_logged_in');
+
         return redirect()->route('admin.login');
     }
 }

@@ -129,7 +129,6 @@ Route::post('/client/logout', [ClientAuthController::class, 'logout'])
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:client')->group(function () {
-
     Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
         ->name('client.loyalty.card');
 
@@ -137,11 +136,16 @@ Route::middleware('auth:client')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+<<<<<<< HEAD
 | ADMIN – LOGOWANIE
+=======
+| ADMIN (prosty, stabilny, bez kombinowania)
+>>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
 
+    // Logowanie admina
     Route::get('/login', [AdminAuthController::class, 'show'])
         ->name('admin.login');
 
@@ -152,6 +156,7 @@ Route::prefix('admin')->group(function () {
         ->name('admin.logout');
 });
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | ADMIN – PANEL (ZABEZPIECZONY)
@@ -160,7 +165,17 @@ Route::prefix('admin')->group(function () {
 Route::prefix('admin')
     ->middleware(['admin.simple'])
     ->group(function () {
+=======
+    // Zabezpieczone adminem (Twoje admin.simple)
+    Route::middleware('admin.simple')->group(function () {
 
+        // Dashboard (żeby nie było 500 na admin.dashboard)
+        Route::get('/', function () {
+            return redirect()->route('admin.firms.index');
+        })->name('admin.dashboard');
+>>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
+
+        // Firmy: lista + create + store + edit + update
         Route::get('/firms', [AdminFirmController::class, 'index'])
             ->name('admin.firms.index');
 
@@ -176,6 +191,7 @@ Route::prefix('admin')
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 
+<<<<<<< HEAD
         /*
         |--------------------------------------------------------------------------
         | EKSPORT ZGÓD – UODO (CSV)
@@ -186,4 +202,9 @@ Route::prefix('admin')
             [ConsentExportController::class, 'exportCsv']
         )->name('admin.consents.export.csv');
 
+=======
+        // Eksport zgód (POST)
+        Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
+            ->name('admin.consents.export.csv');
+>>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
     });
