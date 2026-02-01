@@ -16,6 +16,7 @@ use App\Http\Controllers\PublicClientController;
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminFirmController;
+use App\Http\Controllers\Admin\AdminFirmActivityController;
 use App\Http\Controllers\Admin\ConsentExportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 
@@ -126,7 +127,7 @@ Route::middleware(['web', 'auth:client'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN – LOGOWANIE (WEB + SESJA + CSRF)
+| ADMIN – LOGOWANIE
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
@@ -169,6 +170,10 @@ Route::prefix('admin')
 
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
+
+        // ✅ AKTYWNOŚĆ FIRMY – TU MUSI BYĆ
+        Route::get('/firms/{firm}/activity', [AdminFirmActivityController::class, 'show'])
+            ->name('admin.firms.activity');
 
         Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');

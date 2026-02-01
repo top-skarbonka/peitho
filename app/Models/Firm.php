@@ -32,6 +32,9 @@ class Firm extends Authenticatable
 
         // 🖼 logo
         'logo_path',
+
+        // 📊 aktywność
+        'last_activity_at',
     ];
 
     protected $hidden = [
@@ -39,9 +42,9 @@ class Firm extends Authenticatable
     ];
 
     /**
-     * Routing po slugu
+     * Route model binding po slugu
      */
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
@@ -56,5 +59,13 @@ class Firm extends Authenticatable
         }
 
         return asset('storage/' . $this->logo_path);
+    }
+
+    /**
+     * Karty lojalnościowe firmy
+     */
+    public function loyaltyCards()
+    {
+        return $this->hasMany(\App\Models\LoyaltyCard::class);
     }
 }
