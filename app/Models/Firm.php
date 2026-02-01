@@ -29,22 +29,32 @@ class Firm extends Authenticatable
         'facebook_url',
         'instagram_url',
         'google_url',
+        'google_review_url',
 
         // 🖼 logo
         'logo_path',
 
-        // 📊 aktywność
+        // aktywność
         'last_activity_at',
+        'password_changed_at',
     ];
 
     protected $hidden = [
         'password',
     ];
 
+    // ✅ KLUCZ: dzięki temu last_activity_at będzie Carbonem, a nie stringiem
+    protected $casts = [
+        'last_activity_at'     => 'datetime',
+        'password_changed_at'  => 'datetime',
+        'created_at'           => 'datetime',
+        'updated_at'           => 'datetime',
+    ];
+
     /**
-     * Route model binding po slugu
+     * Routing po slugu
      */
-    public function getRouteKeyName(): string
+    public function getRouteKeyName()
     {
         return 'slug';
     }
@@ -62,7 +72,8 @@ class Firm extends Authenticatable
     }
 
     /**
-     * Karty lojalnościowe firmy
+     * (Opcjonalnie) relacja – może się przydać w przyszłości,
+     * ale nasz Activity i tak liczy po stamps.firm_id
      */
     public function loyaltyCards()
     {

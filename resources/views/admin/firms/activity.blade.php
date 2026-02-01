@@ -1,103 +1,99 @@
 @extends('layouts.public')
 
 @section('content')
-@php
-    use Carbon\Carbon;
+<div style="max-width:1000px;margin:60px auto;padding:40px;background:#fff;border-radius:20px">
 
-    $lastActivity = $firm->last_activity_at
-        ? Carbon::parse($firm->last_activity_at)
-        : null;
+    {{-- ================= HEADER ================= --}}
+    <h1 style="font-size:28px;margin-bottom:10px">🕒 Aktywność firmy</h1>
 
-    $totalStamps = $stamps->sum('actions');
+    <p><strong>Nazwa:</strong> {{ $firm->name }}</p>
+    <p><strong>Slug:</strong> {{ $firm->slug }}</p>
 
-    $isActive = $lastActivity && $lastActivity->gt(now()->subDays(7));
-@endphp
+    <hr style="margin:25px 0">
 
-<div style="
-    max-width:900px;
-    margin:60px auto;
-    padding:40px;
-    background:#fff;
-    border-radius:18px;
-    box-shadow:0 20px 60px rgba(0,0,0,.12);
-">
-
-    <h1 style="margin-bottom:10px;">🕒 Aktywność firmy</h1>
-
-    <p style="color:#555;margin-top:0;">
-        <strong>Nazwa:</strong> {{ $firm->name }} <br>
-        <strong>Slug:</strong> {{ $firm->slug }}
-    </p>
-
-    {{-- STATUS --}}
-    <div style="
-        margin-top:24px;
-        padding:20px;
-        border-radius:14px;
-        background:#f8fafc;
-        border:1px solid #e5e7eb;
-    ">
-        <h3 style="margin-top:0;">📊 Status aktywności</h3>
+    {{-- ================= STATUS ================= --}}
+    <div style="background:#f8fafc;padding:20px;border-radius:14px;margin-bottom:20px">
+        <h3>📊 Status aktywności</h3>
 
         <p>
             <strong>Status:</strong>
-            @if($isActive)
-                <span style="color:#16a34a;font-weight:800;">AKTYWNA</span>
-            @else
-                <span style="color:#dc2626;font-weight:800;">NIEAKTYWNA</span>
-            @endif
+            <span style="color:green;font-weight:700">AKTYWNA</span>
         </p>
 
         <p>
             <strong>Ostatnia aktywność:</strong>
-            @if($lastActivity)
-                {{ $lastActivity->format('d.m.Y H:i') }}
-                <span style="color:#666;">
-                    ({{ $lastActivity->diffForHumans() }})
-                </span>
-            @else
-                —
-            @endif
+            {{ optional($firm->last_activity_at)->format('d.m.Y H:i') ?? 'brak' }}
         </p>
     </div>
 
-    {{-- NAKLEJKI --}}
-    <div style="
-        margin-top:24px;
-        padding:20px;
-        border-radius:14px;
-        background:#f8fafc;
-        border:1px solid #e5e7eb;
-    ">
-        <h3 style="margin-top:0;">🏷️ Naklejki (ostatnie 30 dni)</h3>
+    {{-- ================= NAKLEJKI 30 DNI ================= --}}
+    <div style="background:#f8fafc;padding:20px;border-radius:14px;margin-bottom:20px">
+        <h3>🏷️ Naklejki (ostatnie 30 dni)</h3>
 
-        <p>
-            <strong>Łącznie dodano:</strong>
-            <span style="font-weight:800;font-size:18px;">
-                {{ $totalStamps }}
-            </span>
-        </p>
+        @php
+            $total30 = isset($stamps) ? $stamps->sum('actions') : 0;
+        @endphp
 
-        @if($totalStamps === 0)
-            <p style="color:#666;">Brak aktywności w ostatnich 30 dniach.</p>
+        <p><strong>Łącznie:</strong> {{ $total30 }}</p>
+
+        @if($total30 === 0)
+            <p style="color:#666">Brak aktywności w ostatnich 30 dniach.</p>
         @endif
     </div>
 
-    {{-- POWRÓT --}}
-    <div style="margin-top:30px;">
-        <a href="{{ route('admin.firms.index') }}"
-           style="
-                display:inline-block;
-                padding:12px 18px;
-                border-radius:14px;
-                background:#111827;
-                color:#fff;
-                font-weight:800;
-                text-decoration:none;
-           ">
-            ← Wróć do listy firm
-        </a>
+    {{-- ================= WYKRES ================= --}}
+    @php
+        $labels = $chartLabels ?? [];
+        $values = $chartValues ?? [];
+    @endphp
+
+    <div style="background:#fff;padding:20px;border-radius:14px;margin-top:30px">
+        <h3>📈 Aktywność dzienna (ostatnie 30 dni)</h3>
+
+        @if(count($labels) === 0)
+            <p style="color:#666;margin-top:10px">Brak danych do wyświetlenia wykresu.</p>
+        @else
+            <canvas id="stampsChart" height="120"></canvas>
+        @endif
     </div>
 
+    <a href="{{ route('admin.firms.index') }}"
+       style="
+            display:inline-block;
+            margin-top:30px;
+            padding:12px 20px;
+            border-radius:12px;
+            background:#111827;
+            color:#fff;
+            font-weight:700;
+            text-decoration:none;
+       ">
+        ← Wróć do listy firm
+    </a>
 </div>
+
+{{-- ================= CHART.JS ================= --}}
+@if(count($labels) > 0)
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById('stampsChart'), {
+    type: 'bar',
+    data: {
+        labels: {!! json_encode($labels) !!},
+        datasets: [{
+            data: {!! json_encode($values) !!},
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+    }
+});
+</script>
+@endif
 @endsection

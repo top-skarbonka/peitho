@@ -2,23 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyStamp extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'loyalty_card_id',
-        'firm_id',
-        'description'
+        'client_id',
+        'created_at',
     ];
 
-    public function card()
+    public function loyaltyCard()
     {
-        return $this->belongsTo(LoyaltyCard::class, 'loyalty_card_id');
-    }
-
-    public function firm()
-    {
-        return $this->belongsTo(Firm::class);
+        return $this->belongsTo(LoyaltyCard::class);
     }
 }
