@@ -21,7 +21,7 @@ class ClientController extends Controller
         }
 
         // 🎫 KARTA + RELACJE
-        $card = LoyaltyCard::with(['firm', 'stamps'])
+$card = LoyaltyCard::with('firm')
             ->where('client_id', $client->id)
             ->latest()
             ->first();
@@ -37,16 +37,20 @@ class ClientController extends Controller
         }
 
         // 🔵 AKTUALNY STAN
-        $current = min($card->stamps->count(), $maxStamps);
+$current = min((int) $card->current_stamps, $maxStamps);
 
         // 📊 STATYSTYKI
         $stats = [
             'stamps'       => $current,
             'required'     => $maxStamps,
             'reward_ready' => $current >= $maxStamps,
-            'last_visit'   => optional($card->stamps->last())->created_at?->format('d.m.Y'),
-        ];
-
+'last_visit' => optional(
+    $card->stamps()
+        ->where('firm_id', $card->firm_id)
+        ->latest()
+        ->first()
+)->created_at?->format('d.m.Y'),
+];
         // 🔢 KOD
         $displayCode = str_pad((string) $card->id, 8, '0', STR_PAD_LEFT);
 
