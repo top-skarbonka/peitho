@@ -11,24 +11,28 @@ class AdminFirmActivityController extends Controller
 {
     public function show(Firm $firm)
     {
-        $from = Carbon::now()->subDays(29)->startOfDay();
-        $to   = Carbon::now()->endOfDay();
+        $now = Carbon::now();
 
-        $cardIds = $firm->loyaltyCards()->pluck('id');
+        // 🏷️ wszystkie naklejki tej firmy
+        $stampsQuery = LoyaltyStamp::where('firm_id', $firm->id);
 
-        $stamps = LoyaltyStamp::whereIn('loyalty_card_id', $cardIds)
-            ->whereBetween('created_at', [$from, $to])
-            ->selectRaw('DATE(created_at) as day, COUNT(*) as actions')
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
+        // 🕒 ostatnia aktywność
+        $lastStamp = (clone $stampsQuery)->latest()->first();
+        $lastActivityAt = $lastStamp?->created_at;
+
+        // 🟢 aktywna jeśli coś było w 7 dni
+        $isActive = $lastActivityAt && $lastActivityAt->gt($now->copy()->subDays(7));
+
+        // 📊 suma naklejek z 30 dni
+        $stamps30 = (clone $stampsQuery)
+            ->where('created_at', '>=', $now->copy()->subDays(30))
+            ->count();
 
         return view('admin.firms.activity', [
-            'firm'         => $firm,
-            'stamps'       => $stamps,
-            'from'         => $from,
-            'to'           => $to,
-            'lastActivity' => $firm->last_activity_at,
+            'firm'           => $firm,
+            'isActive'       => $isActive,
+            'lastActivityAt' => $lastActivityAt,
+            'stamps30'       => $stamps30,
         ]);
     }
 }

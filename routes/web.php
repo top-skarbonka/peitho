@@ -100,12 +100,11 @@ Route::get('/register/card/{token}', [PublicClientController::class, 'showRegist
 Route::post('/register/card/{token}', [PublicClientController::class, 'register'])
     ->name('client.register.submit');
 
-Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormByFirm'])
+Route::get('/join/{slug}', [PublicClientController::class, 'showRegisterFormByFirm'])
     ->name('client.register.by_firm');
 
-Route::post('/join/{firm_id}', [PublicClientController::class, 'registerByFirm'])
+Route::post('/join/{slug}', [PublicClientController::class, 'registerByFirm'])
     ->name('client.register.by_firm.submit');
-
 /*
 |--------------------------------------------------------------------------
 | PANEL KLIENTA

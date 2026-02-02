@@ -144,6 +144,8 @@
 
                     {{-- ACTIONS --}}
                     <td style="padding:12px;text-align:right;white-space:nowrap;">
+
+                        {{-- EDYCJA --}}
                         <a href="{{ route('admin.firms.edit', $firm) }}"
                            style="
                                 display:inline-flex;
@@ -161,10 +163,9 @@
                             ✏️ Edytuj
                         </a>
 
-                        {{-- ⛔ Tymczasowo wyłączone (żeby nie sypało 500) --}}
-                        <span
-                            title="Aktywność chwilowo wyłączona – naprawiamy moduł"
-                            style="
+                        {{-- ✅ AKTYWNOŚĆ – POPRAWNA, PO SLUGU --}}
+                        <a href="{{ route('admin.firms.activity', $firm) }}"
+                           style="
                                 display:inline-flex;
                                 align-items:center;
                                 gap:6px;
@@ -172,13 +173,13 @@
                                 border-radius:12px;
                                 font-weight:800;
                                 font-size:13px;
-                                color:#9ca3af;
-                                background:#f3f4f6;
-                                border:1px dashed #e5e7eb;
-                                cursor:not-allowed;
+                                color:#065f46;
+                                background:#ecfdf5;
+                                border:1px solid #a7f3d0;
                            ">
-                            🕒 Aktywność (wkrótce)
-                        </span>
+                            🕒 Aktywność
+                        </a>
+
                     </td>
                 </tr>
             @endforeach

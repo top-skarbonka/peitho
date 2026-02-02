@@ -4,6 +4,9 @@
 @php
     use Carbon\Carbon;
 
+    // 🛡️ zabezpieczenie
+    $stamps = $stamps ?? collect();
+
     $lastActivity = $firm->last_activity_at
         ? Carbon::parse($firm->last_activity_at)
         : null;
@@ -12,7 +15,6 @@
 
     $isActive = $lastActivity && $lastActivity->gt(now()->subDays(7));
 @endphp
-
 <div style="
     max-width:900px;
     margin:60px auto;

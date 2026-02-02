@@ -42,7 +42,7 @@ class Firm extends Authenticatable
     ];
 
     /**
-     * Route model binding po slugu
+     * ✅ Route model binding po SLUGU
      */
     public function getRouteKeyName(): string
     {
@@ -50,7 +50,7 @@ class Firm extends Authenticatable
     }
 
     /**
-     * Pełny URL logo (jeśli istnieje)
+     * 🖼 Pełny URL logo
      */
     public function getLogoUrlAttribute(): ?string
     {
@@ -62,7 +62,7 @@ class Firm extends Authenticatable
     }
 
     /**
-     * Karty lojalnościowe firmy
+     * 🎫 Karty lojalnościowe firmy
      */
     public function loyaltyCards()
     {
