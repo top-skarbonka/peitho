@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
@@ -10,6 +9,7 @@ use App\Models\RegistrationToken;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class FirmController extends Controller
@@ -19,7 +19,6 @@ class FirmController extends Controller
     | POMOCNICZE
     |--------------------------------------------------------------------------
     */
-
     private function firm(): Firm
     {
         $firm = Auth::guard('company')->user();
@@ -36,7 +35,6 @@ class FirmController extends Controller
     | DASHBOARD
     |--------------------------------------------------------------------------
     */
-
     public function dashboard()
     {
         $firm = $this->firm();
@@ -46,54 +44,25 @@ class FirmController extends Controller
             ->count('client_id');
 
         $totalTransactions = Transaction::where('firm_id', $firm->id)->count();
-
         $totalPoints = LoyaltyStamp::where('firm_id', $firm->id)->count();
 
         $avgPoints = $totalTransactions > 0
             ? round($totalPoints / $totalTransactions, 2)
             : 0;
 
-        $dailyLabels = [];
-        $dailyValues = [];
-
-        for ($i = 6; $i >= 0; $i--) {
-            $day = now()->subDays($i);
-            $dailyLabels[] = $day->format('d.m');
-            $dailyValues[] = LoyaltyStamp::where('firm_id', $firm->id)
-                ->whereDate('created_at', $day)
-                ->count();
-        }
-
-        $monthlyLabels = [];
-        $monthlyValues = [];
-
-        for ($i = 11; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthlyLabels[] = $month->format('m.Y');
-            $monthlyValues[] = LoyaltyStamp::where('firm_id', $firm->id)
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->count();
-        }
-
-        return view('firm.dashboard', [
-            'totalClients'      => $totalClients,
-            'totalTransactions' => $totalTransactions,
-            'totalPoints'       => $totalPoints,
-            'avgPoints'         => $avgPoints,
-            'chartLabels'       => $dailyLabels,
-            'chartValues'       => $dailyValues,
-            'monthlyLabels'     => $monthlyLabels,
-            'monthlyValues'     => $monthlyValues,
-        ]);
+        return view('firm.dashboard', compact(
+            'totalClients',
+            'totalTransactions',
+            'totalPoints',
+            'avgPoints'
+        ));
     }
 
     /*
     |--------------------------------------------------------------------------
-    | LISTA KART
+    | KARTY
     |--------------------------------------------------------------------------
     */
-
     public function loyaltyCards()
     {
         $firm = $this->firm();
@@ -103,9 +72,7 @@ class FirmController extends Controller
             ->latest()
             ->get();
 
-        return view('firm.loyalty-cards.index', [
-            'cards' => $cards,
-        ]);
+        return view('firm.loyalty-cards.index', compact('cards'));
     }
 
     /*
@@ -113,7 +80,6 @@ class FirmController extends Controller
     | LINK REJESTRACYJNY
     |--------------------------------------------------------------------------
     */
-
     public function generateRegistrationLink()
     {
         $firm = $this->firm();
@@ -126,86 +92,17 @@ class FirmController extends Controller
             'expires_at' => now()->addDays(30),
         ]);
 
-        return redirect()
-            ->route('company.loyalty.cards')
-            ->with('registration_link', url('/register/card/' . $token->token));
+        return back()->with(
+            'registration_link',
+            url('/register/card/' . $token->token)
+        );
     }
 
     /*
     |--------------------------------------------------------------------------
-    | NAKLEJKI (RĘCZNIE)
+    | 📷 SKAN QR (120 SEKUND BLOKADY + LICZNIK)
     |--------------------------------------------------------------------------
     */
-
-    public function addStamp(LoyaltyCard $card)
-    {
-        $firm = $this->firm();
-
-        if ($card->firm_id !== $firm->id) {
-            abort(403);
-        }
-
-        if ($card->current_stamps >= $card->max_stamps) {
-            return back()->with('error', 'Karta jest już pełna');
-        }
-
-        $card->increment('current_stamps');
-
-        LoyaltyStamp::create([
-            'loyalty_card_id' => $card->id,
-            'firm_id'         => $firm->id,
-            'description'     => 'Naklejka',
-        ]);
-
-        if ($card->current_stamps >= $card->max_stamps) {
-            $card->update(['status' => 'completed']);
-        }
-
-        return back()->with('success', 'Dodano naklejkę');
-    }
-
-    public function resetCard(LoyaltyCard $card)
-    {
-        $firm = $this->firm();
-
-        if ($card->firm_id !== $firm->id) {
-            abort(403);
-        }
-
-        $card->update([
-            'current_stamps' => 0,
-            'status'         => 'active',
-        ]);
-
-        return back()->with('success', 'Karta zresetowana');
-    }
-
-    public function redeemCard(LoyaltyCard $card)
-    {
-        $firm = $this->firm();
-
-        if ($card->firm_id !== $firm->id) {
-            abort(403);
-        }
-
-        if ($card->status !== 'completed') {
-            return back()->with('error', 'Karta nie jest pełna');
-        }
-
-        $card->update([
-            'current_stamps' => 0,
-            'status'         => 'active',
-        ]);
-
-        return back()->with('success', 'Nagroda zrealizowana');
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 📷 SKANOWANIE QR → DODANIE NAKLEJKI
-    |--------------------------------------------------------------------------
-    */
-
     public function scanQr(Request $request)
     {
         $firm = $this->firm();
@@ -216,7 +113,7 @@ class FirmController extends Controller
 
         $raw = trim($request->code);
 
-        if (! str_starts_with($raw, 'CARD:')) {
+        if (!str_starts_with($raw, 'CARD:')) {
             return back()->with('error', 'Nieznany kod');
         }
 
@@ -230,6 +127,25 @@ class FirmController extends Controller
             return back()->with('error', 'Karta nie należy do tej firmy');
         }
 
+        // 🔒 BLOKADA 120 SEKUND (z timestampem)
+        $lockKey = "qr_lock:{$firm->id}:{$card->id}";
+
+        if (Cache::has($lockKey)) {
+            $expiresAt = Cache::get($lockKey);
+            $secondsLeft = max(0, $expiresAt - now()->timestamp);
+
+            return back()->with([
+                'error' => '⏳ Ta karta była niedawno zeskanowana',
+                'lock_seconds' => $secondsLeft,
+            ]);
+        }
+
+        Cache::put(
+            $lockKey,
+            now()->addSeconds(120)->timestamp,
+            120
+        );
+
         if ($card->current_stamps >= $card->max_stamps) {
             return back()->with('error', 'Karta jest już pełna');
         }
@@ -238,14 +154,14 @@ class FirmController extends Controller
 
         LoyaltyStamp::create([
             'loyalty_card_id' => $card->id,
-            'firm_id'         => $firm->id,
-            'description'     => 'Naklejka (QR)',
+            'firm_id' => $firm->id,
+            'description' => 'Naklejka (QR)',
         ]);
 
         if ($card->current_stamps >= $card->max_stamps) {
             $card->update(['status' => 'completed']);
         }
 
-        return back()->with('success', 'Naklejka dodana przez skan QR');
+        return back()->with('success', '✅ Naklejka dodana');
     }
 }

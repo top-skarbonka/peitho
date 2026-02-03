@@ -83,8 +83,10 @@ class PublicClientController extends Controller
 
     /**
      * ============================
-     * KARTA KLIENTA
+     * KARTA KLIENTA (stare / opcjonalne)
      * ============================
+     * UWAGA: Twoja trasa i tak idzie do ClientController@loyaltyCard,
+     * ale zostawiamy to bez zmian, żeby NIC nie popsuć.
      */
     public function loyaltyCard()
     {
