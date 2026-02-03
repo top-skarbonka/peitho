@@ -1,0 +1,40 @@
+803146a | Mon Feb 2 22:54:45 2026 | phone done
+f0ecfe8 | Thu Jan 29 08:49:50 2026 | vol101: stable core – admin, company, client panels working, logo upload fixed
+4623b84 | Wed Jan 28 18:48:03 2026 | hardening: separate auth guards for admin, company and client
+def97bb | Wed Jan 28 18:18:50 2026 | fix: restore VerifyCsrfToken middleware (fix 419 CSRF issues)
+67ac9ab | Wed Jan 28 17:48:22 2026 | checkpoint: stable admin, client registration, loyalty card and stamping flow
+f6f10bb | Wed Jan 28 09:03:08 2026 | Snapshot 28.01 – stable registration, CSRF/session fixes, company panel working
+27d1e04 | Tue Jan 27 11:26:56 2026 | feat: florist loyalty card with accordion sections and socials
+b6fb37b | Tue Jan 27 09:06:35 2026 | security: add security logs and audit trail for sensitive actions (RODO/UODO)
+dc1df10 | Tue Jan 20 22:08:15 2026 | vol23: cofnięcie zgód marketingowych – struktura danych (RODO)
+bfe6b1e | Tue Jan 20 21:37:32 2026 | vol23: RODO – zapis dat i godzin zgód klienta
+1ea9f19 | Tue Jan 20 21:23:35 2026 | git push origin dev qol22: formularz rejestracji klienta + komunikaty błędów – stabilne
+5e9abb7 | Tue Jan 20 18:12:12 2026 | vol21: rejestracja klienta dziala + polityka prywatnosci + zgody RODO
+b7602cd | Thu Jan 15 23:27:01 2026 | vol20: firm login UX + remember me fix + stable CSRF session
+ac9d9d1 | Thu Jan 15 22:39:58 2026 | vol19: UX info 9/10 – komunikat 'Jeszcze X do nagrody'
+2abeff9 | Thu Jan 15 21:44:05 2026 | vol18 UX: nagroda gotowa do odbioru – overlay + konfetti tylko 10/10
+907aba6 | Thu Jan 15 21:35:17 2026 | vol18: classic – gwiazdki + boxy + stabilny layout
+92f88e3 | Thu Jan 8 23:42:21 2026 | vol17: piekna karta classic + timeline + postep do nagrody + stabilny system
+60fb916 | Thu Jan 8 23:08:16 2026 | vol16linkstaly ikartagotowa
+780e9e1 | Thu Jan 8 21:26:14 2026 | VOL15: Stały link JOIN po slug firmy + poprawna rejestracja karty lojalnościowej
+a78f2e5 | Tue Jan 6 20:54:48 2026 | vol14: card template selection (gold/elegant/modern/classic) + social & google links in admin firm registration
+7fc7abe | Tue Jan 6 18:39:36 2026 | vol13finish: stable firm join link via slug, public client registration fixed
+8e50418 | Sun Jan 4 20:42:33 2026 | vol7: public registration flow, join link per firm, improved client register UI
+8c0bc88 | Sun Jan 4 20:11:35 2026 | VOL6 checkpoint: stabilna rejestracja klienta, tokeny działają, UI rejestracji gotowe
+7f56608 | Thu Jan 1 19:51:31 2026 | Program logic v4: working client registration via token, loyalty card creation, guards & flow stabilized
+e87354f | Wed Dec 31 09:36:39 2025 | vol3 public registration form creates client and loyalty card
+ef63e33 | Wed Dec 31 09:04:06 2025 | vol2link do rejstrcjiklientadziala
+90d5288 | Tue Dec 30 15:16:16 2025 | vol130122025
+c7a5be1 | Mon Dec 22 22:23:36 2025 | Admin firm registration works; login OK; TODO: isolate data per firm (multi-tenant)
+c8a851d | Mon Dec 22 18:56:10 2025 | UI: Finalny wygląd karty lojalnościowej klienta
+74dab7d | Mon Dec 22 18:56:04 2025 | UI: Finalny wygląd karty lojalnościowej klienta (QR, naklejki, social, dane firmy)
+2cade7d | Sun Dec 21 21:46:36 2025 | feat: public client registration + loyalty card creation (ETAP 1)
+012c7fd | Tue Dec 16 21:35:57 2025 | FINAL 16.12: dashboard, historia transakcji, dodawanie punktów, logowanie – stabilna wersja
+f0a63e5 | Fri Dec 12 00:06:01 2025 | UX Update: Nowoczesny widok historii transakcji + filtry + statystyki + wykres + timeline
+7da288b | Mon Dec 15 20:30:11 2025 | ETAP 2B.1: loyalty cards logic (stamps history + reset)
+5e54e6a | Mon Dec 15 20:22:29 2025 | Loyalty cards backend stable: routes, firm + client controllers
+f74c00e | Mon Dec 15 19:39:36 2025 | Karty lojalnościowe: działający panel firmy (lista kart, statystyki, postęp)
+c976efb | Fri Dec 12 00:06:01 2025 | UX Update: Nowoczesny widok historii transakcji + filtry + statystyki + wykres + timeline
+3e00410 | Thu Dec 11 21:46:39 2025 | pierwsze statystyki
+9756908 | Thu Dec 11 20:23:55 2025 | dodawanie punktów działa – 11.12
+2fa945d | Wed Dec 10 22:33:45 2025 | chore: initial project setup for Peitho (structure, migrations, dashboard, auth)

@@ -104,7 +104,27 @@
                         @endif
                     </td>
 
-                    <td style="padding:12px;text-align:right;">
+                    {{-- 🔘 AKCJE --}}
+                    <td style="padding:12px;text-align:right;white-space:nowrap;">
+
+                        {{-- 📊 AKTYWNOŚĆ --}}
+                        <a href="{{ route('admin.firms.activity', $firm->slug) }}"
+                           style="
+                                display:inline-flex;
+                                align-items:center;
+                                gap:6px;
+                                padding:10px 14px;
+                                border-radius:14px;
+                                font-weight:800;
+                                font-size:14px;
+                                color:#4338ca;
+                                background:#eef2ff;
+                                margin-right:8px;
+                           ">
+                            📊 Aktywność
+                        </a>
+
+                        {{-- ✏️ EDYTUJ --}}
                         <a href="{{ route('admin.firms.edit', $firm) }}"
                            style="
                                 display:inline-flex;

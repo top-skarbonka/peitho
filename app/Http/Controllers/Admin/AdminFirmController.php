@@ -26,7 +26,7 @@ class AdminFirmController extends Controller
     }
 
     /**
-     * ➕ Formularz dodania
+     * ➕ Formularz dodania firmy
      */
     public function create()
     {
@@ -76,7 +76,7 @@ class AdminFirmController extends Controller
     }
 
     /**
-     * ✏️ Edycja + statystyki
+     * ✏️ Edycja firmy + statystyki
      */
     public function edit(Firm $firm)
     {
@@ -86,13 +86,11 @@ class AdminFirmController extends Controller
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
-$cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
 
         $clientsCount = LoyaltyCard::where('firm_id', $firm->id)
             ->distinct('client_id')
             ->count('client_id');
 
-        // 🔴 TO BYŁ BRAKUJĄCY ELEMENT
         $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
 
         $from = Carbon::now()->startOfMonth();
@@ -109,6 +107,47 @@ $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
             ->get();
 
         return view('admin.firms.edit', compact(
+            'firm',
+            'totalStamps',
+            'monthStamps',
+            'clientsCount',
+            'cardsCount',
+            'stampsByDay'
+        ));
+    }
+
+    /**
+     * 📊 Aktywność firmy (ADMIN) — TO PRZYWRACA „AKTYWNOŚĆ”
+     */
+    public function activity(Firm $firm)
+    {
+        $totalStamps = LoyaltyStamp::where('firm_id', $firm->id)->count();
+
+        $monthStamps = LoyaltyStamp::where('firm_id', $firm->id)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        $clientsCount = LoyaltyCard::where('firm_id', $firm->id)
+            ->distinct('client_id')
+            ->count('client_id');
+
+        $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
+
+        $from = Carbon::now()->startOfMonth();
+        $to   = Carbon::now()->endOfMonth();
+
+        $stampsByDay = LoyaltyStamp::select(
+                DB::raw('DATE(created_at) as day'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->where('firm_id', $firm->id)
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        return view('admin.firms.activity', compact(
             'firm',
             'totalStamps',
             'monthStamps',

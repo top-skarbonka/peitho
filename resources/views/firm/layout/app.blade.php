@@ -1,3 +1,5 @@
+ubuntu@vps-ba38f710:/var/www/peitho$ cat nano resources/views/firm/layout/app.blade.php
+cat: nano: No such file or directory
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -177,3 +179,4 @@
 
 </body>
 </html>
+ubuntu@vps-ba38f710:/var/www/peitho$ 

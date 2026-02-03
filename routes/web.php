@@ -29,7 +29,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| ALIAS /login (Laravel default)
+| ALIAS /login
 |--------------------------------------------------------------------------
 */
 Route::get('/login', function () {
@@ -89,7 +89,7 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – REJESTRACJA KLIENTA (TOKEN)
+| PUBLIC – REJESTRACJA KLIENTA
 |--------------------------------------------------------------------------
 */
 Route::get('/register/card/{token}', [PublicClientController::class, 'showRegisterForm'])
@@ -98,11 +98,6 @@ Route::get('/register/card/{token}', [PublicClientController::class, 'showRegist
 Route::post('/register/card/{token}', [PublicClientController::class, 'register'])
     ->name('client.register.submit');
 
-/*
-|--------------------------------------------------------------------------
-| PUBLIC – STAŁY LINK (QR)
-|--------------------------------------------------------------------------
-*/
 Route::get('/join/{firm_id}', [PublicClientController::class, 'showRegisterFormByFirm'])
     ->name('client.register.by_firm');
 
@@ -111,7 +106,7 @@ Route::post('/join/{firm_id}', [PublicClientController::class, 'registerByFirm']
 
 /*
 |--------------------------------------------------------------------------
-| LOGOWANIE KLIENTA
+| PANEL KLIENTA
 |--------------------------------------------------------------------------
 */
 Route::get('/client/login', [ClientAuthController::class, 'showLoginForm'])
@@ -123,29 +118,18 @@ Route::post('/client/login', [ClientAuthController::class, 'login'])
 Route::post('/client/logout', [ClientAuthController::class, 'logout'])
     ->name('client.logout');
 
-/*
-|--------------------------------------------------------------------------
-| PANEL KLIENTA
-|--------------------------------------------------------------------------
-*/
 Route::middleware('auth:client')->group(function () {
     Route::get('/client/loyalty-card', [ClientController::class, 'loyaltyCard'])
         ->name('client.loyalty.card');
-
 });
 
 /*
 |--------------------------------------------------------------------------
-<<<<<<< HEAD
 | ADMIN – LOGOWANIE
-=======
-| ADMIN (prosty, stabilny, bez kombinowania)
->>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')->group(function () {
 
-    // Logowanie admina
     Route::get('/login', [AdminAuthController::class, 'show'])
         ->name('admin.login');
 
@@ -156,26 +140,19 @@ Route::prefix('admin')->group(function () {
         ->name('admin.logout');
 });
 
-<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | ADMIN – PANEL (ZABEZPIECZONY)
 |--------------------------------------------------------------------------
 */
 Route::prefix('admin')
-    ->middleware(['admin.simple'])
+    ->middleware('admin.simple')
     ->group(function () {
-=======
-    // Zabezpieczone adminem (Twoje admin.simple)
-    Route::middleware('admin.simple')->group(function () {
 
-        // Dashboard (żeby nie było 500 na admin.dashboard)
         Route::get('/', function () {
             return redirect()->route('admin.firms.index');
         })->name('admin.dashboard');
->>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
 
-        // Firmy: lista + create + store + edit + update
         Route::get('/firms', [AdminFirmController::class, 'index'])
             ->name('admin.firms.index');
 
@@ -187,24 +164,11 @@ Route::prefix('admin')
 
         Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])
             ->name('admin.firms.edit');
-
+Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
+    ->name('admin.firms.activity');
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 
-<<<<<<< HEAD
-        /*
-        |--------------------------------------------------------------------------
-        | EKSPORT ZGÓD – UODO (CSV)
-        |--------------------------------------------------------------------------
-        */
-        Route::post(
-            '/consents/export/csv',
-            [ConsentExportController::class, 'exportCsv']
-        )->name('admin.consents.export.csv');
-
-=======
-        // Eksport zgód (POST)
         Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');
->>>>>>> 485c850 (vol101: stable core – admin, company, client panels working, logo upload fixed)
     });
