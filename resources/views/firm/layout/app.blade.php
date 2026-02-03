@@ -1,5 +1,3 @@
-ubuntu@vps-ba38f710:/var/www/peitho$ cat nano resources/views/firm/layout/app.blade.php
-cat: nano: No such file or directory
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -11,172 +9,85 @@ cat: nano: No such file or directory
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            background: #f5f7fb;
-        }
-
-        .page-header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .page-desc {
-            color: #64748b;
-            margin-bottom: 24px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,.05);
-        }
-
-        .stat-card span {
-            display: block;
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 6px;
-        }
-
-        .stat-card strong {
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .card-box {
-            background: #fff;
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,.06);
-            margin-bottom: 24px;
-        }
-
-        .card-box.highlight {
-            border: 2px dashed #6366f1;
-            background: #f8fafc;
-        }
-
-        .register-link-box {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .register-link-box input {
-            flex: 1;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            background: #f8fafc;
-            font-size: 14px;
-        }
-
-        .register-link-box button {
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 18px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .register-link-box button:hover {
-            background: #4f46e5;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        .data-table th {
-            text-align: left;
-            font-size: 13px;
-            color: #64748b;
-            padding-bottom: 12px;
-        }
-
-        .data-table td {
-            padding: 14px 0;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .data-table .empty {
-            text-align: center;
-            color: #94a3b8;
-            padding: 24px 0;
-        }
+        body { background: #f5f7fb; }
     </style>
 </head>
 
 <body class="text-slate-800">
 
-<div class="min-h-screen flex">
+{{-- 🔹 MOBILE TOPBAR --}}
+<div class="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b px-4 py-3 flex items-center justify-between">
+    <div class="font-semibold text-lg">🏢 Panel Firmy</div>
+    <button onclick="toggleMobileMenu()" class="text-2xl">☰</button>
+</div>
 
-    {{-- SIDEBAR --}}
-    <aside class="w-64 bg-white border-r border-slate-200 px-5 py-6">
+{{-- 🔹 MOBILE MENU OVERLAY --}}
+<div id="mobileMenuOverlay"
+     class="fixed inset-0 bg-black/40 z-40 hidden"
+     onclick="toggleMobileMenu()"></div>
+
+{{-- 🔹 MOBILE MENU --}}
+<aside id="mobileMenu"
+       class="fixed top-0 left-0 h-full w-64 bg-white z-50 transform -translate-x-full transition-transform duration-200 md:hidden px-5 py-6">
+
+    <div class="flex items-center justify-between mb-6">
+        <div class="font-semibold text-lg">🏢 Panel Firmy</div>
+        <button onclick="toggleMobileMenu()" class="text-xl">✖</button>
+    </div>
+
+    <nav class="space-y-1 text-sm">
+        <a href="{{ route('company.dashboard') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-100">📊 Dashboard</a>
+        <a href="{{ route('company.loyalty.cards') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-100">⭐ Karty klienta</a>
+        <a href="{{ route('company.points.form') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-100">💎 Dodaj punkty</a>
+        <a href="{{ route('company.transactions') }}" class="block px-3 py-2 rounded-lg hover:bg-slate-100">📜 Transakcje</a>
+        <a href="/company/change-password" class="block px-3 py-2 rounded-lg hover:bg-slate-100">🔐 Zmień hasło</a>
+
+        <form method="POST" action="{{ route('company.logout') }}" class="pt-3 mt-3 border-t">
+            @csrf
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600">
+                🚪 Wyloguj
+            </button>
+        </form>
+    </nav>
+</aside>
+
+<div class="min-h-screen flex pt-14 md:pt-0">
+
+    {{-- 🔹 SIDEBAR DESKTOP --}}
+    <aside class="hidden md:block w-64 bg-white border-r border-slate-200 px-5 py-6">
         <div class="text-lg font-semibold mb-6">🏢 Panel Firmy</div>
 
         <nav class="space-y-1 text-sm">
+            <a href="{{ route('company.dashboard') }}" class="flex gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">📊 Dashboard</a>
+            <a href="{{ route('company.loyalty.cards') }}" class="flex gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">⭐ Karty stałego klienta</a>
+            <a href="{{ route('company.points.form') }}" class="flex gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">💎 Dodaj punkty</a>
+            <a href="{{ route('company.transactions') }}" class="flex gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">📜 Historia transakcji</a>
+            <a href="/company/change-password" class="flex gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">🔐 Zmień hasło</a>
 
-            <a href="{{ route('company.dashboard') }}"
-               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                📊 <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('company.loyalty.cards') }}"
-               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                ⭐ <span>Karty stałego klienta</span>
-            </a>
-
-            <a href="{{ route('company.points.form') }}"
-               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                💎 <span>Dodaj punkty</span>
-            </a>
-
-            <a href="{{ route('company.transactions') }}"
-               class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-                📜 <span>Historia transakcji</span>
-            </a>
-
-            {{-- 🔐 ZMIANA HASŁA --}}
-<a href="/company/change-password" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100">
-    🔐 <span>Zmień hasło</span>
-</a>                🔐 <span>Zmień hasło</span>
-            </a>
-
-            {{-- WYLOGOWANIE --}}
-            <div class="pt-3 mt-3 border-t border-slate-200">
+            <div class="pt-3 mt-3 border-t">
                 <form method="POST" action="{{ route('company.logout') }}">
                     @csrf
-                    <button type="submit"
-                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600">
-                        🚪 <span>Wyloguj</span>
+                    <button class="w-full text-left px-3 py-2 rounded-lg text-red-600 hover:bg-red-50">
+                        🚪 Wyloguj
                     </button>
                 </form>
             </div>
-
         </nav>
     </aside>
 
-    {{-- CONTENT --}}
-    <main class="flex-1 px-8 py-8">
+    {{-- 🔹 CONTENT --}}
+    <main class="flex-1 px-4 md:px-8 py-6 md:py-8">
         @yield('content')
     </main>
 
 </div>
 
+<script>
+function toggleMobileMenu() {
+    document.getElementById('mobileMenu').classList.toggle('-translate-x-full');
+    document.getElementById('mobileMenuOverlay').classList.toggle('hidden');
+}
+</script>
+
 </body>
 </html>
-ubuntu@vps-ba38f710:/var/www/peitho$ 
