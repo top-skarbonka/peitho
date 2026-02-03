@@ -85,6 +85,21 @@ Route::prefix('company')
 
         Route::post('/loyalty-cards/generate-link', [FirmController::class, 'generateRegistrationLink'])
             ->name('company.loyalty.cards.generate');
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 SKAN QR / CZYTNIK
+        |--------------------------------------------------------------------------
+        */
+
+        // ✅ WIDOK SKANERA (TEGO BRAKOWAŁO)
+        Route::get('/scan', function () {
+            return view('firm.scan.index');
+        })->name('company.scan.form');
+
+        // ✅ OBSŁUGA SKANU (JUŻ BYŁA – ZOSTAWIAMY)
+        Route::post('/scan', [FirmController::class, 'scanQr'])
+            ->name('company.scan');
     });
 
 /*
@@ -164,8 +179,10 @@ Route::prefix('admin')
 
         Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])
             ->name('admin.firms.edit');
-Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
-    ->name('admin.firms.activity');
+
+        Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
+            ->name('admin.firms.activity');
+
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 

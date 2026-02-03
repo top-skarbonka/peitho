@@ -24,7 +24,7 @@ class FirmController extends Controller
     {
         $firm = Auth::guard('company')->user();
 
-        if (!$firm) {
+        if (! $firm) {
             abort(403, 'Brak zalogowanej firmy');
         }
 
@@ -53,7 +53,6 @@ class FirmController extends Controller
             ? round($totalPoints / $totalTransactions, 2)
             : 0;
 
-        // wykres dzienny (7 dni)
         $dailyLabels = [];
         $dailyValues = [];
 
@@ -65,7 +64,6 @@ class FirmController extends Controller
                 ->count();
         }
 
-        // wykres miesięczny (12 miesięcy)
         $monthlyLabels = [];
         $monthlyValues = [];
 
@@ -92,7 +90,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | LISTA KART STAŁEGO KLIENTA
+    | LISTA KART
     |--------------------------------------------------------------------------
     */
 
@@ -112,7 +110,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | GENEROWANIE LINKU REJESTRACJI
+    | LINK REJESTRACYJNY
     |--------------------------------------------------------------------------
     */
 
@@ -135,7 +133,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | NAKLEJKI
+    | NAKLEJKI (RĘCZNIE)
     |--------------------------------------------------------------------------
     */
 
@@ -199,33 +197,55 @@ class FirmController extends Controller
             'status'         => 'active',
         ]);
 
-        return back()->with('success', 'Nagroda odebrana');
+        return back()->with('success', 'Nagroda zrealizowana');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | TRANSAKCJE + PUNKTY (jeśli używasz)
+    | 📷 SKANOWANIE QR → DODANIE NAKLEJKI
     |--------------------------------------------------------------------------
     */
 
-    public function transactions()
+    public function scanQr(Request $request)
     {
         $firm = $this->firm();
 
-        $transactions = Transaction::where('firm_id', $firm->id)
-            ->latest()
-            ->get();
+        $request->validate([
+            'code' => 'required|string',
+        ]);
 
-        return view('firm.transactions', compact('transactions'));
-    }
+        $raw = trim($request->code);
 
-    public function showPointsForm()
-    {
-        return view('firm.points');
-    }
+        if (! str_starts_with($raw, 'CARD:')) {
+            return back()->with('error', 'Nieznany kod');
+        }
 
-    public function addPoints(Request $request)
-    {
-        return back()->with('success', 'Dodano punkty');
+        $cardId = (int) str_replace('CARD:', '', $raw);
+
+        $card = LoyaltyCard::where('id', $cardId)
+            ->where('firm_id', $firm->id)
+            ->first();
+
+        if (! $card) {
+            return back()->with('error', 'Karta nie należy do tej firmy');
+        }
+
+        if ($card->current_stamps >= $card->max_stamps) {
+            return back()->with('error', 'Karta jest już pełna');
+        }
+
+        $card->increment('current_stamps');
+
+        LoyaltyStamp::create([
+            'loyalty_card_id' => $card->id,
+            'firm_id'         => $firm->id,
+            'description'     => 'Naklejka (QR)',
+        ]);
+
+        if ($card->current_stamps >= $card->max_stamps) {
+            $card->update(['status' => 'completed']);
+        }
+
+        return back()->with('success', 'Naklejka dodana przez skan QR');
     }
 }
