@@ -19,17 +19,14 @@ class EnsureSubscriptionIsActive
         }
 
         /**
-         * 🔥 ADMIN OVERRIDE
-         * jeśli admin ręcznie odblokuje firmę
+         * 🔥 ADMIN FORCE BLOCK — NADPISUJE WSZYSTKO
          */
-        if (isset($firm->subscription_manual_block) 
-            && $firm->subscription_manual_block == false) {
-            return $next($request);
+        if ($firm->subscription_forced_status === 'blocked') {
+            return response()->view('firm.subscription-blocked');
         }
 
         /**
          * brak daty = traktujemy jako aktywną
-         * (ważne na start SaaS żeby nie zablokować wszystkich)
          */
         if (!$firm->subscription_ends_at) {
             return $next($request);
@@ -38,20 +35,22 @@ class EnsureSubscriptionIsActive
         $endsAt = Carbon::parse($firm->subscription_ends_at);
 
         /**
-         * ✅ abonament aktywny
+         * ✅ ABONAMENT AKTYWNY
          */
         if ($endsAt->isFuture()) {
             return $next($request);
         }
 
         /**
-         * 🔥 GRACE PERIOD — 3 dni
+         * 🔥 GRACE — 3 DNI
          */
-        if ($endsAt->copy()->addDays(3)->isFuture()) {
+        $graceEnds = $endsAt->copy()->addDays(3);
+
+        if ($graceEnds->isFuture()) {
 
             session()->flash(
                 'subscription_warning',
-                '⚠️ Twój abonament wygasł. Masz 3 dni na opłacenie zanim konto zostanie zablokowane.'
+                '⚠️ Abonament wygasł — masz 3 dni na opłacenie, aby uniknąć blokady.'
             );
 
             return $next($request);

@@ -21,11 +21,14 @@ class Firm extends Authenticatable
         'postal_code',
         'nip',
         'phone',
-'subscription_status',
-'subscription_ends_at',
-'plan',
-'billing_period',
-'subscription_forced_status',
+
+        // 💰 BILLING / SAAS
+        'subscription_status',
+        'subscription_ends_at',
+        'plan',
+        'billing_period',
+        'subscription_forced_status',
+
         // 🎨 karta
         'card_template',
 
@@ -40,6 +43,13 @@ class Firm extends Authenticatable
 
     protected $hidden = [
         'password',
+    ];
+
+    /**
+     * 🔥 KLUCZOWE — CAST DATY
+     */
+    protected $casts = [
+        'subscription_ends_at' => 'datetime',
     ];
 
     /**
@@ -60,5 +70,29 @@ class Firm extends Authenticatable
         }
 
         return asset('storage/' . $this->logo_path);
+    }
+
+    /**
+     * 🔥 SERCE SaaS — czy firma jest zablokowana
+     */
+    public function isBlocked(): bool
+    {
+        // admin override
+        if ($this->subscription_forced_status === 'active') {
+            return false;
+        }
+
+        if ($this->subscription_forced_status === 'blocked') {
+            return true;
+        }
+
+        // brak daty → traktujemy jako aktywną
+        if (!$this->subscription_ends_at) {
+            return false;
+        }
+
+        return now()->greaterThan(
+            $this->subscription_ends_at->copy()->addDays(3)
+        );
     }
 }
