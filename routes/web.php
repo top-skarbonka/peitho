@@ -56,8 +56,10 @@ Route::post('/company/logout', [FirmAuthController::class, 'logout'])
 |--------------------------------------------------------------------------
 */
 Route::prefix('company')
-    ->middleware('auth:company')
-    ->group(function () {
+->middleware([
+    'auth:company',
+    \App\Http\Middleware\EnsureSubscriptionIsActive::class
+])    ->group(function () {
 
         Route::get('/dashboard', [FirmController::class, 'dashboard'])
             ->name('company.dashboard');

@@ -34,11 +34,9 @@ class Kernel extends HttpKernel
     /**
      * ✅ LARAVEL 9 — ROUTE MIDDLEWARE
      */
-    protected $routeMiddleware = [
-        'auth' => \App\Http\Middleware\Authenticate::class,
-        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
-
-
-        'admin.simple' => \App\Http\Middleware\AdminSimple::class,
-    ];
-}
+protected $middlewareAliases = [
+    'auth' => \App\Http\Middleware\Authenticate::class,
+    'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+    'subscription.active' => \App\Http\Middleware\EnsureSubscriptionIsActive::class,
+    'admin.simple' => \App\Http\Middleware\AdminSimple::class,
+];

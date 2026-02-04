@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@yield('title', 'Panel Firmy — Peitho')</title>
+
+    <title>@yield('title', 'Panel Firmy — Looply')</title>
+
+    {{-- ✅ FAVICON (NAJWAŻNIEJSZE) --}}
+    <link rel="icon" type="image/png" href="{{ asset('branding/icon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('branding/icon.png') }}">
+
+    {{-- iPhone / Safari --}}
+    <link rel="apple-touch-icon" href="{{ asset('branding/icon.png') }}">
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -20,17 +28,24 @@
 
 {{-- MOBILE TOP BAR --}}
 <div class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b">
-    <div class="font-bold">🏢 Panel Firmy</div>
+
+    {{-- 🔥 LOGO zamiast emoji --}}
+    <div class="flex items-center gap-2">
+        <img src="{{ asset('branding/logo.png') }}" class="h-8">
+    </div>
+
     <button onclick="toggleMenu()" class="text-2xl">☰</button>
 </div>
+
 
 {{-- MOBILE MENU --}}
 <div id="mobileMenu"
      class="fixed inset-0 bg-black/40 z-50 hidden md:hidden"
      onclick="toggleMenu()">
+
     <div class="bg-white w-64 h-full p-5" onclick="event.stopPropagation()">
 
-        <div class="text-lg font-bold mb-6">🏢 Menu</div>
+        <img src="{{ asset('branding/logo.png') }}" class="h-8 mb-6">
 
         <nav class="space-y-2 text-sm">
             <a href="{{ route('company.dashboard') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📊 Dashboard</a>
@@ -49,11 +64,14 @@
     </div>
 </div>
 
+
 <div class="min-h-screen flex">
 
     {{-- DESKTOP SIDEBAR --}}
     <aside class="hidden md:block w-64 bg-white border-r px-5 py-6">
-        <div class="text-lg font-semibold mb-6">🏢 Panel Firmy</div>
+
+        {{-- 🔥 LOGO --}}
+        <img src="{{ asset('branding/logo.png') }}" class="h-9 mb-8">
 
         <nav class="space-y-1 text-sm">
             <a href="{{ route('company.dashboard') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📊 Dashboard</a>

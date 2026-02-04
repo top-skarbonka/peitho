@@ -21,7 +21,11 @@ class Firm extends Authenticatable
         'postal_code',
         'nip',
         'phone',
-
+'subscription_status',
+'subscription_ends_at',
+'plan',
+'billing_period',
+'subscription_forced_status',
         // 🎨 karta
         'card_template',
 
