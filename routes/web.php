@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminFirmController;
 use App\Http\Controllers\Admin\ConsentExportController;
 use App\Http\Middleware\EnsureSubscriptionIsActive;
 
+
 /*
 |--------------------------------------------------------------------------
 | STRONA GŁÓWNA
@@ -26,18 +27,20 @@ use App\Http\Middleware\EnsureSubscriptionIsActive;
 
 Route::get('/', fn () => 'PEITHO DZIAŁA');
 
+
 /*
 |--------------------------------------------------------------------------
 | LOGIN ALIAS
 |--------------------------------------------------------------------------
 */
 
-Route::get('/login', fn () => redirect()->route('company.login'))->name('login');
+Route::get('/login', fn () => redirect()->route('company.login'))
+    ->name('login');
 
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – LOGIN
+| PANEL FIRMY — LOGIN
 |--------------------------------------------------------------------------
 */
 
@@ -56,7 +59,7 @@ Route::prefix('company')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY – ZABEZPIECZONY (SaaS CORE 🔥)
+| PANEL FIRMY — SaaS CORE 🔥
 |--------------------------------------------------------------------------
 */
 
@@ -101,7 +104,7 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC – REJESTRACJA
+| PUBLIC — REJESTRACJA
 |--------------------------------------------------------------------------
 */
 
@@ -136,15 +139,17 @@ Route::prefix('client')->group(function () {
         ->name('client.logout');
 
     Route::middleware('auth:client')->group(function () {
+
         Route::get('/loyalty-card', [ClientController::class, 'loyaltyCard'])
             ->name('client.loyalty.card');
+
     });
 });
 
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN – LOGIN
+| ADMIN — LOGIN
 |--------------------------------------------------------------------------
 */
 
@@ -163,7 +168,7 @@ Route::prefix('admin')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN – PANEL (SUPER WAŻNE 🔥)
+| ADMIN — PANEL 🔥🔥🔥
 |--------------------------------------------------------------------------
 */
 
@@ -173,6 +178,13 @@ Route::prefix('admin')
 
         Route::get('/', fn () => redirect()->route('admin.firms.index'))
             ->name('admin.dashboard');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIRMY
+        |--------------------------------------------------------------------------
+        */
 
         Route::get('/firms', [AdminFirmController::class, 'index'])
             ->name('admin.firms.index');
@@ -195,7 +207,7 @@ Route::prefix('admin')
 
         /*
         |--------------------------------------------------------------------------
-        | 🔥 SaaS CONTROL — NAJWAŻNIEJSZE ROUTY
+        | 🔥 SaaS CONTROL PANEL
         |--------------------------------------------------------------------------
         */
 
@@ -205,12 +217,20 @@ Route::prefix('admin')
         Route::post('/firms/{firm}/unblock', [AdminFirmController::class, 'forceUnblock'])
             ->name('admin.firms.unblock');
 
-        Route::post('/firms/{firm}/extend-30', [AdminFirmController::class, 'extend30'])
+        Route::post('/firms/{firm}/extend30', [AdminFirmController::class, 'extend30'])
             ->name('admin.firms.extend30');
 
-        Route::post('/firms/{firm}/extend-365', [AdminFirmController::class, 'extend365'])
+        Route::post('/firms/{firm}/extend365', [AdminFirmController::class, 'extend365'])
             ->name('admin.firms.extend365');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | EXPORTY
+        |--------------------------------------------------------------------------
+        */
 
         Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');
+
     });

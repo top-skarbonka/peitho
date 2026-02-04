@@ -1,264 +1,259 @@
 @extends('layouts.public')
 
 @section('content')
-@php
-    $firms = $firms ?? \App\Models\Firm::orderByDesc('id')->get();
-@endphp
 
-<div style="width:96%;max-width:1750px;margin:40px auto;padding:34px;background:#fff;border-radius:18px;box-shadow:0 25px 70px rgba(0,0,0,.12)">
+<div style="width:98%;max-width:1850px;margin:30px auto;padding:26px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.12)">
 
     {{-- HEADER --}}
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
         <div>
-            <h2 style="margin-bottom:6px;font-size:26px;font-weight:900;">
-                🏢 Lista firm
-            </h2>
-
-            <p style="color:#666;margin:0;">
+            <h2 style="margin:0;">🏢 Lista firm</h2>
+            <div style="color:#666;font-size:14px;">
                 Zarządzanie abonamentami • blokady • aktywność
-            </p>
+            </div>
         </div>
 
         <a href="{{ route('admin.firms.create') }}"
-           style="
-                display:inline-block;
-                padding:14px 22px;
-                border-radius:14px;
-                background:linear-gradient(135deg,#6a5af9,#ff5fa2);
-                color:#fff;
-                font-weight:800;
-                letter-spacing:.3px;
-                box-shadow:0 10px 30px rgba(106,90,249,.35);
-           ">
-            ➕ Dodaj firmę
+           style="padding:11px 18px;border-radius:12px;
+                  background:linear-gradient(135deg,#6a5af9,#ff5fa2);
+                  color:#fff;font-weight:700;text-decoration:none;">
+            + Dodaj firmę
         </a>
     </div>
 
+
     {{-- SEARCH --}}
-    <div style="margin-top:26px;">
-        <input
-            type="text"
-            id="firmSearch"
-            placeholder="🔍 Szukaj po nazwie, telefonie lub slugu..."
-            style="
-                width:100%;
-                padding:16px 18px;
-                border-radius:14px;
-                border:1px solid #e5e7eb;
-                font-size:15px;
-                outline:none;
-            "
-            onkeyup="filterFirms()"
-        >
-    </div>
+    <input
+        type="text"
+        id="firmSearch"
+        placeholder="🔍 Szukaj po nazwie, telefonie lub slugu..."
+        style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid #e5e7eb;margin-bottom:14px;"
+        onkeyup="filterFirms()"
+    >
 
-    {{-- TABLE --}}
-    <div style="margin-top:22px;overflow:auto;border:1px solid #eee;border-radius:16px;">
-        <table style="width:100%;border-collapse:collapse;min-width:1350px;">
 
-            <thead>
-            <tr style="background:#f7f8ff;border-bottom:1px solid #eee;">
-                <th style="padding:14px;">ID</th>
-                <th style="padding:14px;">Logo</th>
-                <th style="padding:14px;">Nazwa</th>
-                <th style="padding:14px;">Slug</th>
-                <th style="padding:14px;">Miasto</th>
-                <th style="padding:14px;">Telefon</th>
-                <th style="padding:14px;">Status</th>
-                <th style="padding:14px;">Abonament do</th>
-                <th style="padding:14px;">Plan</th>
-                <th style="padding:14px;text-align:right;">Akcje</th>
-            </tr>
-            </thead>
+<style>
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px; /* 🔥 MNIEJSZA CZCIONKA */
+}
 
-            <tbody id="firmsTable">
+th{
+    text-align:left;
+    padding:12px;
+    background:#f7f7fb;
+    font-weight:700;
+    color:#444;
+}
 
-            @foreach($firms as $firm)
+td{
+    padding:12px;
+    border-top:1px solid #eee;
+}
 
-                @php
-                    $isBlocked = $firm->subscription_forced_status === 'blocked';
-                    $isExpired = $firm->subscription_ends_at && now()->gt($firm->subscription_ends_at);
-                @endphp
+.badge{
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+}
 
-                <tr style="border-bottom:1px solid #f1f1f1;transition:.15s;"
-                    onmouseover="this.style.background='#fafbff'"
-                    onmouseout="this.style.background='white'">
+.green{ background:#dcfce7; color:#166534; }
+.orange{ background:#fff7ed; color:#c2410c; }
+.red{ background:#fee2e2; color:#991b1b; }
 
-                    <td style="padding:14px;font-weight:700;">
-                        {{ $firm->id }}
-                    </td>
+.mono{
+    font-family:monospace;
+    font-size:12px;
+    background:#f1f5f9;
+    padding:4px 8px;
+    border-radius:8px;
+}
 
-                    {{-- LOGO --}}
-                    <td style="padding:14px;">
-                        <div style="width:50px;height:50px;border-radius:12px;background:#f3f4f6;
-                                    display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                            @if($firm->logo_path)
-                                <img src="{{ asset('storage/'.$firm->logo_path) }}"
-                                     style="max-width:100%;max-height:100%;object-fit:contain;">
-                            @else
-                                🏷️
-                            @endif
-                        </div>
-                    </td>
+/* 🔥 dropdown */
+details summary{
+    cursor:pointer;
+    list-style:none;
+    background:#111827;
+    color:#fff;
+    padding:7px 11px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:700;
+}
 
-                    <td class="firm-name" style="padding:14px;font-weight:800;">
-                        {{ $firm->name }}
-                    </td>
+details summary::-webkit-details-marker{
+    display:none;
+}
 
-                    <td class="firm-slug" style="padding:14px;">
-                        <span style="
-                            font-family:monospace;
-                            font-size:13px;
-                            background:#eef2ff;
-                            padding:6px 10px;
-                            border-radius:8px;
-                        ">
-                            {{ $firm->slug }}
-                        </span>
-                    </td>
+.dropdown{
+    position:absolute;
+    right:0;
+    margin-top:6px;
+    width:220px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    border:1px solid #eee;
+    overflow:hidden;
+    z-index:999;
+}
 
-                    <td style="padding:14px;">
-                        {{ $firm->city }}
-                    </td>
+.dropdown a,
+.dropdown button{
+    display:block;
+    width:100%;
+    padding:10px 12px;
+    text-align:left;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+}
 
-                    <td class="firm-phone" style="padding:14px;">
-                        {{ $firm->phone ?? '—' }}
-                    </td>
+.dropdown a:hover,
+.dropdown button:hover{
+    background:#f3f4f6;
+}
+</style>
 
-                    {{-- STATUS --}}
-                    <td style="padding:14px;">
-                        @if($isBlocked)
 
-                            <span style="padding:7px 14px;border-radius:999px;
-                                         background:#fee2e2;color:#b91c1c;
-                                         font-weight:900;font-size:12px;">
-                                🔴 Zablokowana
-                            </span>
+<table>
+<thead>
+<tr>
+    <th>Firma</th>
+    <th>Slug</th>
+    <th>Miasto</th>
+    <th>Telefon</th>
+    <th>Status</th>
+    <th>Abonament</th>
+    <th>Plan</th>
+    <th style="width:80px;"></th>
+</tr>
+</thead>
 
-                        @elseif($isExpired)
+<tbody id="firmsTable">
+@foreach($firms as $firm)
+<tr>
 
-                            <span style="padding:7px 14px;border-radius:999px;
-                                         background:#fff7ed;color:#c2410c;
-                                         font-weight:900;font-size:12px;">
-                                ⚠️ Po terminie
-                            </span>
+<td class="firm-name" style="font-weight:700;">
+    {{ $firm->name }}
+</td>
 
-                        @else
+<td class="firm-slug">
+    <span class="mono">{{ $firm->slug }}</span>
+</td>
 
-                            <span style="padding:7px 14px;border-radius:999px;
-                                         background:#dcfce7;color:#166534;
-                                         font-weight:900;font-size:12px;">
-                                🟢 Aktywna
-                            </span>
+<td>{{ $firm->city }}</td>
 
-                        @endif
-                    </td>
+<td class="firm-phone">
+    {{ $firm->phone }}
+</td>
 
-                    {{-- DATA --}}
-                    <td style="padding:14px;font-weight:700;">
-                        {{ $firm->subscription_ends_at?->format('d.m.Y') ?? '—' }}
-                    </td>
+<td>
+@if($firm->subscription_forced_status === 'blocked')
 
-                    <td style="padding:14px;font-weight:700;">
-                        {{ ucfirst($firm->plan ?? 'starter') }}
-                    </td>
+    <span class="badge red">Zablokowana</span>
 
-                    {{-- AKCJE --}}
-                    <td style="padding:14px;text-align:right;white-space:nowrap;">
+@elseif($firm->subscription_ends_at && now()->gt($firm->subscription_ends_at))
 
-                        {{-- AKTYWNOŚĆ --}}
-                        <a href="{{ route('admin.firms.activity', $firm->slug) }}"
-                           style="
-                                padding:10px 14px;
-                                border-radius:12px;
-                                font-weight:800;
-                                color:#4338ca;
-                                background:#eef2ff;
-                                margin-right:6px;
-                           ">
-                            📊
-                        </a>
+    <span class="badge orange">Po terminie</span>
 
-                        {{-- EDYCJA --}}
-                        <a href="{{ route('admin.firms.edit', $firm) }}"
-                           style="
-                                padding:10px 14px;
-                                border-radius:12px;
-                                font-weight:800;
-                                color:#fff;
-                                background:#111827;
-                                margin-right:6px;
-                           ">
-                            ✏️
-                        </a>
+@else
 
-                        {{-- BLOCK / UNBLOCK --}}
-                        @if($isBlocked)
+    <span class="badge green">Aktywna</span>
 
-                            <form method="POST"
-                                  action="{{ route('admin.firms.unblock', $firm) }}"
-                                  style="display:inline;">
-                                @csrf
-                                <button type="submit"
-                                        onclick="return confirm('Odblokować firmę?')"
-                                        style="
-                                            padding:10px 14px;
-                                            border-radius:12px;
-                                            font-weight:900;
-                                            border:none;
-                                            color:#065f46;
-                                            background:#d1fae5;
-                                            cursor:pointer;
-                                        ">
-                                    🟢
-                                </button>
-                            </form>
+@endif
+</td>
 
-                        @else
+<td style="font-weight:700;">
+    {{ $firm->subscription_ends_at?->format('d.m.Y') ?? '—' }}
+</td>
 
-                            <form method="POST"
-                                  action="{{ route('admin.firms.block', $firm) }}"
-                                  style="display:inline;">
-                                @csrf
-                                <button type="submit"
-                                        onclick="return confirm('Na pewno ZABLOKOWAĆ firmę?')"
-                                        style="
-                                            padding:10px 14px;
-                                            border-radius:12px;
-                                            font-weight:900;
-                                            border:none;
-                                            color:#7f1d1d;
-                                            background:#fee2e2;
-                                            cursor:pointer;
-                                        ">
-                                    🔴
-                                </button>
-                            </form>
+<td>
+    {{ ucfirst($firm->plan ?? '-') }}
+</td>
 
-                        @endif
 
-                    </td>
-                </tr>
+{{-- 🔥 AKCJE --}}
+<td style="position:relative;text-align:right;">
 
-            @endforeach
-            </tbody>
-        </table>
-    </div>
+<details>
+<summary>⚙</summary>
+
+<div class="dropdown">
+
+<a href="{{ route('admin.firms.activity', $firm) }}">
+📊 Aktywność
+</a>
+
+<a href="{{ route('admin.firms.edit', $firm) }}">
+✏️ Edytuj
+</a>
+
+<hr>
+
+<form method="POST" action="{{ route('admin.firms.extend30', $firm) }}">
+@csrf
+<button>+30 dni</button>
+</form>
+
+<form method="POST" action="{{ route('admin.firms.extend365', $firm) }}">
+@csrf
+<button>+365 dni</button>
+</form>
+
+<hr>
+
+@if($firm->subscription_forced_status === 'blocked')
+
+<form method="POST" action="{{ route('admin.firms.unblock', $firm) }}">
+@csrf
+<button style="color:green;font-weight:700;">
+Odblokuj (twardo)
+</button>
+</form>
+
+@else
+
+<form method="POST" action="{{ route('admin.firms.block', $firm) }}">
+@csrf
+<button style="color:#b91c1c;font-weight:700;">
+Zablokuj (twardo)
+</button>
+</form>
+
+@endif
+
 </div>
+</details>
+
+</td>
+</tr>
+@endforeach
+</tbody>
+</table>
+</div>
+
+
 
 <script>
 function filterFirms() {
     const q = document.getElementById('firmSearch').value.toLowerCase();
 
     document.querySelectorAll('#firmsTable tr').forEach(row => {
+
         const name = row.querySelector('.firm-name')?.innerText.toLowerCase() || '';
         const phone = row.querySelector('.firm-phone')?.innerText.toLowerCase() || '';
         const slug = row.querySelector('.firm-slug')?.innerText.toLowerCase() || '';
 
         row.style.display =
-            (name.includes(q) || phone.includes(q) || slug.includes(q))
-            ? ''
-            : 'none';
+            name.includes(q) ||
+            phone.includes(q) ||
+            slug.includes(q)
+                ? ''
+                : 'none';
     });
 }
 </script>
