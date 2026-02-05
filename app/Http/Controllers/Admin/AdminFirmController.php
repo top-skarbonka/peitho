@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 
 class AdminFirmController extends Controller
 {
+
     /**
      * 📋 Lista firm
      */
@@ -25,16 +26,18 @@ class AdminFirmController extends Controller
         return view('admin.firms.index', compact('firms'));
     }
 
+
     /**
-     * ➕ Formularz dodania firmy
+     * ➕ Dodanie firmy
      */
     public function create()
     {
         return view('admin.firms.create');
     }
 
+
     /**
-     * 💾 Zapis nowej firmy + mail z danymi
+     * 💾 Store
      */
     public function store(Request $request)
     {
@@ -66,12 +69,12 @@ class AdminFirmController extends Controller
             'program_id'    => 1,
             'card_template' => $request->card_template,
 
-            // 🔥 START SUBSKRYPCJI
+            // 🔥 SUBSKRYPCJA
             'subscription_status' => 'trial',
             'subscription_ends_at' => now()->addDays(14),
+            'subscription_forced_status' => null,
             'plan' => 'starter',
             'billing_period' => 'monthly',
-            'subscription_forced_status' => null,
         ]);
 
         Mail::to($firm->email)->send(
@@ -80,11 +83,13 @@ class AdminFirmController extends Controller
 
         return redirect()
             ->route('admin.firms.index')
-            ->with('success', 'Firma została dodana i mail wysłany');
+            ->with('success', 'Firma została dodana ✅');
     }
 
+
+
     /**
-     * ✏️ Edycja firmy + statystyki
+     * ✏️ Edycja + statystyki
      */
     public function edit(Firm $firm)
     {
@@ -124,49 +129,20 @@ class AdminFirmController extends Controller
         ));
     }
 
+
+
     /**
-     * 📊 Aktywność firmy (ADMIN)
+     * 📊 Aktywność
      */
     public function activity(Firm $firm)
     {
-        $totalStamps = LoyaltyStamp::where('firm_id', $firm->id)->count();
-
-        $monthStamps = LoyaltyStamp::where('firm_id', $firm->id)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
-
-        $clientsCount = LoyaltyCard::where('firm_id', $firm->id)
-            ->distinct('client_id')
-            ->count('client_id');
-
-        $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
-
-        $from = Carbon::now()->startOfMonth();
-        $to   = Carbon::now()->endOfMonth();
-
-        $stampsByDay = LoyaltyStamp::select(
-                DB::raw('DATE(created_at) as day'),
-                DB::raw('COUNT(*) as total')
-            )
-            ->where('firm_id', $firm->id)
-            ->whereBetween('created_at', [$from, $to])
-            ->groupBy('day')
-            ->orderBy('day')
-            ->get();
-
-        return view('admin.firms.activity', compact(
-            'firm',
-            'totalStamps',
-            'monthStamps',
-            'clientsCount',
-            'cardsCount',
-            'stampsByDay'
-        ));
+        return $this->edit($firm);
     }
 
+
+
     /**
-     * 🔄 Aktualizacja danych firmy
+     * 🔄 Update
      */
     public function update(Request $request, Firm $firm)
     {
@@ -190,73 +166,103 @@ class AdminFirmController extends Controller
         );
 
         if ($request->filled('password')) {
-            $firm->password = Hash::make($request->password);
-            $firm->password_changed_at = null;
-            $firm->save();
+
+            $firm->update([
+                'password' => Hash::make($request->password),
+                'password_changed_at' => null
+            ]);
         }
 
-        return back()->with('success', 'Zapisano zmiany');
+        return back()->with('success', 'Zapisano zmiany ✅');
     }
 
+
+
     /**
-     * 🔴 BLOKADA (twarda)
+     * 🔴 FORCE BLOCK
      */
     public function forceBlock(Firm $firm)
     {
         $firm->update([
             'subscription_forced_status' => 'blocked',
+            'subscription_status' => 'blocked'
         ]);
 
-        return back()->with('success', 'Firma została ZABLOKOWANA (twardo)');
+        return back()->with('success', 'Firma została ZABLOKOWANA 🔴');
     }
 
+
+
     /**
-     * 🟢 ODBLOKOWANIE (twarde)
+     * 🟢 FORCE UNBLOCK
      */
     public function forceUnblock(Firm $firm)
     {
+        // jeśli data w przyszłości → active
+        $status = optional($firm->subscription_ends_at)->isFuture()
+            ? 'active'
+            : 'grace';
+
         $firm->update([
             'subscription_forced_status' => null,
+            'subscription_status' => $status
         ]);
 
-        return back()->with('success', 'Firma została ODBLOKOWANA (twardo)');
+        return back()->with('success', 'Firma została ODBLOKOWANA 🟢');
     }
 
+
+
     /**
-     * ➕ Przedłuż o 30 dni (od dziś, jeśli po terminie)
+     * ➕ +30 dni
      */
     public function extend30(Firm $firm)
     {
-        $date = $firm->subscription_ends_at ? $firm->subscription_ends_at->copy() : now();
-        if ($date->isPast()) {
-            $date = now();
-        }
+        $date = $firm->subscription_ends_at && $firm->subscription_ends_at->isFuture()
+            ? $firm->subscription_ends_at->copy()
+            : now();
 
         $firm->update([
             'subscription_ends_at' => $date->addDays(30),
+
+            // 🔥 AUTO UNBLOCK
             'subscription_status' => 'active',
             'subscription_forced_status' => null,
+
+            // 🔥 RESET MAILI
+            'subscription_reminder_sent_at' => null,
+            'subscription_expired_sent_at' => null,
+            'subscription_blocked_sent_at' => null,
         ]);
 
-        return back()->with('success', 'Abonament przedłużony o 30 dni');
+        return back()->with('success', 'Abonament +30 dni ✅');
     }
 
+
+
     /**
-     * 👑 Przedłuż o 365 dni (od dziś, jeśli po terminie)
+     * 👑 +365 dni
      */
     public function extend365(Firm $firm)
     {
-        $date = $firm->subscription_ends_at ? $firm->subscription_ends_at->copy() : now();
-        if ($date->isPast()) {
-            $date = now();
-        }
+        $date = $firm->subscription_ends_at && $firm->subscription_ends_at->isFuture()
+            ? $firm->subscription_ends_at->copy()
+            : now();
 
         $firm->update([
             'subscription_ends_at' => $date->addDays(365),
+
+            // 🔥 AUTO UNBLOCK
             'subscription_status' => 'active',
             'subscription_forced_status' => null,
+
+            // 🔥 RESET MAILI
+            'subscription_reminder_sent_at' => null,
+            'subscription_expired_sent_at' => null,
+            'subscription_blocked_sent_at' => null,
         ]);
 
-        return back()->with('success', 'Abonament przedłużony o rok');
+        return back()->with('success', 'Abonament +365 dni 👑');
     }
+
 }

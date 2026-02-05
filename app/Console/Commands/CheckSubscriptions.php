@@ -4,62 +4,89 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Firm;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\SubscriptionReminderMail;
+use App\Mail\SubscriptionExpiredMail;
+use App\Mail\SubscriptionBlockedMail;
 
 class CheckSubscriptions extends Command
 {
     protected $signature = 'subscriptions:check';
-    protected $description = 'Auto block expired subscriptions';
+    protected $description = 'Auto block expired subscriptions (with mail dedupe)';
 
-    public function handle()
+    public function handle(): int
     {
         $now = now();
 
-        $firms = Firm::whereNotNull('subscription_ends_at')->get();
+        Firm::whereNotNull('subscription_ends_at')
+            ->orderBy('id')
+            ->chunkById(200, function ($firms) use ($now) {
 
-        foreach ($firms as $firm) {
+                foreach ($firms as $firm) {
 
-            /**
-             * 🔴 FORCE BLOCK ma najwyższy priorytet
-             */
-            if ($firm->subscription_forced_status === 'blocked') {
-                continue;
-            }
+                    // 0) FORCE BLOCK ma najwyższy priorytet
+                    if ($firm->subscription_forced_status === 'blocked') {
+                        continue;
+                    }
 
-            /**
-             * ✅ Jeśli abonament aktywny → ACTIVE + AUTO UNBLOCK
-             */
-            if ($firm->subscription_ends_at->isFuture()) {
+                    // 1) REMINDER: 7 dni przed końcem (tylko raz)
+                    // Warunek: ends_at w przyszłości i <= 7 dni
+                    if (
+                        $firm->subscription_ends_at->isFuture()
+                        && $firm->subscription_ends_at->diffInDays($now) <= 7
+                    ) {
+                        // Atomiczne "zarezerwowanie" wysyłki - tylko jeśli flaga jest NULL
+                        $updated = Firm::where('id', $firm->id)
+                            ->whereNull('subscription_reminder_sent_at')
+                            ->update(['subscription_reminder_sent_at' => now()]);
 
-                $firm->update([
-                    'subscription_status' => 'active',
-                    'subscription_forced_status' => null // 🔥 AUTO UNBLOCK
-                ]);
+                        if ($updated) {
+                            Mail::to($firm->email)->queue(new SubscriptionReminderMail($firm));
+                        }
+                    }
 
-                continue;
-            }
+                    // 2) AKTYWNY
+                    if ($firm->subscription_ends_at->isFuture()) {
+                        if ($firm->subscription_status !== 'active') {
+                            $firm->update(['subscription_status' => 'active']);
+                        }
+                        continue;
+                    }
 
-            /**
-             * ⚠️ GRACE (7 dni)
-             */
-            $graceLimit = $firm->subscription_ends_at->copy()->addDays(7);
+                    // 3) EXPIRED (pierwszy raz po terminie) -> status grace + mail raz
+                    $updatedExpired = Firm::where('id', $firm->id)
+                        ->whereNull('subscription_expired_sent_at')
+                        ->update([
+                            'subscription_expired_sent_at' => now(),
+                            'subscription_status' => 'grace',
+                        ]);
 
-            if ($now->lessThan($graceLimit)) {
+                    if ($updatedExpired) {
+                        Mail::to($firm->email)->queue(new SubscriptionExpiredMail($firm));
+                        // po wysłaniu "expired" nie sprawdzamy dalej tej iteracji
+                        continue;
+                    }
 
-                $firm->update([
-                    'subscription_status' => 'grace'
-                ]);
+                    // 4) PO 7 DNIACH -> BLOCK + mail raz
+                    $graceLimit = $firm->subscription_ends_at->copy()->addDays(7);
 
-            } else {
+                    if ($now->greaterThanOrEqualTo($graceLimit)) {
 
-                /**
-                 * 🔴 HARD BLOCK
-                 */
-                $firm->update([
-                    'subscription_status' => 'blocked'
-                ]);
-            }
-        }
+                        $updatedBlocked = Firm::where('id', $firm->id)
+                            ->whereNull('subscription_blocked_sent_at')
+                            ->update([
+                                'subscription_blocked_sent_at' => now(),
+                                'subscription_status' => 'blocked',
+                            ]);
+
+                        if ($updatedBlocked) {
+                            Mail::to($firm->email)->queue(new SubscriptionBlockedMail($firm));
+                        }
+                    }
+                }
+            });
 
         $this->info('Subscriptions checked successfully.');
+        return self::SUCCESS;
     }
 }
