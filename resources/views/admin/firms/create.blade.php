@@ -72,14 +72,14 @@
 
             <h4>🎨 Wygląd karty lojalnościowej</h4>
 
-            <select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
-                <option value="classic">Classic</option>
-                <option value="modern">Modern</option>
-                <option value="elegant">Elegant</option>
-                <option value="gold">Gold</option>
-                <option value="florist">Kwiaciarnia 🌸</option>
-            </select>
-
+<select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
+    <option value="classic">Classic</option>
+    <option value="modern">Modern</option>
+    <option value="elegant">Elegant</option>
+    <option value="gold">Gold</option>
+    <option value="florist">Kwiaciarnia 🌸</option>
+    <option value="hair_salon">Salon fryzjerski ✂️</option>
+</select>
             <hr style="margin:24px 0">
 
             <h4>🔗 Linki</h4>

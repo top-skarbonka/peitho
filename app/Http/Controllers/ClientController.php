@@ -61,14 +61,14 @@ class ClientController extends Controller
         // 🎨 SZABLON KARTY — TU BYŁ PROBLEM
         $template = $card->firm->card_template ?? 'classic';
 
-        $allowed = [
-            'classic',
-            'modern',
-            'elegant',
-            'gold',
-            'florist', // 🌸 KWIACIARNIA — DODANE
-        ];
-
+$allowed = [
+    'classic',
+    'modern',
+    'elegant',
+    'gold',
+    'florist',     // 🌸 Kwiaciarnia
+    'hair_salon', // ✂️ Salon fryzjerski
+];
         if (! in_array($template, $allowed, true)) {
             $template = 'classic';
         }
