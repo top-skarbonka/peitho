@@ -33,6 +33,9 @@ class Client extends Authenticatable
         'sms_marketing_consent_at',
         'terms_accepted_at',
 
+        // ✅ RETENCJA / AKTYWNOŚĆ
+        'last_activity_at',
+
         // inne
         'points',
         'activation_token',
@@ -53,6 +56,7 @@ class Client extends Authenticatable
         'sms_marketing_consent_at'      => 'datetime',
         'terms_accepted_at'             => 'datetime',
         'activation_token_expires_at'   => 'datetime',
+        'last_activity_at'              => 'datetime',
     ];
 
     /**
@@ -61,5 +65,18 @@ class Client extends Authenticatable
     public function firm()
     {
         return $this->belongsTo(Firm::class);
+    }
+
+    /**
+     * 🟢 RODO: aktualizacja ostatniej aktywności klienta
+     * Wywoływana przy:
+     * - wyszukaniu klienta
+     * - skanie QR
+     * - nadaniu punktów / naklejki
+     */
+    public function touchActivity(): void
+    {
+        $this->last_activity_at = now();
+        $this->saveQuietly();
     }
 }

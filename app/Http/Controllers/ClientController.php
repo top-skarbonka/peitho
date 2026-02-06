@@ -66,8 +66,11 @@ $allowed = [
     'modern',
     'elegant',
     'gold',
-    'florist',     // 🌸 Kwiaciarnia
-    'hair_salon', // ✂️ Salon fryzjerski
+    'florist',
+    'hair_salon',
+    'pizzeria',
+    'kebab',
+'cafe'
 ];
         if (! in_array($template, $allowed, true)) {
             $template = 'classic';

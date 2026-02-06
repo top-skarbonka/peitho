@@ -7,6 +7,7 @@ use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
 use App\Models\RegistrationToken;
 use App\Models\Transaction;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -75,17 +76,13 @@ class FirmController extends Controller
                 ->count();
         }
 
-        // ⬇⬇⬇ KLUCZOWY FIX (ALIASY DLA WIDOKU)
         return view('firm.dashboard', [
             'totalClients'      => $totalClients,
             'totalTransactions' => $totalTransactions,
             'totalPoints'       => $totalPoints,
             'avgPoints'         => $avgPoints,
-
-            // ❗ widok oczekuje Tych nazw
             'chartLabels'       => $dailyLabels,
             'chartValues'       => $dailyValues,
-
             'monthlyLabels'     => $monthlyLabels,
             'monthlyValues'     => $monthlyValues,
         ]);
@@ -148,6 +145,11 @@ class FirmController extends Controller
             return back()->with('error', 'Karta jest już pełna');
         }
 
+        // ✅ RODO: aktywność klienta (ręczna obsługa)
+        if ($card->client) {
+            $card->client->touchActivity();
+        }
+
         $card->increment('current_stamps');
 
         LoyaltyStamp::create([
@@ -155,6 +157,15 @@ class FirmController extends Controller
             'firm_id'         => $firm->id,
             'description'     => 'Naklejka (ręcznie)',
         ]);
+
+        // 🛡️ AUDYT RODO
+        AuditLogger::log(
+            'add_stamp_manual',
+            'firm',
+            $firm->id,
+            $card->client_id,
+            ['loyalty_card_id' => $card->id]
+        );
 
         if ($card->current_stamps >= $card->max_stamps) {
             $card->update(['status' => 'completed']);
@@ -205,6 +216,11 @@ class FirmController extends Controller
             return back()->with('error', 'Karta jest już pełna');
         }
 
+        // ✅ RODO: aktywność klienta (QR)
+        if ($card->client) {
+            $card->client->touchActivity();
+        }
+
         $card->increment('current_stamps');
 
         LoyaltyStamp::create([
@@ -212,6 +228,15 @@ class FirmController extends Controller
             'firm_id'         => $firm->id,
             'description'     => 'Naklejka (QR)',
         ]);
+
+        // 🛡️ AUDYT RODO
+        AuditLogger::log(
+            'add_stamp_qr',
+            'firm',
+            $firm->id,
+            $card->client_id,
+            ['loyalty_card_id' => $card->id]
+        );
 
         if ($card->current_stamps >= $card->max_stamps) {
             $card->update(['status' => 'completed']);
