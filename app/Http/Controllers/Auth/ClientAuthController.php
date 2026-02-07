@@ -40,7 +40,8 @@ class ClientAuthController extends Controller
         // Bezpieczna sesja
         $request->session()->regenerate();
 
-        return redirect()->route('client.loyalty.card');
+        // ✅ PO LOGOWANIU → PORTFEL KART (DASHBOARD)
+        return redirect()->route('client.dashboard');
     }
 
     /**
