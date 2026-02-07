@@ -123,7 +123,18 @@ details > div{
 
 <body>
 <div class="container">
-
+{{-- LOGO --}}
+<div class="glass-box" style="text-align:center">
+    @if($firm->logo_path)
+        <img
+            src="{{ asset('storage/'.$firm->logo_path) }}"
+            alt="{{ $firm->name }}"
+            style="max-height:90px; max-width:100%; object-fit:contain;"
+        >
+    @else
+        <span style="font-size:48px">☕</span>
+    @endif
+</div>
 <!-- KARTA -->
 <div class="card">
     <h1>{{ $firm->name }}</h1>
