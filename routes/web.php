@@ -140,9 +140,15 @@ Route::prefix('client')->group(function () {
 
     Route::middleware('auth:client')->group(function () {
 
+        // ⭐ NOWY DASHBOARD KLIENTA (WIELE KART, WIELE FIRM)
+        Route::get('/dashboard', [ClientController::class, 'dashboard'])
+            ->name('client.dashboard');
+
+        // STARA POJEDYNCZA KARTA (zostaje – kompatybilność)
         Route::get('/loyalty-card', [ClientController::class, 'loyaltyCard'])
             ->name('client.loyalty.card');
-
+Route::get('/loyalty-card/{card}', [ClientController::class, 'showCard'])
+    ->name('client.loyalty.card.show');
     });
 });
 

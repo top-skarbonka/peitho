@@ -7,9 +7,7 @@ use App\Mail\FirmCreatedMail;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -36,7 +34,7 @@ class AdminFirmController extends Controller
             'address'       => 'required|string|max:255',
             'postal_code'   => 'required|string|max:20',
             'phone'         => 'nullable|string|max:20',
-            'card_template' => 'required|string|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
+            'card_template' => 'required|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
         ]);
 
         $plainPassword = Str::random(10);
@@ -48,7 +46,6 @@ class AdminFirmController extends Controller
             'name'          => $request->name,
             'email'         => $request->email,
             'password'      => Hash::make($plainPassword),
-            'password_changed_at' => null,
             'city'          => $request->city,
             'address'       => $request->address,
             'postal_code'   => $request->postal_code,
@@ -57,7 +54,6 @@ class AdminFirmController extends Controller
             'card_template' => $request->card_template,
             'subscription_status' => 'trial',
             'subscription_ends_at' => now()->addDays(14),
-            'subscription_forced_status' => null,
             'plan' => 'starter',
             'billing_period' => 'monthly',
         ]);
@@ -101,6 +97,7 @@ class AdminFirmController extends Controller
             'password'      => 'nullable|min:8|confirmed',
             'google_url'    => 'nullable|string',
             'card_template' => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
+            'logo'          => 'nullable|image|max:2048',
         ]);
 
         $data = $request->only([
@@ -115,9 +112,13 @@ class AdminFirmController extends Controller
             'billing_period',
         ]);
 
-        // 🔒 KLUCZOWE ZABEZPIECZENIE
         if ($request->filled('card_template')) {
             $data['card_template'] = $request->card_template;
+        }
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('logos', 'public');
+            $data['logo_path'] = $path;
         }
 
         $firm->update($data);
