@@ -2,9 +2,14 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>{{ $firm->name ?? 'Karta lojalnościowa' }}</title>
+<title>{{ $firm->name }} – karta lojalnościowa | Looply</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===== FAVICON ===== -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
 
 <style>
 *{
@@ -78,7 +83,6 @@ body{
     font-size:34px;
     opacity:.25;
 }
-
 .sticker span{
     display:inline-block;
     transform:scaleX(-1);
@@ -102,7 +106,7 @@ body{
     margin-top:6px;
 }
 
-/* GLASS BOX */
+/* BOX */
 .glass-box{
     background:rgba(255,255,255,.85);
     border-radius:26px;
@@ -111,7 +115,6 @@ body{
     margin-bottom:14px;
 }
 
-/* ACCORDION */
 details summary{
     cursor:pointer;
     font-weight:700;
@@ -120,20 +123,16 @@ details summary{
     justify-content:center;
     gap:8px;
 }
-
 details summary::before{
     content:"▶";
     transition:.2s;
 }
-
 details[open] summary::before{
     transform:rotate(90deg);
 }
-
 details summary::-webkit-details-marker{
     display:none;
 }
-
 details > div{
     margin-top:12px;
     font-size:.9rem;
@@ -149,7 +148,6 @@ details > div{
     overflow:hidden;
     margin-top:10px;
 }
-
 .progress-fill{
     height:100%;
     background:linear-gradient(90deg,#ffb347,#ff8c00);
@@ -176,9 +174,7 @@ details > div{
 
 <div class="stickers-grid">
 @for($i=1;$i<=$maxStamps;$i++)
-<div class="sticker {{ $i <= $current ? 'active' : '' }}">
-    <span>🥙</span>
-</div>
+<div class="sticker {{ $i <= $current ? 'active' : '' }}"><span>🥙</span></div>
 @endfor
 </div>
 
@@ -238,18 +234,7 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} zamówień
 </details>
 </div>
 
-{{-- KONTAKT --}}
-<div class="glass-box">
-<details>
-<summary>📞 Kontakt i social media</summary>
-<div>
-📞 {{ $firm->phone }}<br>
-📍 {{ $firm->address }}
-</div>
-</details>
-</div>
-
-{{-- ZGODY --}}
+{{-- RODO --}}
 <div class="glass-box">
 <details>
 <summary>🔔 Zgody marketingowe i RODO</summary>

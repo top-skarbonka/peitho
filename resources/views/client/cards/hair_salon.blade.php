@@ -2,9 +2,14 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>{{ $firm->name ?? 'Karta lojalnościowa' }}</title>
+<title>{{ $firm->name }} – karta lojalnościowa | Looply</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===== FAVICON ===== -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
 
 <style>
 *{
@@ -29,6 +34,7 @@ body{
     align-items:flex-start;
     padding:20px 16px 40px;
 }
+
 .container{
     width:100%;
     max-width:400px;
@@ -98,7 +104,7 @@ body{
     margin-top:6px;
 }
 
-/* ===== GLASS BOX ===== */
+/* ===== BOX ===== */
 .glass-box{
     background:rgba(255,255,255,.35);
     backdrop-filter:blur(10px);
@@ -108,7 +114,6 @@ body{
     margin-bottom:14px;
 }
 
-/* ===== ACCORDION ===== */
 details summary{
     cursor:pointer;
     font-weight:700;
@@ -148,27 +153,6 @@ details > div{
 .progress-fill{
     height:100%;
     background:linear-gradient(90deg,#c9b6aa,#b08d7d);
-}
-
-/* ===== SOCIAL ===== */
-.social-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:12px;
-    justify-items:center;
-}
-
-.social-btn{
-    width:100%;
-    max-width:160px;
-    background:#fff;
-    color:#222;
-    padding:10px;
-    border-radius:999px;
-    font-weight:600;
-    text-align:center;
-    text-decoration:none;
 }
 </style>
 </head>
@@ -222,56 +206,17 @@ Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
        font-weight:700;
        text-decoration:none;
    ">
-    ⭐ Zobacz / dodaj opinię
+⭐ Zobacz / dodaj opinię
 </a>
 </div>
 </details>
 </div>
 @endif
 
-{{-- NAGRODA --}}
-<div class="glass-box">
-<details open>
-<summary>🎁 Nagroda</summary>
-<div>
-<strong>{{ $maxStamps }} wizyt</strong> = rabat <strong>50 zł</strong><br>
-<small>Kwotę/zasady nagrody ustawimy później w panelu firmy.</small>
-</div>
-</details>
-</div>
-
-{{-- KONTAKT + SOCIAL --}}
-<div class="glass-box">
-<details>
-<summary>📞 Kontakt i social media</summary>
-
-<div>
-📞 {{ $firm->phone }}<br>
-📍 {{ $firm->address }}
-
-<div class="social-grid">
-@if($firm->facebook_url)
-<a class="social-btn" href="{{ $firm->facebook_url }}" target="_blank">Facebook</a>
-@endif
-@if($firm->instagram_url)
-<a class="social-btn" href="{{ $firm->instagram_url }}" target="_blank">Instagram</a>
-@endif
-@if($firm->google_url)
-<a class="social-btn" href="{{ $firm->google_url }}" target="_blank">Google</a>
-@endif
-@if($firm->google_review_url)
-<a class="social-btn" href="{{ $firm->google_review_url }}" target="_blank">⭐ Opinie</a>
-@endif
-</div>
-</div>
-</details>
-</div>
-
 {{-- POSTĘP --}}
 <div class="glass-box">
 <details>
-<summary>📊 Postęp karty</summary>
-
+<summary>📊 Postęp</summary>
 <div>
 Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} wizyt
 <div class="progress-bar">
@@ -281,32 +226,22 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} wizyt
 </details>
 </div>
 
-{{-- ZGODY --}}
+{{-- RODO --}}
 <div class="glass-box">
 <details>
 <summary>🔔 Zgody marketingowe i RODO</summary>
-
 <div>
 @if($client->sms_marketing_consent)
-✅ <strong>Zgoda na SMS marketing</strong><br>
-<small>Wyrażona: {{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
+✅ Zgoda na SMS marketing<br>
+<small>{{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
 @else
 ❌ Brak zgody na SMS marketing
 @endif
 
 <hr style="margin:12px 0;opacity:.3;">
 
-<strong>Regulamin i polityka prywatności</strong><br>
-<small>Zaakceptowane: {{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
-
-<hr style="margin:12px 0;opacity:.3;">
-
-<strong>Cofnięcie zgód</strong><br>
-W każdej chwili możesz cofnąć zgody, pisząc na:<br>
-<a href="mailto:zgody@looply.net.pl"
-style="color:#111;font-weight:600;text-decoration:underline;">
-zgody@looply.net.pl
-</a>
+Regulamin i polityka prywatności<br>
+<small>{{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
 </div>
 </details>
 </div>

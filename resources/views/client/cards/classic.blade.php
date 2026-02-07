@@ -6,6 +6,20 @@
 
 <title>{{ $firm->name }} – karta lojalnościowa</title>
 
+<!-- FAVICON -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6f47ff">
+
+<!-- iOS ADD TO HOME SCREEN -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="{{ $firm->name }}">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
@@ -106,7 +120,6 @@ details summary{cursor:pointer;font-weight:600;}
     <h1>{{ $firm->name }}</h1>
     <div class="subtitle">Twoja karta lojalnościowa</div>
 
-    {{-- ⭐ GWIAZDKI --}}
     <div class="stickers-grid">
         @for($i=1;$i<=$maxStamps;$i++)
             <div class="sticker {{ $i <= $current ? 'active' : '' }}">★</div>
@@ -119,34 +132,6 @@ details summary{cursor:pointer;font-weight:600;}
     </div>
 </div>
 
-{{-- ⭐ OPINIE GOOGLE --}}
-@if($firm->google_url)
-<div class="glass-box">
-    <details>
-        <summary>⭐ Opinie Google</summary>
-        <div style="margin-top:12px;font-size:.95rem;line-height:1.5;">
-            Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
-
-            <a href="{{ $firm->google_url }}"
-               target="_blank"
-               rel="noopener"
-               style="
-                   display:inline-block;
-                   padding:10px 20px;
-                   border-radius:999px;
-                   background:#fbbc05;
-                   color:#000;
-                   font-weight:700;
-                   text-decoration:none;
-               ">
-                ⭐ Zobacz / dodaj opinię
-            </a>
-        </div>
-    </details>
-</div>
-@endif
-
-{{-- POSTĘP --}}
 <div class="glass-box">
     🎯 Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} gwiazdek
     <div class="progress-bar">
@@ -154,7 +139,6 @@ details summary{cursor:pointer;font-weight:600;}
     </div>
 </div>
 
-{{-- HISTORIA --}}
 @if($card->stamps->count())
 <div class="glass-box">
     <details>
@@ -168,51 +152,21 @@ details summary{cursor:pointer;font-weight:600;}
 </div>
 @endif
 
-{{-- ZGODY --}}
 <div class="glass-box">
     <details>
         <summary>🔔 Zgody marketingowe i RODO</summary>
-
         <div style="margin-top:12px;font-size:.9rem;line-height:1.5;">
-
             @if($client->sms_marketing_consent)
-                <div>
-                    ✅ <strong>Zgoda na SMS marketing</strong><br>
-                    <small>
-                        Wyrażona: {{ $client->sms_marketing_consent_at->format('d.m.Y H:i') }}
-                    </small>
-                </div>
+                ✅ <strong>Zgoda na SMS marketing</strong><br>
+                <small>{{ $client->sms_marketing_consent_at->format('d.m.Y H:i') }}</small>
             @else
-                <div>❌ Brak zgody na SMS marketing</div>
+                ❌ Brak zgody na SMS marketing
             @endif
 
             <hr style="margin:12px 0;opacity:.3;">
 
-            <div>
-                📄 <strong>Regulamin i polityka prywatności</strong><br>
-                <small>
-                    Zaakceptowane: {{ $client->terms_accepted_at->format('d.m.Y H:i') }}
-                </small>
-            </div>
-
-            <hr style="margin:12px 0;opacity:.3;">
-
-            <div style="font-size:.85rem;opacity:.9;">
-                🔐 <strong>Cofnięcie zgód</strong><br>
-                W każdej chwili możesz cofnąć udzielone zgody,
-                wysyłając wiadomość e-mail na adres:<br>
-
-                <a href="mailto:zgody@looply.net.pl"
-                   style="color:#fff;font-weight:600;text-decoration:underline;">
-                    zgody@looply.net.pl
-                </a>
-
-                <div style="margin-top:6px;opacity:.8;">
-                    Cofnięcie zgody nie wpływa na zgodność
-                    z wcześniej wykonanym przetwarzaniem danych.
-                </div>
-            </div>
-
+            <strong>Regulamin i polityka prywatności</strong><br>
+            <small>{{ $client->terms_accepted_at->format('d.m.Y H:i') }}</small>
         </div>
     </details>
 </div>

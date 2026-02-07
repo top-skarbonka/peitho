@@ -2,8 +2,14 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ $firm->name ?? 'Karta lojalnościowa' }}</title>
+
+<title>{{ $firm->name }} – karta lojalnościowa | Looply</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===== FAVICON (tylko ikonka w karcie / przeglądarce) ===== -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
 
 <style>
 *{
@@ -56,7 +62,6 @@ body{
     font-size:30px;
     opacity:.25;
 }
-
 .cup.active{
     opacity:1;
 }
@@ -73,7 +78,6 @@ body{
     width:150px;
     height:150px;
 }
-
 .code-number{
     font-size:1.6rem;
     font-weight:800;
@@ -98,18 +102,16 @@ details summary{
     justify-content:center;
     gap:8px;
 }
-
 details summary::before{
     content:"▶";
     transition:.2s;
 }
-
 details[open] summary::before{
     transform:rotate(90deg);
 }
-
-details summary::-webkit-details-marker{display:none;}
-
+details summary::-webkit-details-marker{
+    display:none;
+}
 details > div{
     margin-top:12px;
     font-size:.9rem;
@@ -122,7 +124,7 @@ details > div{
 <body>
 <div class="container">
 
-{{-- KARTA --}}
+<!-- KARTA -->
 <div class="card">
     <h1>{{ $firm->name }}</h1>
     <div class="subtitle">Karta lojalnościowa kawiarni</div>
@@ -141,86 +143,85 @@ details > div{
     </div>
 </div>
 
-{{-- ⭐ OPINIE GOOGLE --}}
+<!-- ⭐ OPINIE GOOGLE -->
 @if($firm->google_url)
 <div class="glass-box">
 <details>
-    <summary>⭐ Opinie Google</summary>
-    <div>
-        Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
+<summary>⭐ Opinie Google</summary>
+<div>
+Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
 
-        <a href="{{ $firm->google_url }}"
-           target="_blank"
-           rel="noopener"
-           style="
-               display:inline-block;
-               padding:10px 18px;
-               border-radius:999px;
-               background:#fbbc05;
-               color:#000;
-               font-weight:700;
-               text-decoration:none;
-           ">
-            ⭐ Zobacz / dodaj opinię
-        </a>
-    </div>
+<a href="{{ $firm->google_url }}"
+   target="_blank"
+   rel="noopener"
+   style="
+       display:inline-block;
+       padding:10px 18px;
+       border-radius:999px;
+       background:#fbbc05;
+       color:#000;
+       font-weight:700;
+       text-decoration:none;
+   ">
+⭐ Zobacz / dodaj opinię
+</a>
+</div>
 </details>
 </div>
 @endif
 
-{{-- NAGRODA --}}
+<!-- NAGRODA -->
 <div class="glass-box">
 <details open>
-    <summary>🎁 Nagroda</summary>
-    <div>
-        {{ $maxStamps }} kaw = <strong>Kawa gratis ☕</strong>
-    </div>
+<summary>🎁 Nagroda</summary>
+<div>
+{{ $maxStamps }} kaw = <strong>Kawa gratis ☕</strong>
+</div>
 </details>
 </div>
 
-{{-- KONTAKT --}}
+<!-- KONTAKT -->
 <div class="glass-box">
 <details>
-    <summary>📍 Kontakt i adres</summary>
-    <div>
-        @if($firm->phone)
-            📞 {{ $firm->phone }}<br>
-        @endif
-
-        @if($firm->address)
-            📍 {{ $firm->address }}
-        @endif
-    </div>
+<summary>📍 Kontakt</summary>
+<div>
+@if($firm->phone)
+📞 {{ $firm->phone }}<br>
+@endif
+@if($firm->address)
+📍 {{ $firm->address }}
+@endif
+</div>
 </details>
 </div>
 
-{{-- POSTĘP --}}
+<!-- POSTĘP -->
 <div class="glass-box">
 <details>
-    <summary>📊 Postęp karty</summary>
-    <div>
-        Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} kaw
-    </div>
+<summary>📊 Postęp</summary>
+<div>
+Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} kaw
+</div>
 </details>
 </div>
 
-{{-- RODO --}}
+<!-- RODO -->
 <div class="glass-box">
 <details>
-    <summary>🔔 Zgody marketingowe i RODO</summary>
-    <div>
-        @if($client->sms_marketing_consent)
-            ✅ Zgoda na SMS marketing<br>
-            <small>{{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
-        @else
-            ❌ Brak zgody na SMS marketing
-        @endif
+<summary>🔔 Zgody marketingowe i RODO</summary>
+<div>
+@if($client->sms_marketing_consent)
+✅ Zgoda na SMS marketing<br>
+<small>{{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
+@else
+❌ Brak zgody na SMS marketing
+@endif
 
-        <hr style="margin:12px 0;opacity:.3;">
+<hr style="margin:12px 0;opacity:.3;">
 
-        Regulamin i polityka prywatności<br>
-        <small>{{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
-    </div>
+Regulamin i polityka prywatności<br>
+<small>{{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
+</div>
 </details>
 </div>
 

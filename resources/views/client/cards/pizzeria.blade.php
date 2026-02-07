@@ -2,9 +2,14 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>{{ $firm->name ?? 'Karta lojalnościowa' }}</title>
+<title>{{ $firm->name }} – karta lojalnościowa | Looply</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===== FAVICON ===== -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
 
 <style>
 *{
@@ -91,7 +96,7 @@ body{
     margin-top:6px;
 }
 
-/* GLASS BOX */
+/* BOX */
 .glass-box{
     background:rgba(255,255,255,.35);
     backdrop-filter:blur(10px);
@@ -101,7 +106,6 @@ body{
     margin-bottom:14px;
 }
 
-/* ACCORDION */
 details summary{
     cursor:pointer;
     font-weight:700;
@@ -115,7 +119,6 @@ details summary::before{
     content:"▶";
     transition:.2s;
 }
-
 details[open] summary::before{
     transform:rotate(90deg);
 }
@@ -143,23 +146,6 @@ details > div{
 .progress-fill{
     height:100%;
     background:linear-gradient(90deg,#ffb347,#ff5f00);
-}
-
-/* SOCIAL */
-.social-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:12px;
-}
-
-.social-btn{
-    background:#fff;
-    color:#111;
-    padding:10px;
-    border-radius:999px;
-    font-weight:600;
-    text-decoration:none;
 }
 </style>
 </head>
@@ -204,8 +190,15 @@ Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
 <a href="{{ $firm->google_url }}"
    target="_blank"
    rel="noopener"
-   class="social-btn"
-   style="display:inline-block">
+   style="
+       display:inline-block;
+       padding:10px 18px;
+       border-radius:999px;
+       background:#fbbc05;
+       color:#000;
+       font-weight:700;
+       text-decoration:none;
+   ">
 ⭐ Zobacz / dodaj opinię
 </a>
 </div>
@@ -218,8 +211,7 @@ Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
 <details open>
 <summary>🎁 Nagroda</summary>
 <div>
-<strong>{{ $maxStamps }} zamówień</strong> = 🍕 <strong>Pizza gratis</strong><br>
-<small>Warunki nagrody ustala pizzeria.</small>
+<strong>{{ $maxStamps }} zamówień</strong> = 🍕 <strong>Pizza gratis</strong>
 </div>
 </details>
 </div>
@@ -237,30 +229,7 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} zamówień
 </details>
 </div>
 
-{{-- KONTAKT --}}
-<div class="glass-box">
-<details>
-<summary>📞 Kontakt i social media</summary>
-<div>
-📞 {{ $firm->phone }}<br>
-📍 {{ $firm->address }}
-
-<div class="social-grid">
-@if($firm->facebook_url)
-<a class="social-btn" href="{{ $firm->facebook_url }}" target="_blank">Facebook</a>
-@endif
-@if($firm->instagram_url)
-<a class="social-btn" href="{{ $firm->instagram_url }}" target="_blank">Instagram</a>
-@endif
-@if($firm->google_url)
-<a class="social-btn" href="{{ $firm->google_url }}" target="_blank">Google</a>
-@endif
-</div>
-</div>
-</details>
-</div>
-
-{{-- ZGODY --}}
+{{-- RODO --}}
 <div class="glass-box">
 <details>
 <summary>🔔 Zgody marketingowe i RODO</summary>
@@ -276,13 +245,6 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} zamówień
 
 Regulamin i polityka prywatności<br>
 <small>{{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
-
-<hr style="margin:12px 0;opacity:.3;">
-
-Cofnięcie zgód:  
-<a href="mailto:zgody@looply.net.pl" style="color:#111;font-weight:600">
-zgody@looply.net.pl
-</a>
 </div>
 </details>
 </div>

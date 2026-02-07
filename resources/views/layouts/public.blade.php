@@ -2,8 +2,24 @@
 <html lang="pl">
 <head>
     <meta charset="utf-8">
-    <title>Peitho</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Looply – karta lojalnościowa</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    {{-- FAVICON (PRZEGLĄDARKI) --}}
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png">
+
+    {{-- PWA --}}
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6a5af9">
+
+    {{-- iOS / Add to Home Screen --}}
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Looply">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
     {{-- Font --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -102,6 +118,7 @@
         }
     </style>
 </head>
+
 <body>
 
 {{-- 🔐 ADMIN PANEL --}}
@@ -110,19 +127,16 @@
         <div class="admin-bar-inner">
 
             <div class="admin-left">
-                <div class="admin-logo">🛠 Peitho Admin</div>
+                <div class="admin-logo">🛠 Looply Admin</div>
 
-                {{-- 📊 DASHBOARD --}}
                 <a href="{{ route('admin.dashboard') }}" class="admin-link">
                     📊 Dashboard
                 </a>
 
-                {{-- 🏢 FIRMY --}}
                 <a href="{{ route('admin.firms.index') }}" class="admin-link">
                     🏢 Firmy
                 </a>
 
-                {{-- ➕ NOWA FIRMA --}}
                 <a href="{{ route('admin.firms.create') }}" class="admin-link primary">
                     ➕ Nowa firma
                 </a>

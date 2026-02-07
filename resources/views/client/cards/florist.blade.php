@@ -2,9 +2,24 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>{{ $firm->name ?? 'Karta lojalnościowa' }}</title>
+<title>{{ $firm->name ?? 'Karta lojalnościowa' }} – Looply</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===== FAVICON ===== -->
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f472b6">
+
+<!-- ===== iOS ADD TO HOME ===== -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="{{ $firm->name ?? 'Looply' }}">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 
 <style>
 *{
@@ -45,7 +60,7 @@ body{
     object-fit:contain;
 }
 
-/* ===== KARTA ===== */
+/* ===== CARD ===== */
 .card{
     background:#fff;
     border-radius:32px;
@@ -111,17 +126,20 @@ details summary{
     align-items:center;
     justify-content:center;
     gap:8px;
-    text-align:center;
 }
 
 details summary::before{
     content:"▶";
     transition:.2s;
 }
+
 details[open] summary::before{
     transform:rotate(90deg);
 }
-details summary::-webkit-details-marker{display:none;}
+
+details summary::-webkit-details-marker{
+    display:none;
+}
 
 details > div{
     text-align:center;
@@ -129,47 +147,13 @@ details > div{
     font-size:.9rem;
     line-height:1.5;
 }
-
-/* ===== PROGRESS ===== */
-.progress-bar{
-    height:10px;
-    background:rgba(255,255,255,.35);
-    border-radius:999px;
-    overflow:hidden;
-    margin-top:10px;
-}
-.progress-fill{
-    height:100%;
-    background:linear-gradient(90deg,#ec4899,#f472b6);
-}
-
-/* ===== SOCIAL ===== */
-.social-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:12px;
-    justify-items:center;
-}
-
-.social-btn{
-    width:100%;
-    max-width:160px;
-    background:#fff;
-    color:#222;
-    padding:10px;
-    border-radius:999px;
-    font-weight:600;
-    text-align:center;
-    text-decoration:none;
-}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-{{-- LOGO --}}
+<!-- LOGO -->
 <div class="logo-section">
     @if($firm->logo_path)
         <img src="{{ asset('storage/'.$firm->logo_path) }}" alt="{{ $firm->name }}">
@@ -178,7 +162,7 @@ details > div{
     @endif
 </div>
 
-{{-- KARTA --}}
+<!-- KARTA -->
 <div class="card">
     <h1>{{ $firm->name }}</h1>
     <div class="subtitle">Karta lojalnościowa kwiaciarni</div>
@@ -195,101 +179,60 @@ details > div{
     </div>
 </div>
 
-{{-- ⭐ OPINIE GOOGLE --}}
+<!-- ⭐ OPINIE GOOGLE (UJEDNOLICONY BOX) -->
 @if($firm->google_url)
 <div class="glass-box">
 <details>
-    <summary>⭐ Opinie Google</summary>
-    <div>
-        Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
-
-        <a href="{{ $firm->google_url }}"
-           target="_blank"
-           rel="noopener"
-           style="
-               display:inline-block;
-               padding:10px 18px;
-               border-radius:999px;
-               background:#fbbc05;
-               color:#000;
-               font-weight:700;
-               text-decoration:none;
-           ">
-            ⭐ Zobacz / dodaj opinię
-        </a>
-    </div>
-</details>
-</div>
-@endif
-
-{{-- KONTAKT + SOCIAL --}}
-<div class="glass-box">
-<details>
-<summary>📞 Kontakt i social media</summary>
-
+<summary>⭐ Opinie Google</summary>
 <div>
-📞 {{ $firm->phone }}<br>
-📍 {{ $firm->address }}
+Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
 
-<div class="social-grid">
-@if($firm->facebook_url)
-<a class="social-btn" href="{{ $firm->facebook_url }}" target="_blank">Facebook</a>
-@endif
-@if($firm->instagram_url)
-<a class="social-btn" href="{{ $firm->instagram_url }}" target="_blank">Instagram</a>
-@endif
-@if($firm->google_url)
-<a class="social-btn" href="{{ $firm->google_url }}" target="_blank">Google</a>
-@endif
+<a href="{{ $firm->google_url }}"
+   target="_blank"
+   rel="noopener"
+   style="
+       display:inline-block;
+       padding:10px 18px;
+       border-radius:999px;
+       background:#fbbc05;
+       color:#000;
+       font-weight:700;
+       text-decoration:none;
+   ">
+⭐ Zobacz / dodaj opinię
+</a>
 </div>
-</div>
-
 </details>
 </div>
+@endif
 
-{{-- POSTĘP --}}
+<!-- POSTĘP -->
 <div class="glass-box">
-<details>
+<details open>
 <summary>📊 Postęp karty</summary>
-
 <div>
 Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} bukietów
-<div class="progress-bar">
-<div class="progress-fill" style="width:{{ ($current/$maxStamps)*100 }}%"></div>
 </div>
-</div>
-
 </details>
 </div>
 
-{{-- ZGODY --}}
+<!-- ZGODY -->
 <div class="glass-box">
 <details>
 <summary>🔔 Zgody marketingowe i RODO</summary>
-
 <div>
 @if($client->sms_marketing_consent)
-✅ <strong>Zgoda na SMS marketing</strong><br>
-<small>Wyrażona: {{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
+✅ Zgoda na SMS marketing<br>
+<small>{{ $client->sms_marketing_consent_at?->format('d.m.Y H:i') }}</small>
 @else
 ❌ Brak zgody na SMS marketing
 @endif
 
 <hr style="margin:12px 0;opacity:.3;">
 
-<strong>Regulamin i polityka prywatności</strong><br>
-<small>Zaakceptowane: {{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
-
-<hr style="margin:12px 0;opacity:.3;">
-
-<strong>Cofnięcie zgód</strong><br>
-W każdej chwili możesz cofnąć zgody, pisząc na:<br>
-<a href="mailto:zgody@looply.net.pl"
-style="color:#fff;font-weight:600;text-decoration:underline;">
-zgody@looply.net.pl
-</a>
+Regulamin i polityka prywatności<br>
+<small>{{ $client->terms_accepted_at?->format('d.m.Y H:i') }}</small>
 </div>
-
 </details>
 </div>
 
