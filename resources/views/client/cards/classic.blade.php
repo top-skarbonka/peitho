@@ -106,7 +106,7 @@ details summary{cursor:pointer;font-weight:600;}
     <h1>{{ $firm->name }}</h1>
     <div class="subtitle">Twoja karta lojalnościowa</div>
 
-    {{-- ⭐ GWIAZDKI – STAN Z BLADE --}}
+    {{-- ⭐ GWIAZDKI --}}
     <div class="stickers-grid">
         @for($i=1;$i<=$maxStamps;$i++)
             <div class="sticker {{ $i <= $current ? 'active' : '' }}">★</div>
@@ -118,6 +118,33 @@ details summary{cursor:pointer;font-weight:600;}
         <div class="code-number">{{ $displayCode }}</div>
     </div>
 </div>
+
+{{-- ⭐ OPINIE GOOGLE --}}
+@if($firm->google_url)
+<div class="glass-box">
+    <details>
+        <summary>⭐ Opinie Google</summary>
+        <div style="margin-top:12px;font-size:.95rem;line-height:1.5;">
+            Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
+
+            <a href="{{ $firm->google_url }}"
+               target="_blank"
+               rel="noopener"
+               style="
+                   display:inline-block;
+                   padding:10px 20px;
+                   border-radius:999px;
+                   background:#fbbc05;
+                   color:#000;
+                   font-weight:700;
+                   text-decoration:none;
+               ">
+                ⭐ Zobacz / dodaj opinię
+            </a>
+        </div>
+    </details>
+</div>
+@endif
 
 {{-- POSTĘP --}}
 <div class="glass-box">
@@ -175,10 +202,11 @@ details summary{cursor:pointer;font-weight:600;}
                 W każdej chwili możesz cofnąć udzielone zgody,
                 wysyłając wiadomość e-mail na adres:<br>
 
-<a href="mailto:zgody@looply.net.pl"
-   style="color:#fff;font-weight:600;text-decoration:underline;">
-    zgody@looply.net.pl
-</a>
+                <a href="mailto:zgody@looply.net.pl"
+                   style="color:#fff;font-weight:600;text-decoration:underline;">
+                    zgody@looply.net.pl
+                </a>
+
                 <div style="margin-top:6px;opacity:.8;">
                     Cofnięcie zgody nie wpływa na zgodność
                     z wcześniej wykonanym przetwarzaniem danych.
@@ -188,6 +216,7 @@ details summary{cursor:pointer;font-weight:600;}
         </div>
     </details>
 </div>
+
 </div>
 </body>
 </html>

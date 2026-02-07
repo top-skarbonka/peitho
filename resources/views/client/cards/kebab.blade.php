@@ -81,7 +81,7 @@ body{
 
 .sticker span{
     display:inline-block;
-    transform:scaleX(-1); /* 🔥 ODBICIE W PRAWO */
+    transform:scaleX(-1);
 }
 
 .sticker.active{
@@ -187,6 +187,33 @@ details > div{
 <div class="code-number">{{ $displayCode }}</div>
 </div>
 </div>
+
+{{-- ⭐ OPINIE GOOGLE --}}
+@if($firm->google_url)
+<div class="glass-box">
+<details>
+<summary>⭐ Opinie Google</summary>
+<div>
+Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
+
+<a href="{{ $firm->google_url }}"
+   target="_blank"
+   rel="noopener"
+   style="
+       display:inline-block;
+       padding:10px 18px;
+       border-radius:999px;
+       background:#fbbc05;
+       color:#000;
+       font-weight:700;
+       text-decoration:none;
+   ">
+⭐ Zobacz / dodaj opinię
+</a>
+</div>
+</details>
+</div>
+@endif
 
 {{-- NAGRODA --}}
 <div class="glass-box">

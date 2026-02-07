@@ -193,6 +193,26 @@ details > div{
 </div>
 </div>
 
+{{-- ⭐ OPINIE GOOGLE --}}
+@if($firm->google_url)
+<div class="glass-box">
+<details>
+<summary>⭐ Opinie Google</summary>
+<div>
+Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
+
+<a href="{{ $firm->google_url }}"
+   target="_blank"
+   rel="noopener"
+   class="social-btn"
+   style="display:inline-block">
+⭐ Zobacz / dodaj opinię
+</a>
+</div>
+</details>
+</div>
+@endif
+
 {{-- NAGRODA --}}
 <div class="glass-box">
 <details open>

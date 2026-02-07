@@ -9,38 +9,35 @@ class Firm extends Authenticatable
 {
     use HasFactory;
 
-    protected $fillable = [
-        'firm_id',
-        'slug',
-        'name',
-        'email',
-        'password',
-        'program_id',
-        'city',
-        'address',
-        'postal_code',
-        'nip',
-        'phone',
+protected $fillable = [
+    'firm_id',
+    'slug',
+    'name',
+    'email',
+    'password',
+    'program_id',
+    'city',
+    'address',
+    'postal_code',
+    'nip',
+    'phone',
 
-        // 💰 BILLING / SAAS
-        'subscription_status',
-        'subscription_ends_at',
-        'plan',
-        'billing_period',
-        'subscription_forced_status',
+    // 🎨 WYGLĄD / KARTA
+    'card_template',
 
-        // 🎨 karta
-        'card_template',
+    // 🔗 LINKI
+    'facebook_url',
+    'instagram_url',
+    'google_url',
+    'google_review_url',
 
-        // 🔗 linki
-        'facebook_url',
-        'instagram_url',
-        'google_url',
-
-        // 🖼 logo
-        'logo_path',
-    ];
-
+    // 💰 BILLING / SAAS
+    'subscription_status',
+    'subscription_ends_at',
+    'plan',
+    'billing_period',
+    'subscription_forced_status',
+];
     protected $hidden = [
         'password',
     ];

@@ -83,7 +83,6 @@ body{
 }
 .sticker.active{
     opacity:1;
-    /* neutral pastel glow */
     filter:drop-shadow(0 0 6px rgba(120,84,72,.45));
 }
 
@@ -121,7 +120,6 @@ details summary{
     text-align:center;
 }
 
-/* ▶ po LEWEJ */
 details summary::before{
     content:"▶";
     transition:.2s;
@@ -130,12 +128,8 @@ details[open] summary::before{
     transform:rotate(90deg);
 }
 
-/* wyłączamy domyślną strzałkę */
-details summary::-webkit-details-marker{
-    display:none;
-}
+details summary::-webkit-details-marker{display:none;}
 
-/* środek zawartości */
 details > div{
     text-align:center;
     margin-top:12px;
@@ -153,7 +147,6 @@ details > div{
 }
 .progress-fill{
     height:100%;
-    /* hair salon pastel */
     background:linear-gradient(90deg,#c9b6aa,#b08d7d);
 }
 
@@ -209,7 +202,34 @@ details > div{
     </div>
 </div>
 
-{{-- NAGRODA (placeholder - później podmienimy na wartość z bazy) --}}
+{{-- ⭐ OPINIE GOOGLE --}}
+@if($firm->google_url)
+<div class="glass-box">
+<details>
+<summary>⭐ Opinie Google</summary>
+<div>
+Sprawdź lub dodaj opinię o <strong>{{ $firm->name }}</strong><br><br>
+
+<a href="{{ $firm->google_url }}"
+   target="_blank"
+   rel="noopener"
+   style="
+       display:inline-block;
+       padding:10px 18px;
+       border-radius:999px;
+       background:#fbbc05;
+       color:#000;
+       font-weight:700;
+       text-decoration:none;
+   ">
+    ⭐ Zobacz / dodaj opinię
+</a>
+</div>
+</details>
+</div>
+@endif
+
+{{-- NAGRODA --}}
 <div class="glass-box">
 <details open>
 <summary>🎁 Nagroda</summary>
@@ -244,7 +264,6 @@ details > div{
 @endif
 </div>
 </div>
-
 </details>
 </div>
 
@@ -259,7 +278,6 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} wizyt
 <div class="progress-fill" style="width:{{ ($current/$maxStamps)*100 }}%"></div>
 </div>
 </div>
-
 </details>
 </div>
 
@@ -286,11 +304,10 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} wizyt
 <strong>Cofnięcie zgód</strong><br>
 W każdej chwili możesz cofnąć zgody, pisząc na:<br>
 <a href="mailto:zgody@looply.net.pl"
-style="color:#fff;font-weight:600;text-decoration:underline;">
+style="color:#111;font-weight:600;text-decoration:underline;">
 zgody@looply.net.pl
 </a>
 </div>
-
 </details>
 </div>
 
