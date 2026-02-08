@@ -78,7 +78,11 @@ class PublicClientController extends Controller
 
         auth('client')->login($client);
 
-return redirect()->route('client.dashboard');    }
+        // 🎉 FIRST-TIME USER EXPERIENCE – pierwszy portfel
+        session()->flash('first_time_wallet', true);
+
+        return redirect()->route('client.dashboard');
+    }
 
     /**
      * ============================

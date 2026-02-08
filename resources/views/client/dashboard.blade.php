@@ -211,7 +211,7 @@
     </header>
 
     {{-- 🎉 FIRST TIME USER EXPERIENCE --}}
-    @if(session('first_card_welcome'))
+    @if(session('first_time_wallet'))
         <div style="
             margin-bottom:18px;
             padding:16px 18px;
@@ -224,21 +224,15 @@
                 🎉 Witaj w swoim portfelu kart lojalnościowych
             </div>
 
-            <div style="font-size:.9rem;opacity:.9;margin-bottom:12px;">
-                Tutaj będą wszystkie Twoje karty z kawiarni, salonów i sklepów.
+            <div style="font-size:.9rem;opacity:.95;line-height:1.5;">
+                Twoje ulubione miejsca nagradzają Cię za powroty.<br>
+                Zbieraj <strong>naklejki</strong>, korzystaj z rabatów i odbieraj nagrody —
+                bez papierowych kart i chaosu.
             </div>
 
-            <span style="
-                display:inline-block;
-                padding:10px 16px;
-                border-radius:999px;
-                background:#fff;
-                color:#000;
-                font-weight:700;
-                font-size:.85rem;
-            ">
-                ➕ Dodaj kolejną kartę
-            </span>
+            <div style="margin-top:10px;font-size:.85rem;opacity:.95;">
+                👉 Wystarczy, że pokażesz kartę przy zakupach.
+            </div>
         </div>
     @endif
 
@@ -265,7 +259,7 @@
                         </div>
 
                         <div class="desc">
-                            {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej punkty' }}
+                            {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej naklejki' }}
                         </div>
 
                         <div class="progress">
