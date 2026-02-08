@@ -41,8 +41,7 @@ class ClientAuthController extends Controller
         $request->session()->regenerate();
 
         // ✅ PO LOGOWANIU → PORTFEL KART (DASHBOARD)
-        return redirect()->route('client.dashboard');
-    }
+return redirect()->route('client.dashboard');    }
 
     /**
      * Wylogowanie klienta

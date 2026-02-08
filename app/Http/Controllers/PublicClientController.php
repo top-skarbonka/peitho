@@ -78,8 +78,7 @@ class PublicClientController extends Controller
 
         auth('client')->login($client);
 
-        return redirect()->route('client.loyalty.card');
-    }
+return redirect()->route('client.dashboard');    }
 
     /**
      * ============================
