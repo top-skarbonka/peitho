@@ -2,8 +2,11 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Logowanie klienta</title>
+<title>Zaloguj się do swojego portfela kart</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ✅ FAVICON -->
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -35,6 +38,13 @@ body{
     border-radius:32px;
     padding:30px 22px;
     box-shadow:0 25px 60px rgba(0,0,0,.25);
+}
+
+/* ✅ LOGO */
+.logo{
+    width:160px;
+    margin:0 auto 18px;
+    display:block;
 }
 
 .icon-box{
@@ -151,10 +161,13 @@ button:hover{
 
     <div class="login-card">
 
+        <!-- ✅ LOGO LOOPLY -->
+        <img src="{{ asset('branding/logo.png') }}" alt="Looply" class="logo">
+
         <div class="icon-box">🔐</div>
 
-        <h1>Logowanie</h1>
-        <div class="subtitle">Zaloguj się do swojej karty lojalnościowej</div>
+        <h1>Zaloguj się</h1>
+        <div class="subtitle">Zaloguj się do swojego portfela kart lojalnościowych</div>
 
         @if ($errors->any())
             <div class="error-box">
