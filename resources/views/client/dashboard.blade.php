@@ -13,6 +13,11 @@
             --secondary: #ec4899;
             --glass: rgba(255,255,255,.06);
             --glass-border: rgba(255,255,255,.12);
+
+            /* KOLORY TEKSTU */
+            --text-main: #f8fafc;
+            --text-soft: rgba(248,250,252,.75);
+            --text-muted: rgba(248,250,252,.55);
         }
 
         * { box-sizing: border-box; }
@@ -22,7 +27,7 @@
             min-height: 100vh;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-            color: #f8fafc;
+            color: var(--text-main);
             padding: 18px 14px 40px;
         }
 
@@ -36,7 +41,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .header-left {
@@ -55,11 +60,6 @@
             box-shadow: 0 0 18px rgba(168,85,247,.45);
         }
 
-        .logo-icon i {
-            color: #fff;
-            font-size: 1.3rem;
-        }
-
         header h1 {
             font-size: 1.4rem;
             margin: 0;
@@ -67,7 +67,7 @@
 
         header span {
             font-size: .85rem;
-            opacity: .65;
+            color: var(--text-muted);
         }
 
         .privacy-link {
@@ -76,36 +76,22 @@
             border-radius: 999px;
             background: var(--glass);
             border: 1px solid var(--glass-border);
-            color: #f8fafc;
+            color: var(--text-main);
             text-decoration: none;
-        }
-
-        .privacy-link:hover {
-            opacity: 1;
         }
 
         .categories {
             display: flex;
             gap: 12px;
-            overflow-x: auto;
-            padding: 6px 2px 14px;
-            margin-bottom: 18px;
-            scrollbar-width: none;
+            margin-bottom: 20px;
         }
 
-        .categories::-webkit-scrollbar { display: none; }
-
         .category {
-            flex: 0 0 auto;
             padding: 10px 14px;
             border-radius: 999px;
             background: var(--glass);
             border: 1px solid var(--glass-border);
             font-size: .85rem;
-            cursor: pointer;
-            transition: .2s;
-            white-space: nowrap;
-            color: #f8fafc;
         }
 
         .category.active {
@@ -115,8 +101,8 @@
 
         .cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+            gap: 22px;
         }
 
         .card {
@@ -128,15 +114,89 @@
         }
 
         .brand {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 800;
-            margin-bottom: 8px;
+            color: var(--text-main);
+            margin-bottom: 4px;
         }
 
-        .desc {
+        .sub {
             font-size: .9rem;
-            line-height: 1.55;
-            color: rgba(248,250,252,.85);
+            color: var(--text-soft);
+            margin-bottom: 12px;
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.14);
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .progress span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-id {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+
+        .show-btn {
+            background: #fff;
+            color: #111;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: .85rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* BOX: DODAJ KARTĘ */
+        .add-card {
+            border: 2px dashed rgba(255,255,255,.18);
+            background: transparent;
+            min-height: 170px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-soft);
+            padding: 22px;
+        }
+
+        .add-card h3 {
+            font-size: 1rem;
+            margin: 0 0 8px;
+            color: var(--text-main);
+        }
+
+        .add-card p {
+            font-size: .85rem;
+            margin: 0;
+            line-height: 1.5;
+            color: var(--text-muted);
+        }
+
+        .icons {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            color: var(--text-soft);
         }
     </style>
 </head>
@@ -160,28 +220,64 @@
         </a>
     </header>
 
-    {{-- KATEGORIE --}}
     <div class="categories">
-        <div class="category active" data-category="all">Wszystkie</div>
+        <div class="category active">Wszystkie</div>
         @foreach($grouped as $category => $cards)
-            <div class="category" data-category="{{ $category }}">
+            <div class="category">
                 {{ ucfirst(str_replace('_',' ', $category)) }}
             </div>
         @endforeach
     </div>
 
-    {{-- GRID --}}
     <div class="cards-grid">
         @foreach($grouped as $category => $cards)
             @foreach($cards as $item)
-                <div class="card" data-category="{{ $category }}">
+                @php
+                    $percent = ($item['current'] / $item['max']) * 100;
+                @endphp
+
+                <div class="card">
                     <div class="brand">{{ $item['card']->firm->name }}</div>
-                    <div class="desc">
-                        {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej naklejki' }}
+                    <div class="sub">
+                        Zbieraj dalej punkty ({{ $item['current'] }}/{{ $item['max'] }})
+                    </div>
+
+                    <div class="progress">
+                        <span style="width: {{ $percent }}%"></span>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="card-id">ID: {{ $item['card']->id }}</div>
+
+                        <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}"
+                           class="show-btn">
+                            <i class="fa-solid fa-qrcode"></i>
+                            Pokaż kartę
+                        </a>
                     </div>
                 </div>
             @endforeach
         @endforeach
+
+        {{-- DODAJ NOWĄ KARTĘ --}}
+        <div class="card add-card">
+            <div>
+                <div class="icons">
+                    <i class="fa-solid fa-gift"></i>
+                    <i class="fa-solid fa-mobile-screen"></i>
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+
+                <h3>Twój portfel jest gotowy na więcej</h3>
+
+                <p>
+                    Coraz więcej firm korzysta z kart lojalnościowych Looply.<br>
+                    Przy kolejnych zakupach zapytaj:<br><br>
+                    <strong>„Czy mogę dostać kartę lojalnościową w Looply?”</strong><br><br>
+                    Jedna aplikacja • Wiele firm • Zero papieru
+                </p>
+            </div>
+        </div>
     </div>
 
 </div>
