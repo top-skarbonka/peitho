@@ -34,8 +34,15 @@
         header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 14px;
             margin-bottom: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
 
         .logo-icon {
@@ -63,6 +70,20 @@
             opacity: .65;
         }
 
+        .privacy-link {
+            font-size: .85rem;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: #f8fafc;
+            text-decoration: none;
+        }
+
+        .privacy-link:hover {
+            opacity: 1;
+        }
+
         .categories {
             display: flex;
             gap: 12px;
@@ -76,17 +97,15 @@
 
         .category {
             flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 10px;
             padding: 10px 14px;
             border-radius: 999px;
             background: var(--glass);
             border: 1px solid var(--glass-border);
             font-size: .85rem;
-            white-space: nowrap;
             cursor: pointer;
             transition: .2s;
+            white-space: nowrap;
+            color: #f8fafc;
         }
 
         .category.active {
@@ -106,93 +125,45 @@
             backdrop-filter: blur(14px);
             border-radius: 22px;
             padding: 22px;
-            position: relative;
-            overflow: hidden;
         }
-
-        .card::before {
-            content:'';
-            position:absolute;
-            top:-60%;
-            right:-60%;
-            width:220px;
-            height:220px;
-            background:linear-gradient(135deg,var(--primary),var(--secondary));
-            filter:blur(90px);
-            opacity:.15;
-        }
-
-        .card-content { position: relative; z-index: 1; }
 
         .brand {
-            display:flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .badge {
-            font-size:.75rem;
-            padding:4px 10px;
-            border-radius:999px;
-            border:1px solid var(--secondary);
-            color:var(--secondary);
-            background:rgba(255,255,255,.08);
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 8px;
         }
 
         .desc {
-            font-size:.9rem;
-            opacity:.65;
+            font-size: .9rem;
+            line-height: 1.55;
+            color: rgba(248,250,252,.85);
         }
 
-        .progress {
-            margin: 18px 0 14px;
-            height: 8px;
-            background: rgba(255,255,255,.12);
-            border-radius: 999px;
-            overflow: hidden;
+        .desc ul {
+            margin: 10px 0 10px 18px;
         }
 
-        .progress > div {
-            height: 100%;
-            background: linear-gradient(90deg,var(--primary),var(--secondary));
+        .desc li {
+            margin-bottom: 6px;
         }
 
-        .qr-row {
-            display:flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 14px;
+        .badge {
+            display:inline-block;
+            margin-top:12px;
+            padding:6px 12px;
+            border-radius:999px;
+            font-size:.75rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color:#fff;
         }
 
-        .qr-btn {
-            border:none;
-            background:#fff;
-            color:#000;
-            font-weight:700;
-            padding:10px 16px;
-            border-radius:12px;
-            display:flex;
-            gap:8px;
-            align-items:center;
-            cursor:pointer;
-            text-decoration: none;
-        }
-
-        .add-card {
-            border:2px dashed var(--glass-border);
-            border-radius:22px;
-            display:grid;
-            place-items:center;
-            min-height:180px;
-            color:var(--glass-border);
-        }
-
-        @keyframes fadeIn {
-            from { opacity:0; transform:translateY(6px); }
-            to { opacity:1; transform:none; }
+        .privacy-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
@@ -201,16 +172,22 @@
 <div class="dashboard">
 
     <header>
-        <div class="logo-icon">
-            <i class="fa-solid fa-infinity"></i>
+        <div class="header-left">
+            <div class="logo-icon">
+                <i class="fa-solid fa-infinity"></i>
+            </div>
+            <div>
+                <h1>Looply</h1>
+                <span>Witaj ponownie, {{ $client->name ?? '👋' }}</span>
+            </div>
         </div>
-        <div>
-            <h1>Looply</h1>
-            <span>Witaj ponownie, {{ $client->name ?? '👋' }}</span>
-        </div>
+
+        <a href="{{ route('client.dashboard') }}?view=privacy" class="privacy-link">
+            ⚙️ Prywatność i zgody
+        </a>
     </header>
 
-    {{-- 🎉 FIRST TIME USER EXPERIENCE --}}
+    {{-- FTUE --}}
     @if(session('first_time_wallet'))
         <div style="
             margin-bottom:18px;
@@ -218,95 +195,65 @@
             border-radius:18px;
             background:linear-gradient(135deg,#7c3aed,#ec4899);
             color:#fff;
-            box-shadow:0 12px 30px rgba(0,0,0,.35);
         ">
-            <div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">
-                🎉 Witaj w swoim portfelu kart lojalnościowych
-            </div>
-
-            <div style="font-size:.9rem;opacity:.95;line-height:1.5;">
-                Twoje ulubione miejsca nagradzają Cię za powroty.<br>
-                Zbieraj <strong>naklejki</strong>, korzystaj z rabatów i odbieraj nagrody —
-                bez papierowych kart i chaosu.
-            </div>
-
-            <div style="margin-top:10px;font-size:.85rem;opacity:.95;">
-                👉 Wystarczy, że pokażesz kartę przy zakupach.
-            </div>
+            <strong>🎉 Witaj w swoim portfelu kart lojalnościowych</strong><br><br>
+            Zbieraj <strong>naklejki</strong>, korzystaj z rabatów i odbieraj nagrody —  
+            bez papierowych kart i chaosu.<br><br>
+            👉 Wystarczy, że pokażesz kartę przy zakupach.
         </div>
     @endif
 
-    {{-- KATEGORIE --}}
-    <div class="categories">
-        <div class="category active" data-category="all">Wszystkie</div>
-        @foreach($grouped as $category => $cards)
-            <div class="category" data-category="{{ $category }}">
-                {{ ucfirst(str_replace('_',' ', $category)) }}
+    {{-- TRYB: PRYWATNOŚĆ --}}
+    @if(request('view') === 'privacy')
+
+        <div class="card">
+            <div class="privacy-title">📄 Prywatność i zgody marketingowe</div>
+
+            <div class="desc">
+                Każda karta lojalnościowa to <strong>osobna zgoda marketingowa</strong>.<br><br>
+
+                Możesz:
+                <ul>
+                    <li>✔ cofnąć zgodę dla jednej firmy</li>
+                    <li>✔ zostawić zgodę w innej</li>
+                </ul>
+
+                Twój numer telefonu jest jeden, ale decyzje podejmujesz
+                <strong>osobno dla każdej karty</strong>.
             </div>
-        @endforeach
-    </div>
 
-    {{-- KARTY --}}
-    <div class="cards-grid">
-        @foreach($grouped as $category => $cards)
-            @foreach($cards as $item)
-                @php $percent = ($item['current'] / $item['max']) * 100; @endphp
-                <div class="card" data-category="{{ $category }}">
-                    <div class="card-content">
-                        <div class="brand">
-                            {{ $item['card']->firm->name }}
-                            <span class="badge">{{ $item['current'] }} / {{ $item['max'] }}</span>
-                        </div>
+            <span class="badge">Zgodne z RODO</span>
+        </div>
 
+    @else
+
+        {{-- KATEGORIE --}}
+        <div class="categories">
+            <div class="category active" data-category="all">Wszystkie</div>
+            @foreach($grouped as $category => $cards)
+                <div class="category" data-category="{{ $category }}">
+                    {{ ucfirst(str_replace('_',' ', $category)) }}
+                </div>
+            @endforeach
+        </div>
+
+        {{-- GRID --}}
+        <div class="cards-grid">
+            @foreach($grouped as $category => $cards)
+                @foreach($cards as $item)
+                    <div class="card" data-category="{{ $category }}">
+                        <div class="brand">{{ $item['card']->firm->name }}</div>
                         <div class="desc">
                             {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej naklejki' }}
                         </div>
-
-                        <div class="progress">
-                            <div style="width: {{ $percent }}%"></div>
-                        </div>
-
-                        <div class="qr-row">
-                            <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}" class="qr-btn">
-                                <i class="fa-solid fa-qrcode"></i> Pokaż kartę
-                            </a>
-                        </div>
                     </div>
-                </div>
+                @endforeach
             @endforeach
-        @endforeach
-
-        <div class="add-card">
-            <div style="text-align:center">
-                <i class="fa-solid fa-plus" style="font-size:2.2rem"></i>
-                <p style="margin-top:10px">Dodaj nową kartę</p>
-            </div>
         </div>
-    </div>
+
+    @endif
+
 </div>
-
-<script>
-    const categories = document.querySelectorAll('.category');
-    const cards = document.querySelectorAll('.card');
-
-    categories.forEach(cat => {
-        cat.addEventListener('click', () => {
-            categories.forEach(c => c.classList.remove('active'));
-            cat.classList.add('active');
-
-            const selected = cat.dataset.category;
-
-            cards.forEach(card => {
-                if (selected === 'all' || card.dataset.category === selected) {
-                    card.style.display = 'block';
-                    card.style.animation = 'fadeIn .25s ease';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
 
 </body>
 </html>
