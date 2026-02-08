@@ -5,8 +5,8 @@
 <title>Zaloguj się do swojego portfela kart</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<!-- ✅ FAVICON -->
-<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+<!-- ✅ FAVICON (IKONA BEZ TŁA) -->
+<link rel="icon" type="image/png" href="{{ asset('icons/icon-512.png') }}">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
