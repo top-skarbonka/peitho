@@ -62,18 +62,22 @@ class PublicClientController extends Controller
             'postal_code'              => $validated['postal_code'] ?? null,
             'password'                 => Hash::make($validated['password']),
 
-            // ✅ ZGODY
+            // ✅ ZGODY (GLOBALNE – klient)
             'sms_marketing_consent'    => isset($validated['sms_marketing_consent']),
             'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
             'terms_accepted_at'        => $now,
         ]);
 
-        // 💳 KARTA LOJALNOŚCIOWA
+        // 💳 KARTA LOJALNOŚCIOWA (ZGODA PER FIRMA)
         LoyaltyCard::create([
-            'client_id'  => $client->id,
-            'firm_id'    => $firm->id,
-            'program_id' => $firm->program_id,
-            'stamps'     => $firm->start_stamps ?? 0,
+            'client_id'             => $client->id,
+            'firm_id'               => $firm->id,
+            'program_id'            => $firm->program_id,
+            'stamps'                => $firm->start_stamps ?? 0,
+
+            // ✅ ZGODA MARKETINGOWA PER KARTA
+            'marketing_consent'     => isset($validated['sms_marketing_consent']),
+            'marketing_consent_at'  => isset($validated['sms_marketing_consent']) ? $now : null,
         ]);
 
         auth('client')->login($client);

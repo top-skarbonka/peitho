@@ -138,33 +138,6 @@
             line-height: 1.55;
             color: rgba(248,250,252,.85);
         }
-
-        .desc ul {
-            margin: 10px 0 10px 18px;
-        }
-
-        .desc li {
-            margin-bottom: 6px;
-        }
-
-        .badge {
-            display:inline-block;
-            margin-top:12px;
-            padding:6px 12px;
-            border-radius:999px;
-            font-size:.75rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color:#fff;
-        }
-
-        .privacy-title {
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
     </style>
 </head>
 <body>
@@ -182,76 +155,34 @@
             </div>
         </div>
 
-        <a href="{{ route('client.dashboard') }}?view=privacy" class="privacy-link">
+        <a href="{{ route('client.consents') }}" class="privacy-link">
             ⚙️ Prywatność i zgody
         </a>
     </header>
 
-    {{-- FTUE --}}
-    @if(session('first_time_wallet'))
-        <div style="
-            margin-bottom:18px;
-            padding:16px 18px;
-            border-radius:18px;
-            background:linear-gradient(135deg,#7c3aed,#ec4899);
-            color:#fff;
-        ">
-            <strong>🎉 Witaj w swoim portfelu kart lojalnościowych</strong><br><br>
-            Zbieraj <strong>naklejki</strong>, korzystaj z rabatów i odbieraj nagrody —  
-            bez papierowych kart i chaosu.<br><br>
-            👉 Wystarczy, że pokażesz kartę przy zakupach.
-        </div>
-    @endif
-
-    {{-- TRYB: PRYWATNOŚĆ --}}
-    @if(request('view') === 'privacy')
-
-        <div class="card">
-            <div class="privacy-title">📄 Prywatność i zgody marketingowe</div>
-
-            <div class="desc">
-                Każda karta lojalnościowa to <strong>osobna zgoda marketingowa</strong>.<br><br>
-
-                Możesz:
-                <ul>
-                    <li>✔ cofnąć zgodę dla jednej firmy</li>
-                    <li>✔ zostawić zgodę w innej</li>
-                </ul>
-
-                Twój numer telefonu jest jeden, ale decyzje podejmujesz
-                <strong>osobno dla każdej karty</strong>.
+    {{-- KATEGORIE --}}
+    <div class="categories">
+        <div class="category active" data-category="all">Wszystkie</div>
+        @foreach($grouped as $category => $cards)
+            <div class="category" data-category="{{ $category }}">
+                {{ ucfirst(str_replace('_',' ', $category)) }}
             </div>
+        @endforeach
+    </div>
 
-            <span class="badge">Zgodne z RODO</span>
-        </div>
-
-    @else
-
-        {{-- KATEGORIE --}}
-        <div class="categories">
-            <div class="category active" data-category="all">Wszystkie</div>
-            @foreach($grouped as $category => $cards)
-                <div class="category" data-category="{{ $category }}">
-                    {{ ucfirst(str_replace('_',' ', $category)) }}
+    {{-- GRID --}}
+    <div class="cards-grid">
+        @foreach($grouped as $category => $cards)
+            @foreach($cards as $item)
+                <div class="card" data-category="{{ $category }}">
+                    <div class="brand">{{ $item['card']->firm->name }}</div>
+                    <div class="desc">
+                        {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej naklejki' }}
+                    </div>
                 </div>
             @endforeach
-        </div>
-
-        {{-- GRID --}}
-        <div class="cards-grid">
-            @foreach($grouped as $category => $cards)
-                @foreach($cards as $item)
-                    <div class="card" data-category="{{ $category }}">
-                        <div class="brand">{{ $item['card']->firm->name }}</div>
-                        <div class="desc">
-                            {{ $item['rewardReady'] ? '🎉 Nagroda gotowa!' : 'Zbieraj dalej naklejki' }}
-                        </div>
-                    </div>
-                @endforeach
-            @endforeach
-        </div>
-
-    @endif
+        @endforeach
+    </div>
 
 </div>
 

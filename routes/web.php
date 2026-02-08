@@ -140,15 +140,24 @@ Route::prefix('client')->group(function () {
 
     Route::middleware('auth:client')->group(function () {
 
-        // ⭐ NOWY DASHBOARD KLIENTA (WIELE KART, WIELE FIRM)
+        // ⭐ DASHBOARD
         Route::get('/dashboard', [ClientController::class, 'dashboard'])
             ->name('client.dashboard');
 
-        // STARA POJEDYNCZA KARTA (zostaje – kompatybilność)
+        // 📄 WIDOK ZGÓD
+        Route::get('/consents', [ClientController::class, 'consents'])
+            ->name('client.consents');
+
+        // 🔐 UPDATE ZGODY (AJAX)
+        Route::post('/consents/{card}', [ClientController::class, 'updateMarketingConsent'])
+            ->name('client.consents.update');
+
+        // STARA KARTA – kompatybilność
         Route::get('/loyalty-card', [ClientController::class, 'loyaltyCard'])
             ->name('client.loyalty.card');
-Route::get('/loyalty-card/{card}', [ClientController::class, 'showCard'])
-    ->name('client.loyalty.card.show');
+
+        Route::get('/loyalty-card/{card}', [ClientController::class, 'showCard'])
+            ->name('client.loyalty.card.show');
     });
 });
 
@@ -185,13 +194,6 @@ Route::prefix('admin')
         Route::get('/', fn () => redirect()->route('admin.firms.index'))
             ->name('admin.dashboard');
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | FIRMY
-        |--------------------------------------------------------------------------
-        */
-
         Route::get('/firms', [AdminFirmController::class, 'index'])
             ->name('admin.firms.index');
 
@@ -210,13 +212,6 @@ Route::prefix('admin')
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | 🔥 SaaS CONTROL PANEL
-        |--------------------------------------------------------------------------
-        */
-
         Route::post('/firms/{firm}/block', [AdminFirmController::class, 'forceBlock'])
             ->name('admin.firms.block');
 
@@ -229,14 +224,6 @@ Route::prefix('admin')
         Route::post('/firms/{firm}/extend365', [AdminFirmController::class, 'extend365'])
             ->name('admin.firms.extend365');
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | EXPORTY
-        |--------------------------------------------------------------------------
-        */
-
         Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');
-
     });

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\LoyaltyCard;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Carbon;
 
 class ClientController extends Controller
 {
@@ -50,6 +52,54 @@ class ClientController extends Controller
         return view('client.dashboard', [
             'client'  => $client,
             'grouped' => $grouped,
+        ]);
+    }
+
+    /**
+     * 📄 ZGODY MARKETINGOWE – WIDOK
+     */
+    public function consents()
+    {
+        $client = Auth::guard('client')->user();
+
+        if (! $client) {
+            return redirect()->route('client.login');
+        }
+
+        $cards = LoyaltyCard::with('firm')
+            ->where('client_id', $client->id)
+            ->get();
+
+        return view('client.consents', [
+            'cards' => $cards,
+        ]);
+    }
+
+    /**
+     * 🔐 ZGODY MARKETINGOWE (AJAX)
+     * Jedna karta = jedna zgoda
+     */
+    public function updateConsent(Request $request, LoyaltyCard $card)
+    {
+        $client = Auth::guard('client')->user();
+
+        if (! $client || $card->client_id !== $client->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'marketing_consent' => 'required|boolean',
+        ]);
+
+        $consent = (bool) $request->marketing_consent;
+
+        $card->marketing_consent = $consent;
+        $card->marketing_consent_at = $consent ? Carbon::now() : null;
+        $card->save();
+
+        return response()->json([
+            'success' => true,
+            'marketing_consent' => $consent,
         ]);
     }
 
