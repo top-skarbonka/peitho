@@ -7,21 +7,30 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SubscriptionReminderMail extends Mailable
+class FirmWelcomeGuideMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public Firm $firm;
 
+    /**
+     * Create a new message instance.
+     */
     public function __construct(Firm $firm)
     {
         $this->firm = $firm;
     }
 
+    /**
+     * Build the message.
+     */
     public function build()
     {
         return $this
-            ->subject('Pierwsze dni z Looply – spokojnie, krok po kroku')
-            ->view('emails.subscription-reminder');
+            ->subject('Jak zacząć z Looply – krótki przewodnik 🚀')
+            ->view('emails.firm-welcome-guide')
+            ->with([
+                'firm' => $this->firm,
+            ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\FirmCreatedMail;
+use App\Mail\FirmWelcomeGuideMail; // ✅ MAIL NR 2
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
@@ -58,8 +59,14 @@ class AdminFirmController extends Controller
             'billing_period' => 'monthly',
         ]);
 
+        // 1️⃣ MAIL NR 1 – dane logowania
         Mail::to($firm->email)->send(
             new FirmCreatedMail($firm, $plainPassword)
+        );
+
+        // 2️⃣ MAIL NR 2 – onboarding / jak zacząć z Looply
+        Mail::to($firm->email)->send(
+            new FirmWelcomeGuideMail($firm)
         );
 
         return redirect()
