@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\FirmCreatedMail;
-use App\Mail\FirmWelcomeGuideMail; // ✅ MAIL NR 2
+use App\Mail\FirmWelcomeGuideMail;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 class AdminFirmController extends Controller
 {
@@ -59,12 +60,10 @@ class AdminFirmController extends Controller
             'billing_period' => 'monthly',
         ]);
 
-        // 1️⃣ MAIL NR 1 – dane logowania
         Mail::to($firm->email)->send(
             new FirmCreatedMail($firm, $plainPassword)
         );
 
-        // 2️⃣ MAIL NR 2 – onboarding / jak zacząć z Looply
         Mail::to($firm->email)->send(
             new FirmWelcomeGuideMail($firm)
         );
@@ -101,10 +100,15 @@ class AdminFirmController extends Controller
     public function update(Request $request, Firm $firm)
     {
         $request->validate([
-            'password'      => 'nullable|min:8|confirmed',
-            'google_url'    => 'nullable|string',
-            'card_template' => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
-            'logo'          => 'nullable|image|max:2048',
+            'password'        => 'nullable|min:8|confirmed',
+            'google_url'      => 'nullable|string',
+            'facebook_url'    => 'nullable|string',
+            'instagram_url'   => 'nullable|string',
+            'youtube_url'     => 'nullable|string',
+            'promotion_text'  => 'nullable|string',
+            'opening_hours'   => 'nullable|string',
+            'card_template'   => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
+            'logo'            => 'nullable|image|max:2048',
         ]);
 
         $data = $request->only([
@@ -113,6 +117,11 @@ class AdminFirmController extends Controller
             'address',
             'phone',
             'google_url',
+            'facebook_url',
+            'instagram_url',
+            'youtube_url',
+            'promotion_text',
+            'opening_hours',
             'subscription_status',
             'subscription_ends_at',
             'plan',
@@ -138,5 +147,33 @@ class AdminFirmController extends Controller
         }
 
         return back()->with('success', 'Zapisano zmiany ✅');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | 🔥 PRZEDŁUŻENIE ABONAMENTU
+    |--------------------------------------------------------------------------
+    */
+
+    public function extend30(Firm $firm)
+    {
+        $firm->subscription_ends_at = Carbon::parse($firm->subscription_ends_at ?? now())
+            ->addDays(30);
+
+        $firm->subscription_status = 'active';
+        $firm->save();
+
+        return back()->with('success', 'Abonament przedłużony o 30 dni ✅');
+    }
+
+    public function extend365(Firm $firm)
+    {
+        $firm->subscription_ends_at = Carbon::parse($firm->subscription_ends_at ?? now())
+            ->addDays(365);
+
+        $firm->subscription_status = 'active';
+        $firm->save();
+
+        return back()->with('success', 'Abonament przedłużony o 365 dni ✅');
     }
 }

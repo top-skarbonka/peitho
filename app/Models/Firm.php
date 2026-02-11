@@ -31,6 +31,11 @@ class Firm extends Authenticatable
         'google_url',
         'facebook_url',
         'instagram_url',
+        'youtube_url',
+
+        // 🎁 Promocje / godziny
+        'promotion_text',
+        'opening_hours',
 
         // 💳 Subskrypcja
         'plan',

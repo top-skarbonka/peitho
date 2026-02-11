@@ -1,27 +1,4 @@
-[90m= [39m[34;4mApp\Models\Firm[39;24m {#6089
-    [34mid[39m: [35m11[39m,
-    [34mslug[39m: "[32mloopytest-695e9adeb912c[39m",
-    [34mcard_template[39m: "[32mgold[39m",
-    [34mfacebook_url[39m: [36mnull[39m,
-    [34minstagram_url[39m: [36mnull[39m,
-    [34mgoogle_review_url[39m: [36mnull[39m,
-    [34mgoogle_url[39m: [36mnull[39m,
-    [34mfirm_id[39m: "[32mloopytest-5762[39m",
-    [34mname[39m: "[32mLOOPYtest[39m",
-    [34memail[39m: "[32mLO@wp.pl[39m",
-    [34mpassword[39m: "[32m$2y$12$XypdgDLZUJ1TiM37OB9wMuisHUYlkouVLTXR4In4hVN65nBeQdMxa[39m",
-    [34mprogram_id[39m: [35m1[39m,
-    [34mstamps_required[39m: [35m10[39m,
-    [34mcreated_at[39m: "[32m2026-01-07 18:41:51[39m",
-    [34mupdated_at[39m: "[32m2026-01-07 18:41:51[39m",
-    [34mcity[39m: "[32mnowa[39m",
-    [34maddress[39m: "[32mdeba[39m",
-    [34mpostal_code[39m: "[32m39-460[39m",
-    [34mnip[39m: [36mnull[39m,
-    [34mphone[39m: "[32m743567876[39m",
-  }
-
-[90m= [39m[34;4mApp\Models\Firm[39;24m {#5856
+[90m= [39m[34;4mApp\Models\Firm[39;24m {#6099
     [34mid[39m: [35m1[39m,
     [34mslug[39m: "[32mtest-demo-1043[39m",
     [34mplan[39m: "[32mstarter[39m",

@@ -39,18 +39,17 @@
 </div>
 
 <h2>✏️ Edycja firmy</h2>
-<p style="color:#666;">ID: <b>{{ $firm->id }}</b> · slug: <b>{{ $firm->slug }}</b></p>
 
 @if(session('success'))
-    <div style="background:#e7fff1;border:1px solid #86efac;padding:14px;border-radius:10px;margin-bottom:20px;">
-        {{ session('success') }}
-    </div>
+<div style="background:#e7fff1;border:1px solid #86efac;padding:14px;border-radius:10px;margin-bottom:20px;">
+    {{ session('success') }}
+</div>
 @endif
 
 @if($errors->any())
-    <div style="background:#ffecec;border:1px solid #ffb3b3;padding:14px;border-radius:10px;margin-bottom:20px;">
-        {{ $errors->first() }}
-    </div>
+<div style="background:#ffecec;border:1px solid #ffb3b3;padding:14px;border-radius:10px;margin-bottom:20px;">
+    {{ $errors->first() }}
+</div>
 @endif
 
 <form method="POST" action="{{ route('admin.firms.update', $firm) }}" enctype="multipart/form-data">
@@ -66,37 +65,56 @@
 
 <hr>
 
-{{-- LOGO --}}
-<h4>🖼 Logo</h4>
-<input type="file" name="logo" accept="image/*" style="width:100%;padding:12px;margin-bottom:20px">
+{{-- 🎁 PROMOCJA --}}
+<h4>🎁 Warunki promocji / nagroda</h4>
+<textarea name="promotion_text"
+          rows="4"
+          placeholder="Np. 10 bukietów = 1 gratis"
+          style="width:100%;padding:12px;margin-bottom:20px">{{ old('promotion_text',$firm->promotion_text) }}</textarea>
+
+{{-- 🕒 GODZINY OTWARCIA --}}
+<h4>🕒 Godziny otwarcia</h4>
+<textarea name="opening_hours"
+          rows="3"
+          placeholder="Pon–Pt 8:00–18:00&#10;Sobota 9:00–14:00"
+          style="width:100%;padding:12px;margin-bottom:20px">{{ old('opening_hours',$firm->opening_hours) }}</textarea>
 
 <hr>
 
-{{-- SZABLON --}}
-<h4>🎨 Szablon karty</h4>
-<select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
-@foreach([
-'classic'=>'Classic',
-'florist'=>'Kwiaciarnia 🌸',
-'hair_salon'=>'Salon fryzjerski ✂️',
-'pizzeria'=>'Pizzeria 🍕',
-'kebab'=>'Kebab 🌯',
-'cafe'=>'Kawiarnia ☕'
-] as $key=>$label)
-<option value="{{ $key }}" {{ old('card_template',$firm->card_template)===$key ? 'selected' : '' }}>
-    {{ $label }}
-</option>
-@endforeach
-</select>
+{{-- 🌍 SOCIAL MEDIA --}}
+<h4>🌍 Social Media</h4>
+<input name="facebook_url"
+       value="{{ old('facebook_url',$firm->facebook_url) }}"
+       placeholder="Link do Facebook"
+       style="width:100%;padding:12px;margin-bottom:10px">
+
+<input name="instagram_url"
+       value="{{ old('instagram_url',$firm->instagram_url) }}"
+       placeholder="Link do Instagram"
+       style="width:100%;padding:12px;margin-bottom:10px">
+
+<input name="youtube_url"
+       value="{{ old('youtube_url',$firm->youtube_url) }}"
+       placeholder="Link do YouTube"
+       style="width:100%;padding:12px;margin-bottom:20px">
 
 <hr>
 
 {{-- GOOGLE --}}
-<h4>⭐ Wizytówka Google (opinie)</h4>
+<h4>⭐ Wizytówka Google</h4>
 <input name="google_url"
        value="{{ old('google_url',$firm->google_url) }}"
        placeholder="Link do opinii Google"
-       style="width:100%;padding:12px;margin-bottom:24px">
+       style="width:100%;padding:12px;margin-bottom:20px">
+
+<hr>
+
+{{-- LOGO --}}
+<h4>🖼 Logo</h4>
+<input type="file"
+       name="logo"
+       accept="image/*"
+       style="width:100%;padding:12px;margin-bottom:30px">
 
 <button type="submit" style="
     width:100%;
