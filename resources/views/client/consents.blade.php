@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Looply | Zgody marketingowe</title>
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -104,6 +106,11 @@
             margin-top:18px;
         }
 
+        .status {
+            font-size:.75rem;
+            opacity:.7;
+        }
+
         .switch {
             position: relative;
             width: 48px;
@@ -174,7 +181,6 @@
         Możesz w każdej chwili cofnąć lub przywrócić zgodę — bez wpływu na inne karty.
     </div>
 
-    {{-- GRID KART --}}
     <div class="grid">
         @foreach($cards as $card)
             <div class="card">
@@ -186,13 +192,15 @@
                 </div>
 
                 <div class="footer">
-                    <span style="font-size:.75rem;opacity:.7">Aktywna</span>
+                    <span class="status" id="status-{{ $card->id }}">
+                        {{ $card->marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
+                    </span>
 
                     <label class="switch">
                         <input
                             type="checkbox"
+                            data-id="{{ $card->id }}"
                             {{ $card->marketing_consent ? 'checked' : '' }}
-                            disabled
                         >
                         <span class="slider"></span>
                     </label>
@@ -207,6 +215,38 @@
     </div>
 
 </div>
+
+<script>
+document.querySelectorAll('.switch input').forEach(toggle => {
+    toggle.addEventListener('change', function() {
+
+        const cardId = this.dataset.id;
+        const statusLabel = document.getElementById('status-' + cardId);
+        const consent = this.checked ? 1 : 0;
+
+        fetch(`/client/consents/${cardId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                marketing_consent: consent
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            statusLabel.textContent = consent ? 'Aktywna' : 'Nieaktywna';
+        })
+        .catch(() => {
+            alert('Błąd zapisu. Spróbuj ponownie.');
+            toggle.checked = !consent;
+        });
+
+    });
+});
+</script>
 
 </body>
 </html>

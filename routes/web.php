@@ -149,7 +149,7 @@ Route::prefix('client')->group(function () {
             ->name('client.consents');
 
         // 🔐 UPDATE ZGODY (AJAX)
-        Route::post('/consents/{card}', [ClientController::class, 'updateMarketingConsent'])
+        Route::post('/consents/{card}', [ClientController::class, 'updateConsent'])
             ->name('client.consents.update');
 
         // STARA KARTA – kompatybilność

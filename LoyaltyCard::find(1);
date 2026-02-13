@@ -1,0 +1,130 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#5839
+    [34mall[39m: [
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6130
+        [34mid[39m: [35m1[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6131
+        [34mid[39m: [35m2[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6132
+        [34mid[39m: [35m3[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6133
+        [34mid[39m: [35m4[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6134
+        [34mid[39m: [35m5[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6135
+        [34mid[39m: [35m6[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6136
+        [34mid[39m: [35m7[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6137
+        [34mid[39m: [35m8[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6138
+        [34mid[39m: [35m9[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6139
+        [34mid[39m: [35m10[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6140
+        [34mid[39m: [35m11[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6141
+        [34mid[39m: [35m12[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6142
+        [34mid[39m: [35m13[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6143
+        [34mid[39m: [35m14[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6144
+        [34mid[39m: [35m15[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6145
+        [34mid[39m: [35m16[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6146
+        [34mid[39m: [35m17[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6147
+        [34mid[39m: [35m18[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6148
+        [34mid[39m: [35m19[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6149
+        [34mid[39m: [35m20[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6150
+        [34mid[39m: [35m21[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6151
+        [34mid[39m: [35m22[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6152
+        [34mid[39m: [35m23[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6153
+        [34mid[39m: [35m24[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+      [34;4mApp\Models\LoyaltyCard[39;24m {#6154
+        [34mid[39m: [35m25[39m,
+        [34mmarketing_consent[39m: [35m0[39m,
+        [34mmarketing_consent_at[39m: [36mnull[39m,
+      },
+    ],
+  }
+

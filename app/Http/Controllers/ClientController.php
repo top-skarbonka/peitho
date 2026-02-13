@@ -5,16 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
 
 class ClientController extends Controller
 {
-    /**
-     * 📊 DASHBOARD KLIENTA
-     * - pokazuje tylko kategorie, w których klient ma karty
-     * - w środku listy firm (kart)
-     */
     public function dashboard()
     {
         $client = Auth::guard('client')->user();
@@ -55,9 +53,6 @@ class ClientController extends Controller
         ]);
     }
 
-    /**
-     * 📄 ZGODY MARKETINGOWE – WIDOK
-     */
     public function consents()
     {
         $client = Auth::guard('client')->user();
@@ -77,7 +72,10 @@ class ClientController extends Controller
 
     /**
      * 🔐 ZGODY MARKETINGOWE (AJAX)
-     * Jedna karta = jedna zgoda
+     * + audyt RODO (consent_logs)
+     *
+     * Uwaga: W razie rozjechanej tabeli consent_logs (brak kolumn) – nie robimy 500.
+     * Zapis zgody w loyalty_cards ma się udać zawsze, a log zapisujemy tyle ile się da.
      */
     public function updateConsent(Request $request, LoyaltyCard $card)
     {
@@ -87,25 +85,85 @@ class ClientController extends Controller
             abort(403);
         }
 
+        // Przyjmujemy JSON/FORM. boolean() bezpiecznie mapuje: true/false/"1"/"0"/1/0
         $request->validate([
-            'marketing_consent' => 'required|boolean',
+            'marketing_consent' => 'required',
         ]);
 
-        $consent = (bool) $request->marketing_consent;
+        $oldValue = (int) ((bool) $card->marketing_consent);
+        $newValue = (int) ($request->boolean('marketing_consent'));
 
-        $card->marketing_consent = $consent;
-        $card->marketing_consent_at = $consent ? Carbon::now() : null;
+        // Jeśli bez zmiany — oddajemy OK
+        if ($oldValue === $newValue) {
+            return response()->json([
+                'success' => true,
+                'marketing_consent' => (bool) $newValue,
+            ]);
+        }
+
+        $now = Carbon::now();
+
+        // 1) ZAPIS PRAWDZIWEJ ZGODY (NAJWAŻNIEJSZE)
+        $card->marketing_consent = $newValue;
+        $card->marketing_consent_at = $newValue ? $now : null;
+        $card->marketing_consent_revoked_at = $newValue ? null : $now;
         $card->save();
+
+        // 2) AUDYT (consent_logs) – bez ryzyka 500
+        try {
+            if (Schema::hasTable('consent_logs')) {
+
+                // bierzemy tylko kolumny, które faktycznie istnieją w tabeli
+                $cols = Schema::getColumnListing('consent_logs');
+
+                $payload = [
+                    'loyalty_card_id' => $card->id,
+                    'client_id'       => $client->id,
+                    'firm_id'         => $card->firm_id,
+                    'old_value'       => $oldValue,
+                    'new_value'       => $newValue,
+                    'ip_address'      => $request->ip(),
+                    'user_agent'      => substr((string) $request->userAgent(), 0, 500),
+                    'source'          => 'client_wallet',
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
+
+                // filtrujemy payload do istniejących kolumn (żeby nigdy nie było "unknown column" => 500)
+                $filtered = array_intersect_key($payload, array_flip($cols));
+
+                // jeżeli tabela jest "okaleczona" i nie ma nic poza timestampami, to i tak coś zapiszemy
+                if (! empty($filtered)) {
+                    DB::table('consent_logs')->insert($filtered);
+                } else {
+                    Log::warning('consent_logs table has no expected columns; consent not logged there', [
+                        'card_id'   => $card->id,
+                        'client_id' => $client->id,
+                        'firm_id'   => $card->firm_id,
+                    ]);
+                }
+            } else {
+                Log::warning('consent_logs table missing; consent not logged there', [
+                    'card_id'   => $card->id,
+                    'client_id' => $client->id,
+                    'firm_id'   => $card->firm_id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to insert consent log', [
+                'error'     => $e->getMessage(),
+                'card_id'   => $card->id,
+                'client_id' => $client->id,
+                'firm_id'   => $card->firm_id,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'marketing_consent' => $consent,
+            'marketing_consent' => (bool) $newValue,
         ]);
     }
 
-    /**
-     * 🎫 POJEDYNCZA KARTA (klikana z dashboardu)
-     */
     public function showCard(LoyaltyCard $card)
     {
         $client = Auth::guard('client')->user();
@@ -156,9 +214,6 @@ class ClientController extends Controller
         ]);
     }
 
-    /**
-     * 🎫 STARA LOGIKA – zachowana (np. link bez dashboardu)
-     */
     public function loyaltyCard()
     {
         $client = Auth::guard('client')->user();

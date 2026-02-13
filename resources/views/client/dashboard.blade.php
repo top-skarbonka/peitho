@@ -1,13 +1,11 @@
-k<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <title>Looply – Twój portfel kart lojalnościowych</title>
-    <meta name="description" content="Looply – Twój portfel kart lojalnościowych. Jedna aplikacja, wiele firm, zero papierowych kart. Zbieraj punkty, naklejki i nagrody w jednym miejscu.">
 
-    {{-- ✅ FAVICON – IDENTYCZNY JAK W PANELU FIRMY (CACHE-BUSTER) --}}
     <link rel="icon" type="image/png" href="{{ asset('branding/icon.png') }}?v=20260210">
     <link rel="shortcut icon" href="{{ asset('branding/icon.png') }}?v=20260210">
     <link rel="apple-touch-icon" href="{{ asset('branding/icon.png') }}?v=20260210">
@@ -20,7 +18,6 @@ k<!DOCTYPE html>
             --secondary: #ec4899;
             --glass: rgba(255,255,255,.06);
             --glass-border: rgba(255,255,255,.12);
-
             --text-main: #f8fafc;
             --text-soft: rgba(248,250,252,.75);
             --text-muted: rgba(248,250,252,.55);
@@ -37,10 +34,7 @@ k<!DOCTYPE html>
             padding: 18px 14px 40px;
         }
 
-        .dashboard {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
+        .dashboard { max-width: 1100px; margin: 0 auto; }
 
         header {
             display: flex;
@@ -50,11 +44,7 @@ k<!DOCTYPE html>
             margin-bottom: 22px;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
 
         .logo-icon {
             width: 44px;
@@ -64,16 +54,6 @@ k<!DOCTYPE html>
             display: grid;
             place-items: center;
             box-shadow: 0 0 18px rgba(168,85,247,.45);
-        }
-
-        header h1 {
-            font-size: 1.4rem;
-            margin: 0;
-        }
-
-        header span {
-            font-size: .85rem;
-            color: var(--text-muted);
         }
 
         .privacy-link {
@@ -90,6 +70,7 @@ k<!DOCTYPE html>
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .category {
@@ -98,6 +79,8 @@ k<!DOCTYPE html>
             background: var(--glass);
             border: 1px solid var(--glass-border);
             font-size: .85rem;
+            cursor: pointer;
+            transition: .2s;
         }
 
         .category.active {
@@ -119,17 +102,12 @@ k<!DOCTYPE html>
             padding: 22px;
         }
 
-        .brand {
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin-bottom: 4px;
+        .card.hidden {
+            display: none;
         }
 
-        .sub {
-            font-size: .9rem;
-            color: var(--text-soft);
-            margin-bottom: 12px;
-        }
+        .brand { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+        .sub { font-size: .9rem; color: var(--text-soft); margin-bottom: 12px; }
 
         .progress {
             height: 8px;
@@ -151,10 +129,7 @@ k<!DOCTYPE html>
             justify-content: space-between;
         }
 
-        .card-id {
-            font-size: .75rem;
-            color: var(--text-muted);
-        }
+        .card-id { font-size: .75rem; color: var(--text-muted); }
 
         .show-btn {
             background: #fff;
@@ -179,83 +154,94 @@ k<!DOCTYPE html>
             color: var(--text-soft);
             padding: 22px;
         }
-
-        .icons {
-            display: flex;
-            justify-content: center;
-            gap: 14px;
-            margin-bottom: 10px;
-            font-size: 1.1rem;
-        }
     </style>
 </head>
 <body>
 
 <div class="dashboard">
 
-    <header>
-        <div class="header-left">
-            <div class="logo-icon">
-                <i class="fa-solid fa-infinity"></i>
-            </div>
-            <div>
-                <h1>Looply</h1>
-                <span>Witaj ponownie, {{ $client->name ?? '👋' }}</span>
-            </div>
+<header>
+    <div class="header-left">
+        <div class="logo-icon">
+            <i class="fa-solid fa-infinity"></i>
         </div>
-
-        <a href="{{ route('client.consents') }}" class="privacy-link">
-            ⚙️ Prywatność i zgody
-        </a>
-    </header>
-
-    <div class="categories">
-        <div class="category active">Wszystkie</div>
-        @foreach($grouped as $category => $cards)
-            <div class="category">{{ ucfirst(str_replace('_',' ', $category)) }}</div>
-        @endforeach
-    </div>
-
-    <div class="cards-grid">
-        @foreach($grouped as $category => $cards)
-            @foreach($cards as $item)
-                @php $percent = ($item['current'] / $item['max']) * 100; @endphp
-
-                <div class="card">
-                    <div class="brand">{{ $item['card']->firm->name }}</div>
-                    <div class="sub">Zbieraj dalej punkty ({{ $item['current'] }}/{{ $item['max'] }})</div>
-
-                    <div class="progress">
-                        <span style="width: {{ $percent }}%"></span>
-                    </div>
-
-                    <div class="card-footer">
-                        <div class="card-id">ID: {{ $item['card']->id }}</div>
-
-                        <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}" class="show-btn">
-                            <i class="fa-solid fa-qrcode"></i>
-                            Pokaż kartę
-                        </a>
-                    </div>
-                </div>
-            @endforeach
-        @endforeach
-
-        <div class="card add-card">
-            <div>
-                <div class="icons">
-                    <i class="fa-solid fa-gift"></i>
-                    <i class="fa-solid fa-mobile-screen"></i>
-                    <i class="fa-solid fa-leaf"></i>
-                </div>
-                <strong>Twój portfel jest gotowy na więcej</strong><br><br>
-                Zapytaj przy zakupach:<br>
-                <em>„Czy mogę dostać kartę lojalnościową w Looply?”</em>
-            </div>
+        <div>
+            <h1>Looply</h1>
+            <span>Witaj ponownie, {{ $client->name ?? '👋' }}</span>
         </div>
     </div>
+
+    <a href="{{ route('client.consents') }}" class="privacy-link">
+        ⚙️ Prywatność i zgody
+    </a>
+</header>
+
+<div class="categories">
+    <div class="category active" data-filter="all">Wszystkie</div>
+    @foreach($grouped as $category => $cards)
+        <div class="category" data-filter="{{ $category }}">
+            {{ ucfirst(str_replace('_',' ', $category)) }}
+        </div>
+    @endforeach
+</div>
+
+<div class="cards-grid">
+@foreach($grouped as $category => $cards)
+    @foreach($cards as $item)
+        @php $percent = ($item['current'] / $item['max']) * 100; @endphp
+
+        <div class="card" data-category="{{ $category }}">
+            <div class="brand">{{ $item['card']->firm->name }}</div>
+            <div class="sub">
+                Zbieraj dalej punkty ({{ $item['current'] }}/{{ $item['max'] }})
+            </div>
+
+            <div class="progress">
+                <span style="width: {{ $percent }}%"></span>
+            </div>
+
+            <div class="card-footer">
+                <div class="card-id">ID: {{ $item['card']->id }}</div>
+
+                <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}" class="show-btn">
+                    <i class="fa-solid fa-qrcode"></i>
+                    Pokaż kartę
+                </a>
+            </div>
+        </div>
+    @endforeach
+@endforeach
+
+<div class="card add-card" data-category="all">
+    <div>
+        <strong>Twój portfel jest gotowy na więcej</strong><br><br>
+        Zapytaj przy zakupach:<br>
+        <em>„Czy mogę dostać kartę lojalnościową w Looply?”</em>
+    </div>
+</div>
 
 </div>
+</div>
+
+<script>
+document.querySelectorAll('.category').forEach(button => {
+    button.addEventListener('click', function() {
+
+        document.querySelectorAll('.category').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const filter = this.dataset.filter;
+
+        document.querySelectorAll('.card').forEach(card => {
+            if (filter === 'all' || card.dataset.category === filter) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    });
+});
+</script>
 
 </body>
 </html>

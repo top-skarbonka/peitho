@@ -6,16 +6,12 @@ use App\Models\Client;
 use App\Models\Firm;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Carbon;
 
 class PublicClientController extends Controller
 {
-    /**
-     * ============================
-     * GET /join/{slug}
-     * ============================
-     */
     public function showRegisterFormByFirm(string $slug)
     {
         $firm = Firm::where('slug', $slug)->firstOrFail();
@@ -25,11 +21,6 @@ class PublicClientController extends Controller
         ]);
     }
 
-    /**
-     * ============================
-     * POST /join/{slug}
-     * ============================
-     */
     public function registerByFirm(Request $request, string $slug)
     {
         $firm = Firm::where('slug', $slug)->firstOrFail();
@@ -42,59 +33,92 @@ class PublicClientController extends Controller
             'sms_marketing_consent' => 'nullable|in:1',
         ]);
 
-        // 🔴 BLOKADA DUPLIKATU TELEFONU (GLOBALNIE)
-        if (Client::where('phone', $validated['phone'])->exists()) {
+        $now = Carbon::now();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔍 1️⃣ SPRAWDZAMY CZY KLIENT JUŻ ISTNIEJE (PORTFEL GLOBALNY)
+        |--------------------------------------------------------------------------
+        */
+
+        $client = Client::where('phone', $validated['phone'])->first();
+
+        if (! $client) {
+            // 👤 NOWY KLIENT
+            $client = Client::create([
+                'firm_id'                  => $firm->id,
+                'program_id'               => $firm->program_id,
+                'name'                     => $validated['name'] ?? null,
+                'phone'                    => $validated['phone'],
+                'postal_code'              => $validated['postal_code'] ?? null,
+                'password'                 => Hash::make($validated['password']),
+                'sms_marketing_consent'    => isset($validated['sms_marketing_consent']),
+                'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
+                'terms_accepted_at'        => $now,
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔒 2️⃣ BLOKADA DUPLIKATU KARTY DLA TEJ SAMEJ FIRMY
+        |--------------------------------------------------------------------------
+        */
+
+        $existingCard = LoyaltyCard::where('client_id', $client->id)
+            ->where('firm_id', $firm->id)
+            ->first();
+
+        if ($existingCard) {
             return back()
                 ->withErrors([
-                    'phone' => 'Ten numer telefonu jest już zarejestrowany w systemie.',
+                    'phone' => 'Masz już kartę w tej firmie.',
                 ])
                 ->withInput();
         }
 
-        $now = Carbon::now();
+        /*
+        |--------------------------------------------------------------------------
+        | 💳 3️⃣ TWORZYMY NOWĄ KARTĘ
+        |--------------------------------------------------------------------------
+        */
 
-        // 👤 KLIENT
-        $client = Client::create([
-            'firm_id'                  => $firm->id,
-            'program_id'               => $firm->program_id,
-            'name'                     => $validated['name'] ?? null,
-            'phone'                    => $validated['phone'],
-            'postal_code'              => $validated['postal_code'] ?? null,
-            'password'                 => Hash::make($validated['password']),
+        $consent = isset($validated['sms_marketing_consent']);
 
-            // ✅ ZGODY (GLOBALNE – klient)
-            'sms_marketing_consent'    => isset($validated['sms_marketing_consent']),
-            'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
-            'terms_accepted_at'        => $now,
+        $card = LoyaltyCard::create([
+            'client_id'            => $client->id,
+            'firm_id'              => $firm->id,
+            'program_id'           => $firm->program_id,
+            'stamps'               => $firm->start_stamps ?? 0,
+            'marketing_consent'    => $consent,
+            'marketing_consent_at' => $consent ? $now : null,
         ]);
 
-        // 💳 KARTA LOJALNOŚCIOWA (ZGODA PER FIRMA)
-        LoyaltyCard::create([
-            'client_id'             => $client->id,
-            'firm_id'               => $firm->id,
-            'program_id'            => $firm->program_id,
-            'stamps'                => $firm->start_stamps ?? 0,
+        /*
+        |--------------------------------------------------------------------------
+        | 🛡 4️⃣ LOG RODO – DECYZJA PRZY REJESTRACJI
+        |--------------------------------------------------------------------------
+        */
 
-            // ✅ ZGODA MARKETINGOWA PER KARTA
-            'marketing_consent'     => isset($validated['sms_marketing_consent']),
-            'marketing_consent_at'  => isset($validated['sms_marketing_consent']) ? $now : null,
+        DB::table('consent_logs')->insert([
+            'loyalty_card_id' => $card->id,
+            'client_id'       => $client->id,
+            'firm_id'         => $firm->id,
+            'old_value'       => null,
+            'new_value'       => $consent ? 1 : 0,
+            'ip_address'      => $request->ip(),
+            'user_agent'      => substr((string) $request->userAgent(), 0, 500),
+            'source'          => 'client_register',
+            'created_at'      => $now,
+            'updated_at'      => $now,
         ]);
 
         auth('client')->login($client);
 
-        // 🎉 FIRST-TIME USER EXPERIENCE – pierwszy portfel
         session()->flash('first_time_wallet', true);
 
         return redirect()->route('client.dashboard');
     }
 
-    /**
-     * ============================
-     * KARTA KLIENTA (stare / opcjonalne)
-     * ============================
-     * UWAGA: Twoja trasa i tak idzie do ClientController@loyaltyCard,
-     * ale zostawiamy to bez zmian, żeby NIC nie popsuć.
-     */
     public function loyaltyCard()
     {
         $client = auth('client')->user();
