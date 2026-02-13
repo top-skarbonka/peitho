@@ -1,5 +1,4 @@
 @extends('firm.layout.app')
-
 @section('content')
 <div class="space-y-8">
 

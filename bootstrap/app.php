@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Session\TokenMismatchException;
 
 return Application::configure(basePath: dirname(__DIR__))
 ->withRouting(
@@ -26,27 +27,60 @@ return Application::configure(basePath: dirname(__DIR__))
 
 ->withExceptions(function (Exceptions $exceptions) {
 
+    /*
+    |--------------------------------------------------------------------------
+    | AUTHENTICATION (BRAK ZALOGOWANIA)
+    |--------------------------------------------------------------------------
+    */
     $exceptions->render(function (AuthenticationException $e, $request) {
 
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        // 🔥 PANEL KLIENTA (PORTFEL)
         if ($request->is('client') || $request->is('client/*')) {
             return redirect()
                 ->route('client.login')
                 ->with('session_expired', true);
         }
 
-        // 🔥 PANEL ADMINA
         if ($request->is('admin') || $request->is('admin/*')) {
             return redirect()
                 ->route('admin.login')
                 ->with('session_expired', true);
         }
 
-        // 🔥 PANEL FIRMY
+        if ($request->is('company') || $request->is('company/*')) {
+            return redirect()
+                ->route('company.login')
+                ->with('session_expired', true);
+        }
+
+        return redirect()
+            ->route('company.login')
+            ->with('session_expired', true);
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | 419 — TOKEN MISMATCH (WYGASŁA SESJA)
+    |--------------------------------------------------------------------------
+    */
+    $exceptions->render(function (TokenMismatchException $e, $request) {
+
+        if ($request->is('client') || $request->is('client/*')) {
+            return redirect()
+                ->route('client.login')
+                ->with('session_expired', true);
+        }
+
+        if ($request->is('admin') || $request->is('admin/*')) {
+            return redirect()
+                ->route('admin.login')
+                ->with('session_expired', true);
+        }
+
         if ($request->is('company') || $request->is('company/*')) {
             return redirect()
                 ->route('company.login')

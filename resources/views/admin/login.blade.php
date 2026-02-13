@@ -36,11 +36,28 @@
             border:0;
         }
         .error{color:red;font-size:14px;}
+        .session{
+            margin-bottom:15px;
+            padding:12px;
+            border-radius:10px;
+            background:#eef2ff;
+            border:1px solid #6366f1;
+            color:#1e293b;
+            font-weight:700;
+            text-align:center;
+        }
     </style>
 </head>
 <body>
 <div class="box">
     <h1>Admin</h1>
+
+    {{-- 🔥 SESJA WYGASŁA --}}
+    @if(session('session_expired'))
+        <div class="session">
+            ⚡ Sesja wygasła. Zaloguj się ponownie 🔐
+        </div>
+    @endif
 
     @error('password')
         <div class="error">{{ $message }}</div>
