@@ -43,7 +43,6 @@
     {{-- TAB: FIRMA --}}
     <div id="tab-firm">
 
-        {{-- ⬇️ WAŻNE: multipart --}}
         <form method="POST"
               action="{{ route('admin.firms.store') }}"
               enctype="multipart/form-data">
@@ -72,13 +71,15 @@
 
             <h4>🎨 Wygląd karty lojalnościowej</h4>
 
-<select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
-<option value="florist">Kwiaciarnia 🌸</option>
-<option value="hair_salon">Salon fryzjerski ✂️</option>
-<option value="pizzeria">Pizzeria 🍕</option>
-<option value="kebab">Kebab 🌯</option>
-<option value="cafe">Kawiarnia ☕</option>
-</select>
+            <select name="card_template" style="width:100%;padding:12px;margin-bottom:20px">
+                <option value="florist">Kwiaciarnia 🌸</option>
+                <option value="hair_salon">Salon fryzjerski ✂️</option>
+                <option value="pizzeria">Pizzeria 🍕</option>
+                <option value="kebab">Kebab 🌯</option>
+                <option value="cafe">Kawiarnia ☕</option>
+                <option value="workshop">Warsztat samochodowy ⚒️</option>
+            </select>
+
             <h4>🔗 Linki</h4>
 
             <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
@@ -92,7 +93,6 @@
         </form>
     </div>
 
-    {{-- TAB: CONSENTS --}}
     <div id="tab-consents" style="display:none;">
         <h4>🧩 Eksport zgód marketingowych (RODO / UODO)</h4>
         <p style="color:#666">Ten moduł już działa ✔</p>

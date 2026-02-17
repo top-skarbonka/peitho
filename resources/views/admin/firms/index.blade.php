@@ -36,7 +36,7 @@
 table{
     width:100%;
     border-collapse:collapse;
-    font-size:14px; /* 🔥 MNIEJSZA CZCIONKA */
+    font-size:14px;
 }
 
 th{
@@ -71,7 +71,6 @@ td{
     border-radius:8px;
 }
 
-/* 🔥 dropdown */
 details summary{
     cursor:pointer;
     list-style:none;
@@ -91,7 +90,7 @@ details summary::-webkit-details-marker{
     position:absolute;
     right:0;
     margin-top:6px;
-    width:220px;
+    width:240px;
     background:#fff;
     border-radius:12px;
     box-shadow:0 10px 30px rgba(0,0,0,.15);
@@ -153,17 +152,11 @@ details summary::-webkit-details-marker{
 
 <td>
 @if($firm->subscription_forced_status === 'blocked')
-
     <span class="badge red">Zablokowana</span>
-
 @elseif($firm->subscription_ends_at && now()->gt($firm->subscription_ends_at))
-
     <span class="badge orange">Po terminie</span>
-
 @else
-
     <span class="badge green">Aktywna</span>
-
 @endif
 </td>
 
@@ -175,8 +168,6 @@ details summary::-webkit-details-marker{
     {{ ucfirst($firm->plan ?? '-') }}
 </td>
 
-
-{{-- 🔥 AKCJE --}}
 <td style="position:relative;text-align:right;">
 
 <details>
@@ -191,6 +182,16 @@ details summary::-webkit-details-marker{
 <a href="{{ route('admin.firms.edit', $firm) }}">
 ✏️ Edytuj
 </a>
+
+<hr>
+
+<form method="POST" action="{{ route('admin.consents.export.csv') }}" target="_blank">
+@csrf
+<input type="hidden" name="firm_id" value="{{ $firm->id }}">
+<button style="color:#2563eb;font-weight:700;">
+📥 Eksport zgód (CSV)
+</button>
+</form>
 
 <hr>
 
@@ -235,7 +236,6 @@ Zablokuj (twardo)
 </tbody>
 </table>
 </div>
-
 
 
 <script>

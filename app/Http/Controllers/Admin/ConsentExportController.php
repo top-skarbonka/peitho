@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Client;
 use App\Models\Firm;
 use App\Models\SecurityLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ConsentExportController extends Controller
 {
@@ -18,14 +18,13 @@ class ConsentExportController extends Controller
      */
     public function exportCsv(Request $request)
     {
-        // ✅ WALIDACJA
         $request->validate([
             'firm_id' => 'required|exists:firms,id',
         ]);
 
         $firm = Firm::findOrFail($request->firm_id);
 
-        // ✅ LOG BEZPIECZEŃSTWA (AUDYT UODO)
+        // 🔐 LOG ADMINA (AUDYT)
         SecurityLog::create([
             'actor_type' => 'admin',
             'actor_id'   => Auth::id(),
@@ -35,7 +34,6 @@ class ConsentExportController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        // ✅ NAZWA PLIKU
         $filename = 'zgody_marketingowe_firma_' . $firm->id . '_' . now()->format('Y-m-d_H-i') . '.csv';
 
         $headers = [
@@ -43,44 +41,53 @@ class ConsentExportController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        // ✅ STREAM CSV (BEZ OBCIĄŻANIA PAMIĘCI)
         $callback = function () use ($firm) {
+
             $output = fopen('php://output', 'w');
 
-            // BOM – Excel / UODO
+            // BOM dla Excela
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            // Nagłówki CSV
             fputcsv($output, [
+                'ID karty',
                 'ID klienta',
                 'Telefon',
-                'Kod pocztowy',
                 'ID firmy',
                 'Nazwa firmy',
-                'Zgoda SMS',
-                'Data wyrażenia zgody SMS',
-                'Data cofnięcia zgody SMS',
-                'Regulamin zaakceptowany',
-                'Data akceptacji regulaminu',
-                'Data utworzenia konta',
+                'Zgoda SMS (aktualna)',
+                'Data wyrażenia zgody',
+                'Data cofnięcia zgody',
+                'Źródło zgody',
+                'IP ostatniej operacji',
+                'User Agent',
+                'Data utworzenia karty',
             ], ';');
 
-            Client::where('firm_id', $firm->id)
+            DB::table('loyalty_cards')
+                ->where('firm_id', $firm->id)
                 ->orderBy('id')
-                ->chunk(500, function ($clients) use ($output, $firm) {
-                    foreach ($clients as $client) {
+                ->chunk(500, function ($cards) use ($output, $firm) {
+
+                    foreach ($cards as $card) {
+
+                        $lastLog = DB::table('consent_logs')
+                            ->where('loyalty_card_id', $card->id)
+                            ->latest('id')
+                            ->first();
+
                         fputcsv($output, [
-                            $client->id,
-                            $client->phone,
-                            $client->postal_code,
+                            $card->id,
+                            $card->client_id,
+                            $card->phone ?? '',
                             $firm->id,
                             $firm->name,
-                            $client->sms_marketing_consent ? 'TAK' : 'NIE',
-                            optional($client->sms_marketing_consent_at)?->format('Y-m-d H:i:s'),
-                            optional($client->sms_marketing_withdrawn_at)?->format('Y-m-d H:i:s'),
-                            $client->terms_accepted_at ? 'TAK' : 'NIE',
-                            optional($client->terms_accepted_at)?->format('Y-m-d H:i:s'),
-                            $client->created_at->format('Y-m-d H:i:s'),
+                            $card->marketing_consent ? 'TAK' : 'NIE',
+                            optional($card->marketing_consent_at)?->format('Y-m-d H:i:s'),
+                            optional($card->marketing_consent_revoked_at)?->format('Y-m-d H:i:s'),
+                            $lastLog->source ?? '',
+                            $lastLog->ip_address ?? '',
+                            $lastLog->user_agent ?? '',
+                            optional($card->created_at)?->format('Y-m-d H:i:s'),
                         ], ';');
                     }
                 });

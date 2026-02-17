@@ -36,7 +36,8 @@ class AdminFirmController extends Controller
             'address'       => 'required|string|max:255',
             'postal_code'   => 'required|string|max:20',
             'phone'         => 'nullable|string|max:20',
-            'card_template' => 'required|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
+            // 🔥 DODANY workshop
+            'card_template' => 'required|in:classic,florist,hair_salon,pizzeria,kebab,cafe,workshop',
         ]);
 
         $plainPassword = Str::random(10);
@@ -107,7 +108,8 @@ class AdminFirmController extends Controller
             'youtube_url'     => 'nullable|string',
             'promotion_text'  => 'nullable|string',
             'opening_hours'   => 'nullable|string',
-            'card_template'   => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe',
+            // 🔥 DODANY workshop
+            'card_template'   => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe,workshop',
             'logo'            => 'nullable|image|max:2048',
         ]);
 
@@ -148,12 +150,6 @@ class AdminFirmController extends Controller
 
         return back()->with('success', 'Zapisano zmiany ✅');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 🔥 PRZEDŁUŻENIE ABONAMENTU
-    |--------------------------------------------------------------------------
-    */
 
     public function extend30(Firm $firm)
     {

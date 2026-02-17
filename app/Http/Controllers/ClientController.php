@@ -70,13 +70,6 @@ class ClientController extends Controller
         ]);
     }
 
-    /**
-     * 🔐 ZGODY MARKETINGOWE (AJAX)
-     * + audyt RODO (consent_logs)
-     *
-     * Uwaga: W razie rozjechanej tabeli consent_logs (brak kolumn) – nie robimy 500.
-     * Zapis zgody w loyalty_cards ma się udać zawsze, a log zapisujemy tyle ile się da.
-     */
     public function updateConsent(Request $request, LoyaltyCard $card)
     {
         $client = Auth::guard('client')->user();
@@ -85,7 +78,6 @@ class ClientController extends Controller
             abort(403);
         }
 
-        // Przyjmujemy JSON/FORM. boolean() bezpiecznie mapuje: true/false/"1"/"0"/1/0
         $request->validate([
             'marketing_consent' => 'required',
         ]);
@@ -93,7 +85,6 @@ class ClientController extends Controller
         $oldValue = (int) ((bool) $card->marketing_consent);
         $newValue = (int) ($request->boolean('marketing_consent'));
 
-        // Jeśli bez zmiany — oddajemy OK
         if ($oldValue === $newValue) {
             return response()->json([
                 'success' => true,
@@ -103,17 +94,14 @@ class ClientController extends Controller
 
         $now = Carbon::now();
 
-        // 1) ZAPIS PRAWDZIWEJ ZGODY (NAJWAŻNIEJSZE)
         $card->marketing_consent = $newValue;
         $card->marketing_consent_at = $newValue ? $now : null;
         $card->marketing_consent_revoked_at = $newValue ? null : $now;
         $card->save();
 
-        // 2) AUDYT (consent_logs) – bez ryzyka 500
         try {
             if (Schema::hasTable('consent_logs')) {
 
-                // bierzemy tylko kolumny, które faktycznie istnieją w tabeli
                 $cols = Schema::getColumnListing('consent_logs');
 
                 $payload = [
@@ -129,10 +117,8 @@ class ClientController extends Controller
                     'updated_at'      => $now,
                 ];
 
-                // filtrujemy payload do istniejących kolumn (żeby nigdy nie było "unknown column" => 500)
                 $filtered = array_intersect_key($payload, array_flip($cols));
 
-                // jeżeli tabela jest "okaleczona" i nie ma nic poza timestampami, to i tak coś zapiszemy
                 if (! empty($filtered)) {
                     DB::table('consent_logs')->insert($filtered);
                 } else {
@@ -142,12 +128,6 @@ class ClientController extends Controller
                         'firm_id'   => $card->firm_id,
                     ]);
                 }
-            } else {
-                Log::warning('consent_logs table missing; consent not logged there', [
-                    'card_id'   => $card->id,
-                    'client_id' => $client->id,
-                    'firm_id'   => $card->firm_id,
-                ]);
             }
         } catch (\Throwable $e) {
             Log::error('Failed to insert consent log', [
@@ -190,6 +170,7 @@ class ClientController extends Controller
 
         $template = $card->firm->card_template ?? 'classic';
 
+        // 🔥 JEDYNA ZMIANA: DODANY 'workshop'
         $allowed = [
             'classic',
             'florist',
@@ -197,6 +178,7 @@ class ClientController extends Controller
             'pizzeria',
             'kebab',
             'cafe',
+            'workshop', // <-- NOWY LAYOUT
         ];
 
         if (! in_array($template, $allowed, true)) {
