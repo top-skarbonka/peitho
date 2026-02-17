@@ -65,15 +65,19 @@ height:48px;
 fill:#ffffff;
 }
 
-/* NOWE PROFESJONALNE KLUCZE */
-.stamp-icon{
-width:26px;
-height:26px;
-stroke:#3b4d61;
-stroke-width:3;
-stroke-linecap:round;
-stroke-linejoin:round;
-fill:none;
+/* STAMP IMAGE */
+.stamp-img{
+width:100%;
+height:100%;
+object-fit:contain;
+animation:stampPop .35s ease-out;
+}
+
+/* ANIMACJA NABICIA */
+@keyframes stampPop{
+0%{transform:scale(.3) rotate(-15deg);opacity:0;}
+60%{transform:scale(1.15) rotate(5deg);}
+100%{transform:scale(1) rotate(0);opacity:1;}
 }
 
 /* STAMPY */
@@ -93,10 +97,11 @@ align-items:center;
 justify-content:center;
 overflow:hidden;
 transition:.25s;
+background:#fff;
 }
 
 .circle.on{
-background:#e6e6e6;
+background:#f1f1f1;
 border-color:#999;
 transform:scale(1.05);
 }
@@ -213,19 +218,21 @@ transform:translateY(-2px);
 
 @php
 $carSvgHeader = '
-<svg viewBox="0 0 64 64" class="car-icon" xmlns="http://www.w3.org/2000/svg">
-<path d="M10 38l4-12c1-3 3-5 6-5h24c3 0 5 2 6 5l4 12v10h-6a4 4 0 0 1-8 0H24a4 4 0 0 1-8 0H10z"/>
-<circle cx="20" cy="48" r="4"/>
-<circle cx="44" cy="48" r="4"/>
-</svg>
-';
-
-$wrenchStamp = '
-<svg viewBox="0 0 24 24" class="stamp-icon" xmlns="http://www.w3.org/2000/svg">
-<path d="M3 21l6-6"/>
-<path d="M9 15l-2-2a4 4 0 115.6-5.6l2 2"/>
-<path d="M21 3l-6 6"/>
-<path d="M15 9l2 2a4 4 0 11-5.6 5.6l-2-2"/>
+<svg viewBox="0 0 80 48" class="car-icon" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10 30 
+           L18 18 
+           C20 14 24 12 28 12 
+           H52 
+           C56 12 60 14 62 18 
+           L70 30" 
+        stroke="white" 
+        stroke-width="3.5" 
+        fill="none" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  <rect x="28" y="20" width="24" height="6" rx="3" fill="white"/>
+  <circle cx="26" cy="34" r="5" fill="white"/>
+  <circle cx="54" cy="34" r="5" fill="white"/>
 </svg>
 ';
 @endphp
@@ -250,7 +257,9 @@ $wrenchStamp = '
 <div class="stamps">
 @for($i=1;$i<=$maxStamps;$i++)
 <div class="circle {{ $i <= $current ? 'on' : '' }}">
-{!! $wrenchStamp !!}
+@if($i <= $current)
+<img src="{{ asset('icons/pieczatascauto.svg') }}" class="stamp-img" alt="Pieczątka">
+@endif
 </div>
 @endfor
 </div>
@@ -271,7 +280,8 @@ $wrenchStamp = '
 
 </div>
 
-{{-- 1️⃣ DANE KONTAKTOWE --}}
+{{-- BOXy — NIC NIE ZMIENIONE --}}
+
 @if($firm->address || $firm->city || $firm->phone)
 <div class="glass-box">
 <details>
@@ -285,7 +295,6 @@ $wrenchStamp = '
 </div>
 @endif
 
-{{-- 2️⃣ GODZINY OTWARCIA --}}
 @if(!empty($firm->opening_hours))
 <div class="glass-box">
 <details>
@@ -295,7 +304,6 @@ $wrenchStamp = '
 </div>
 @endif
 
-{{-- 3️⃣ NAGRODA --}}
 @if(!empty($firm->promotion_text))
 <div class="glass-box">
 <details>
@@ -305,7 +313,6 @@ $wrenchStamp = '
 </div>
 @endif
 
-{{-- 4️⃣ POSTĘP --}}
 <div class="glass-box">
 <details>
 <summary>📊 Postęp karty</summary>
@@ -315,7 +322,6 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} naklejek.
 </details>
 </div>
 
-{{-- 5️⃣ GOOGLE --}}
 @if(!empty($firm->google_url))
 <div class="glass-box">
 <details>
@@ -329,7 +335,6 @@ Masz <strong>{{ $current }}</strong> / {{ $maxStamps }} naklejek.
 </div>
 @endif
 
-{{-- 6️⃣ SOCIAL --}}
 @if(!empty($firm->facebook_url) || !empty($firm->instagram_url) || !empty($firm->youtube_url))
 <div class="glass-box">
 <details>
