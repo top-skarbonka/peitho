@@ -2,13 +2,9 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Looply – Twój portfel kart lojalnościowych</title>
-
-    <link rel="icon" type="image/png" href="{{ asset('branding/icon.png') }}?v=20260210">
-    <link rel="shortcut icon" href="{{ asset('branding/icon.png') }}?v=20260210">
-    <link rel="apple-touch-icon" href="{{ asset('branding/icon.png') }}?v=20260210">
+    <title>Looply – Twój portfel kart</title>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
@@ -28,7 +24,7 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
             color: var(--text-main);
             padding: 18px 14px 40px;
@@ -40,11 +36,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 14px;
             margin-bottom: 22px;
         }
-
-        .header-left { display: flex; align-items: center; gap: 14px; }
 
         .logo-icon {
             width: 44px;
@@ -53,17 +46,6 @@
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             display: grid;
             place-items: center;
-            box-shadow: 0 0 18px rgba(168,85,247,.45);
-        }
-
-        .privacy-link {
-            font-size: .85rem;
-            padding: 8px 14px;
-            border-radius: 999px;
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            text-decoration: none;
         }
 
         .categories {
@@ -80,7 +62,6 @@
             border: 1px solid var(--glass-border);
             font-size: .85rem;
             cursor: pointer;
-            transition: .2s;
         }
 
         .category.active {
@@ -102,11 +83,9 @@
             padding: 22px;
         }
 
-        .card.hidden {
-            display: none;
-        }
+        .card.hidden { display:none; }
 
-        .brand { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+        .brand { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
         .sub { font-size: .9rem; color: var(--text-soft); margin-bottom: 12px; }
 
         .progress {
@@ -118,41 +97,25 @@
         }
 
         .progress span {
-            display: block;
-            height: 100%;
+            display:block;
+            height:100%;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
         }
 
         .card-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
         }
-
-        .card-id { font-size: .75rem; color: var(--text-muted); }
 
         .show-btn {
-            background: #fff;
-            color: #111;
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: .85rem;
-            font-weight: 700;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .add-card {
-            border: 2px dashed rgba(255,255,255,.18);
-            min-height: 170px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: var(--text-soft);
-            padding: 22px;
+            background:#fff;
+            color:#111;
+            padding:8px 14px;
+            border-radius:12px;
+            text-decoration:none;
+            font-size:.85rem;
+            font-weight:700;
         }
     </style>
 </head>
@@ -161,39 +124,48 @@
 <div class="dashboard">
 
 <header>
-    <div class="header-left">
+    <div style="display:flex;align-items:center;gap:14px;">
         <div class="logo-icon">
             <i class="fa-solid fa-infinity"></i>
         </div>
         <div>
             <h1>Looply</h1>
-            <span>Witaj ponownie, {{ $client->name ?? '👋' }}</span>
+            <span>Witaj {{ $client->name ?? '' }}</span>
         </div>
     </div>
-
-    <a href="{{ route('client.consents') }}" class="privacy-link">
-        ⚙️ Prywatność i zgody
-    </a>
 </header>
 
+{{-- ===================== KATEGORIE ===================== --}}
 <div class="categories">
     <div class="category active" data-filter="all">Wszystkie</div>
+
     @foreach($grouped as $category => $cards)
         <div class="category" data-filter="{{ $category }}">
             {{ ucfirst(str_replace('_',' ', $category)) }}
         </div>
     @endforeach
+
+    @if(isset($passes) && $passes->count())
+        <div class="category" data-filter="passes">
+            🎫 Karnety
+        </div>
+    @endif
 </div>
 
+{{-- ===================== GRID ===================== --}}
 <div class="cards-grid">
+
+{{-- KARTY LOJALNOŚCIOWE --}}
 @foreach($grouped as $category => $cards)
     @foreach($cards as $item)
+
         @php $percent = ($item['current'] / $item['max']) * 100; @endphp
 
         <div class="card" data-category="{{ $category }}">
             <div class="brand">{{ $item['card']->firm->name }}</div>
+
             <div class="sub">
-                Zbieraj dalej punkty ({{ $item['current'] }}/{{ $item['max'] }})
+                {{ $item['current'] }}/{{ $item['max'] }} naklejek
             </div>
 
             <div class="progress">
@@ -201,24 +173,43 @@
             </div>
 
             <div class="card-footer">
-                <div class="card-id">ID: {{ $item['card']->id }}</div>
-
                 <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}" class="show-btn">
-                    <i class="fa-solid fa-qrcode"></i>
                     Pokaż kartę
                 </a>
             </div>
         </div>
+
     @endforeach
 @endforeach
 
-<div class="card add-card" data-category="all">
-    <div>
-        <strong>Twój portfel jest gotowy na więcej</strong><br><br>
-        Zapytaj przy zakupach:<br>
-        <em>„Czy mogę dostać kartę lojalnościową w Looply?”</em>
-    </div>
-</div>
+
+{{-- KARNETY --}}
+@if(isset($passes))
+    @foreach($passes as $pass)
+
+        @php
+            $percent = ($pass->remaining_entries / $pass->total_entries) * 100;
+        @endphp
+
+        <div class="card" data-category="passes">
+
+            <div class="brand">{{ $pass->firm_name }}</div>
+            <div class="sub">{{ $pass->pass_name }}</div>
+
+            <div class="sub">
+                Pozostało wejść:
+                <strong>{{ $pass->remaining_entries }}</strong>
+                / {{ $pass->total_entries }}
+            </div>
+
+            <div class="progress">
+                <span style="width: {{ $percent }}%"></span>
+            </div>
+
+        </div>
+
+    @endforeach
+@endif
 
 </div>
 </div>

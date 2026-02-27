@@ -47,9 +47,28 @@ class ClientController extends Controller
                 });
             });
 
+        // 🔥 NOWE: pobieranie karnetów
+        $passes = DB::table('user_passes as up')
+            ->join('company_pass_types as pt', 'pt.id', '=', 'up.pass_type_id')
+            ->join('firms as f', 'f.id', '=', 'up.firm_id')
+            ->where('up.client_id', $client->id)
+            ->select([
+                'up.id',
+                'up.total_entries',
+                'up.remaining_entries',
+                'up.status',
+                'up.activated_at',
+                'up.finished_at',
+                'pt.name as pass_name',
+                'f.name as firm_name',
+            ])
+            ->orderByDesc('up.id')
+            ->get();
+
         return view('client.dashboard', [
             'client'  => $client,
             'grouped' => $grouped,
+            'passes'  => $passes, // 🔥 przekazujemy do widoku
         ]);
     }
 
@@ -99,45 +118,6 @@ class ClientController extends Controller
         $card->marketing_consent_revoked_at = $newValue ? null : $now;
         $card->save();
 
-        try {
-            if (Schema::hasTable('consent_logs')) {
-
-                $cols = Schema::getColumnListing('consent_logs');
-
-                $payload = [
-                    'loyalty_card_id' => $card->id,
-                    'client_id'       => $client->id,
-                    'firm_id'         => $card->firm_id,
-                    'old_value'       => $oldValue,
-                    'new_value'       => $newValue,
-                    'ip_address'      => $request->ip(),
-                    'user_agent'      => substr((string) $request->userAgent(), 0, 500),
-                    'source'          => 'client_wallet',
-                    'created_at'      => $now,
-                    'updated_at'      => $now,
-                ];
-
-                $filtered = array_intersect_key($payload, array_flip($cols));
-
-                if (! empty($filtered)) {
-                    DB::table('consent_logs')->insert($filtered);
-                } else {
-                    Log::warning('consent_logs table has no expected columns; consent not logged there', [
-                        'card_id'   => $card->id,
-                        'client_id' => $client->id,
-                        'firm_id'   => $card->firm_id,
-                    ]);
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::error('Failed to insert consent log', [
-                'error'     => $e->getMessage(),
-                'card_id'   => $card->id,
-                'client_id' => $client->id,
-                'firm_id'   => $card->firm_id,
-            ]);
-        }
-
         return response()->json([
             'success' => true,
             'marketing_consent' => (bool) $newValue,
@@ -160,7 +140,6 @@ class ClientController extends Controller
         $current = min($card->stamps->count(), $maxStamps);
 
         $displayCode = str_pad((string) $card->id, 8, '0', STR_PAD_LEFT);
-
         $qrPayload = $card->qr_code ?: ('CARD:' . $card->id);
 
         $qr = QrCode::format('svg')
@@ -169,21 +148,6 @@ class ClientController extends Controller
             ->generate($qrPayload);
 
         $template = $card->firm->card_template ?? 'classic';
-
-        // 🔥 JEDYNA ZMIANA: DODANY 'workshop'
-        $allowed = [
-            'classic',
-            'florist',
-            'hair_salon',
-            'pizzeria',
-            'kebab',
-            'cafe',
-            'workshop', // <-- NOWY LAYOUT
-        ];
-
-        if (! in_array($template, $allowed, true)) {
-            $template = 'classic';
-        }
 
         return view("client.cards.$template", [
             'card'        => $card,

@@ -99,6 +99,28 @@ Route::prefix('company')
 
         Route::post('/scan', [FirmController::class, 'scanQr'])
             ->name('company.scan');
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🎫 KARNETY — MVP PRODUKCJA
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('/pass-types', [FirmController::class, 'passTypes'])
+            ->name('company.pass_types');
+
+        Route::post('/pass-types', [FirmController::class, 'storePassType'])
+            ->name('company.pass_types.store');
+
+        Route::get('/passes/issue', [FirmController::class, 'issuePassForm'])
+            ->name('company.passes.issue_form');
+
+        Route::post('/passes/issue', [FirmController::class, 'issuePass'])
+            ->name('company.passes.issue');
+
+        // ✅ LISTA WYDANYCH KARNETÓW (to było brakujące)
+        Route::get('/passes', [FirmController::class, 'issuedPasses'])
+            ->name('company.passes.index');
     });
 
 
