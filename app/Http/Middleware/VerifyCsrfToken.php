@@ -12,6 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        // Nic nie wyłączamy – CSRF ma działać
+        'c/*',   // 🔥 Publiczny QR karnetów (bez sesji)
     ];
 }

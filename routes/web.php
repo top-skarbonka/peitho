@@ -140,19 +140,15 @@ Route::prefix('client')->group(function () {
 
     Route::middleware('auth:client')->group(function () {
 
-        // ⭐ DASHBOARD
         Route::get('/dashboard', [ClientController::class, 'dashboard'])
             ->name('client.dashboard');
 
-        // 📄 WIDOK ZGÓD
         Route::get('/consents', [ClientController::class, 'consents'])
             ->name('client.consents');
 
-        // 🔐 UPDATE ZGODY (AJAX)
         Route::post('/consents/{card}', [ClientController::class, 'updateConsent'])
             ->name('client.consents.update');
 
-        // STARA KARTA – kompatybilność
         Route::get('/loyalty-card', [ClientController::class, 'loyaltyCard'])
             ->name('client.loyalty.card');
 
