@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'c/*',   // 🔥 Publiczny QR karnetów (bez sesji)
+        'c/*',               // 🔥 Publiczny QR karnetów (bez sesji)
+        'public-pass/*',     // 🔥 OTP + odejmowanie wejścia (QR flow)
     ];
 }

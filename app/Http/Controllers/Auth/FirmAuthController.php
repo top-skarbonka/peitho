@@ -20,7 +20,6 @@ class FirmAuthController extends Controller
             'password' => ['required', 'string', 'max:255'],
         ]);
 
-        // UWAGA: logujemy NA GUARDZIE "company" i po polu firm_id
         $ok = Auth::guard('company')->attempt([
             'firm_id'  => $data['firm_id'],
             'password' => $data['password'],
@@ -32,8 +31,14 @@ class FirmAuthController extends Controller
                 ->withErrors(['firm_id' => 'Błędne ID firmy lub hasło.']);
         }
 
-        // Bezpieczna sesja
         $request->session()->regenerate();
+
+        $firm = Auth::guard('company')->user();
+
+        // 🔥 poprawiony warunek
+        if ($firm->program_type === 'passes') {
+            return redirect()->route('company.passes.index');
+        }
 
         return redirect()->route('company.dashboard');
     }

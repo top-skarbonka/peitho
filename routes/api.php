@@ -5,32 +5,16 @@ use App\Http\Controllers\PublicPassController;
 
 /*
 |--------------------------------------------------------------------------
-| API ROUTES – PUBLIC QR (KARNETY)
+| PUBLIC PASS (QR → OTP → ODJĘCIE WEJŚCIA)
 |--------------------------------------------------------------------------
-|
-| Publiczny endpoint do obsługi karnetów:
-| - skan QR firmy
-| - podanie telefonu
-| - wysłanie OTP
-| - weryfikacja OTP
-| - potrącenie wejścia
-|
-| BEZ sesji
-| BEZ CSRF
-| BEZ redirectów
-| Czysty JSON
-|
 */
 
-Route::prefix('c')->group(function () {
+Route::prefix('public-pass/{slug}/{token}')->group(function () {
 
-    Route::get('/{slug}/{token}', [PublicPassController::class, 'showPhoneForm'])
-        ->name('api.passes.phone');
+    Route::post('/send-otp', [PublicPassController::class, 'sendOtp'])
+        ->name('api.public-pass.send-otp');
 
-    Route::post('/{slug}/{token}/otp', [PublicPassController::class, 'sendOtp'])
-        ->name('api.passes.otp');
-
-    Route::post('/{slug}/{token}/verify', [PublicPassController::class, 'verifyOtp'])
-        ->name('api.passes.verify');
+    Route::post('/verify-otp', [PublicPassController::class, 'verifyOtp'])
+        ->name('api.public-pass.verify-otp');
 
 });

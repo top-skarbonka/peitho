@@ -61,6 +61,15 @@
 
             <hr style="margin:24px 0">
 
+            <h4>🧠 Typ programu</h4>
+
+            <select name="program_type" required style="width:100%;padding:12px;margin-bottom:20px">
+                <option value="cards">Wirtualna karta (naklejki)</option>
+                <option value="passes">Karnety (wejścia)</option>
+            </select>
+
+            <hr style="margin:24px 0">
+
             <h4>🖼 Logo firmy</h4>
             <input type="file"
                    name="logo"

@@ -284,6 +284,8 @@ class FirmController extends Controller
     | 🎫 WYDANIE KARNETU KLIENTOWI (MVP)
     |--------------------------------------------------------------------------
     */
+
+    // ✅ DODANE (KONIECZNE) – route wskazuje na tę metodę
     public function issuePassForm()
     {
         $firm = $this->firm();
@@ -304,6 +306,16 @@ class FirmController extends Controller
             'phone' => 'required|string|min:6|max:32',
             'pass_type_id' => 'required|integer',
         ]);
+
+        // 🔥 NOWA BLOKADA: tylko jeden aktywny karnet per firma
+        $existingActive = DB::table('user_passes')
+            ->where('firm_id', $firm->id)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($existingActive) {
+            return back()->with('error', 'Klient posiada już aktywny karnet dla tej firmy.');
+        }
 
         DB::transaction(function () use ($request, $firm) {
 

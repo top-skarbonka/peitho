@@ -36,7 +36,7 @@ class AdminFirmController extends Controller
             'address'       => 'required|string|max:255',
             'postal_code'   => 'required|string|max:20',
             'phone'         => 'nullable|string|max:20',
-            // 🔥 DODANY workshop
+            'program_type'  => 'required|in:cards,passes',
             'card_template' => 'required|in:classic,florist,hair_salon,pizzeria,kebab,cafe,workshop',
         ]);
 
@@ -53,6 +53,7 @@ class AdminFirmController extends Controller
             'address'       => $request->address,
             'postal_code'   => $request->postal_code,
             'phone'         => $request->phone,
+            'program_type'  => $request->program_type,
             'program_id'    => 1,
             'card_template' => $request->card_template,
             'subscription_status' => 'trial',
@@ -108,7 +109,6 @@ class AdminFirmController extends Controller
             'youtube_url'     => 'nullable|string',
             'promotion_text'  => 'nullable|string',
             'opening_hours'   => 'nullable|string',
-            // 🔥 DODANY workshop
             'card_template'   => 'nullable|in:classic,florist,hair_salon,pizzeria,kebab,cafe,workshop',
             'logo'            => 'nullable|image|max:2048',
         ]);

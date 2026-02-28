@@ -245,3 +245,23 @@ Route::prefix('admin')
         Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');
     });
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PASS (QR → OTP → ODJĘCIE WEJŚCIA)
+|--------------------------------------------------------------------------
+*/
+
+use App\Http\Controllers\PublicPassController;
+
+Route::prefix('public-pass/{slug}/{token}')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->group(function () {
+
+        Route::post('/send-otp', [PublicPassController::class, 'sendOtp'])
+            ->name('public-pass.send-otp');
+
+        Route::post('/verify-otp', [PublicPassController::class, 'verifyOtp'])
+            ->name('public-pass.verify-otp');
+
+    });

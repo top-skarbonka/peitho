@@ -17,6 +17,9 @@ class Firm extends Authenticatable
         'password',
         'password_changed_at',
 
+        // 🆕 Typ programu
+        'program_type',
+
         // 📍 Dane adresowe
         'city',
         'address',
@@ -53,4 +56,20 @@ class Firm extends Authenticatable
         'subscription_ends_at' => 'datetime',
         'password_changed_at' => 'datetime',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPERY
+    |--------------------------------------------------------------------------
+    */
+
+    public function isCards(): bool
+    {
+        return $this->program_type === 'cards';
+    }
+
+    public function isPasses(): bool
+    {
+        return $this->program_type === 'passes';
+    }
 }

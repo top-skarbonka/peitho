@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\BelongsToFirm;
 
 class Transaction extends Model
 {
+    use BelongsToFirm;
+
     protected $fillable = [
         'client_id',
         'firm_id',

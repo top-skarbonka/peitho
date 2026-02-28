@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\BelongsToFirm;
 
 class LoyaltyStamp extends Model
 {
+    use BelongsToFirm;
+
     protected $fillable = [
         'loyalty_card_id',
         'firm_id',

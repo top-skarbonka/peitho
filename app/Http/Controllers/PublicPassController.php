@@ -16,14 +16,28 @@ class PublicPassController extends Controller
         $firm = Firm::where('slug', $slug)->first();
 
         if (!$firm) {
-            return response('Nieprawidłowa firma.', 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowa firma.',
+            ], 404);
         }
 
         if (!$firm->pass_qr_token || $firm->pass_qr_token !== $token) {
-            return response('Nieprawidłowy token QR.', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowy token QR.',
+            ], 403);
         }
 
-        return response("OK. Firma: {$firm->name}. Podaj numer telefonu.", 200);
+        return response()->json([
+            'success' => true,
+            'firm' => [
+                'id' => $firm->id,
+                'name' => $firm->name,
+                'slug' => $firm->slug,
+            ],
+            'message' => 'Podaj numer telefonu.',
+        ], 200);
     }
 
     public function sendOtp(Request $request, string $slug, string $token)
@@ -34,18 +48,27 @@ class PublicPassController extends Controller
 
         $firm = Firm::where('slug', $slug)->first();
         if (!$firm) {
-            return response('Nieprawidłowa firma.', 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowa firma.',
+            ], 404);
         }
 
         if (!$firm->pass_qr_token || $firm->pass_qr_token !== $token) {
-            return response('Nieprawidłowy token QR.', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowy token QR.',
+            ], 403);
         }
 
         $phone = $request->input('phone');
 
         $client = Client::where('phone', $phone)->first();
         if (!$client) {
-            return response('Klient nie istnieje.', 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Klient nie istnieje.',
+            ], 404);
         }
 
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -101,12 +124,15 @@ class PublicPassController extends Controller
             'updated_at' => now(),
         ]);
 
-        // 🔥 ZMIANA: zawsze zwracamy otp_dev do testów
         $response = [
             'success' => true,
             'expires_at' => $expiresAt->toDateTimeString(),
-            'otp_dev' => $otp,
         ];
+
+        // OTP tylko do testów: DEBUG albo jawny przełącznik w .env
+        if (config('app.debug') || (bool) env('OTP_ALWAYS_RETURN_DEV', false)) {
+            $response['otp_dev'] = $otp;
+        }
 
         return response()->json($response);
     }
@@ -120,11 +146,17 @@ class PublicPassController extends Controller
 
         $firm = Firm::where('slug', $slug)->first();
         if (!$firm) {
-            return response('Nieprawidłowa firma.', 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowa firma.',
+            ], 404);
         }
 
         if (!$firm->pass_qr_token || $firm->pass_qr_token !== $token) {
-            return response('Nieprawidłowy token QR.', 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nieprawidłowy token QR.',
+            ], 403);
         }
 
         $phone = $request->input('phone');
@@ -139,15 +171,24 @@ class PublicPassController extends Controller
             ->first();
 
         if (!$row) {
-            return response('Brak aktywnego kodu.', 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak aktywnego kodu.',
+            ], 404);
         }
 
         if (now()->greaterThan($row->expires_at)) {
-            return response('Kod wygasł.', 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Kod wygasł.',
+            ], 422);
         }
 
         if ((int) $row->attempts >= 3) {
-            return response('Zbyt wiele prób.', 429);
+            return response()->json([
+                'success' => false,
+                'message' => 'Zbyt wiele prób.',
+            ], 429);
         }
 
         DB::table('otp_codes')->where('id', $row->id)->update([
@@ -156,7 +197,10 @@ class PublicPassController extends Controller
         ]);
 
         if (!Hash::check($otp, $row->code_hash)) {
-            return response('Błędny kod.', 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Błędny kod.',
+            ], 422);
         }
 
         try {
@@ -207,7 +251,10 @@ class PublicPassController extends Controller
             });
 
         } catch (\Exception $e) {
-            return response($e->getMessage(), 422);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
 
         return response()->json([

@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\BelongsToFirm;
 
 class RegistrationToken extends Model
 {
     use HasFactory;
+    use BelongsToFirm;
 
     protected $fillable = [
         'token',
