@@ -48,6 +48,42 @@
             place-items: center;
         }
 
+        /* ✅ DODANE (MINIMALNIE): przycisk do zgód w prawym górnym rogu */
+        .top-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 14px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: .9rem;
+            backdrop-filter: blur(14px);
+            transition: transform .12s ease, background .12s ease, border-color .12s ease;
+            user-select: none;
+        }
+
+        .top-action:hover {
+            background: rgba(255,255,255,.10);
+            border-color: rgba(255,255,255,.18);
+            transform: translateY(-1px);
+        }
+
+        .top-action i {
+            opacity: .95;
+        }
+
+        /* Na bardzo małych ekranach zostawiamy samą ikonkę (czytelnie, mobile-first) */
+        @media (max-width: 520px) {
+            .top-action span { display: none; }
+            .top-action { width: 44px; padding: 0; border-radius: 14px; }
+        }
+
         .categories {
             display: flex;
             gap: 12px;
@@ -133,6 +169,12 @@
             <span>Witaj {{ $client->name ?? '' }}</span>
         </div>
     </div>
+
+    {{-- ✅ DODANE: szybki skrót do panelu zgód --}}
+    <a href="{{ url('/client/consents') }}" class="top-action" title="Zgody marketingowe">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Zgody</span>
+    </a>
 </header>
 
 {{-- ===================== KATEGORIE ===================== --}}

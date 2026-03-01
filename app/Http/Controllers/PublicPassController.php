@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Firm;
 use App\Services\Sms\SmsApiSender;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -46,7 +47,49 @@ class PublicPassController extends Controller
             return response()->json(['success' => false, 'message' => 'Nieprawidłowy token QR.'], 403);
         }
 
-        $phone = $request->input('phone');
+        $ip = (string) $request->ip();
+        $phone = $this->normalizePhone((string) $request->input('phone'));
+
+        /**
+         * 🔒 GLOBAL LIMIT KOSZTOWY (5 SMS / 10 MIN) — CAŁY SYSTEM
+         * twardy bezpiecznik: maks 5 SMS OTP na 10 minut łącznie.
+         */
+        $globalKey = 'pp:otp:global_10m';
+
+        if (Cache::add($globalKey, 1, now()->addMinutes(10)) === false) {
+            $globalCount = (int) Cache::increment($globalKey);
+
+            if ($globalCount > 5) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Limit wysyłek SMS chwilowo osiągnięty. Spróbuj ponownie za kilka minut.',
+                ], 429);
+            }
+        }
+
+        /**
+         * 🔐 THROTTLE OTP (PRODUKCJA)
+         * - 1 SMS / 60s na (firma + telefon)
+         * - limit anty-spam na IP (np. 20 prób / 10 min)
+         */
+        $sendLockKey = "pp:otp:send_lock:firm:{$firm->id}:phone:{$phone}";
+        if (Cache::has($sendLockKey)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Odczekaj chwilę przed kolejną wysyłką kodu.',
+            ], 429);
+        }
+
+        $ipRateKey = "pp:otp:send_ip:{$ip}";
+        if ($this->rateLimitHit($ipRateKey, 600, 20)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Zbyt wiele prób. Spróbuj ponownie za kilka minut.',
+            ], 429);
+        }
+
+        Cache::put($sendLockKey, true, now()->addSeconds(60));
+
         $client = Client::where('phone', $phone)->first();
 
         if (!$client) {
@@ -77,6 +120,9 @@ class PublicPassController extends Controller
         ]);
 
         if (!$smsResult['ok']) {
+            // Jeśli provider padł – pozwól ponowić szybciej (nie blokujemy usera bez sensu)
+            Cache::forget($sendLockKey);
+
             return response()->json(['success' => false, 'message' => 'Nie udało się wysłać SMS.'], 500);
         }
 
@@ -128,8 +174,30 @@ class PublicPassController extends Controller
             return response()->json(['success' => false, 'message' => 'Nieprawidłowy token QR.'], 403);
         }
 
-        $phone = $request->input('phone');
+        $ip = (string) $request->ip();
+        $phone = $this->normalizePhone((string) $request->input('phone'));
         $otp = $request->input('otp');
+
+        /**
+         * 🔐 THROTTLE VERIFY (PRODUKCJA)
+         * - max 5 prób / 5 min na (firma + telefon)
+         * - dodatkowo limit na IP (np. 60 prób / 10 min)
+         */
+        $verifyRateKey = "pp:otp:verify:firm:{$firm->id}:phone:{$phone}";
+        if ($this->rateLimitHit($verifyRateKey, 300, 5)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Zbyt wiele prób. Odczekaj kilka minut i spróbuj ponownie.',
+            ], 429);
+        }
+
+        $verifyIpRateKey = "pp:otp:verify_ip:{$ip}";
+        if ($this->rateLimitHit($verifyIpRateKey, 600, 60)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Zbyt wiele prób z tego adresu IP. Spróbuj ponownie później.',
+            ], 429);
+        }
 
         $row = DB::table('otp_codes')
             ->where('firm_id', $firm->id)
@@ -250,5 +318,30 @@ class PublicPassController extends Controller
             'success' => true,
             'message' => 'Wejście odjęte poprawnie.',
         ]);
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        $phone = trim($phone);
+        $phone = preg_replace('/\s+/', '', $phone);
+        return (string) $phone;
+    }
+
+    private function rateLimitHit(string $key, int $ttlSeconds, int $maxAttempts): bool
+    {
+        $now = now();
+
+        if (!Cache::has($key)) {
+            Cache::put($key, 1, $now->addSeconds($ttlSeconds));
+            return false;
+        }
+
+        $count = (int) Cache::increment($key);
+
+        if ($count === 2) {
+            Cache::put($key, $count, $now->addSeconds($ttlSeconds));
+        }
+
+        return $count > $maxAttempts;
     }
 }

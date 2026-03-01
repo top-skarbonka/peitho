@@ -11,13 +11,27 @@ class Kernel extends ConsoleKernel
     {
         /**
          * 🔥 AUTO BLOCK ENGINE
-         * co minutę (na start)
-         *
-         * potem zmienisz na:
-         * ->hourly()
          */
-$schedule->command('subscriptions:check')
-    ->hourly();    }
+        $schedule->command('subscriptions:check')
+            ->hourly();
+
+        /**
+         * 🛡 BACKUP SYSTEM – PRODUKCJA
+         * 06:00 rano
+         * 22:00 wieczorem
+         */
+        $schedule->command('backup:run')
+            ->dailyAt('06:00');
+
+        $schedule->command('backup:run')
+            ->dailyAt('22:00');
+
+        /**
+         * 🧹 Cleanup starych backupów
+         */
+        $schedule->command('backup:clean')
+            ->dailyAt('23:00');
+    }
 
     protected function commands(): void
     {

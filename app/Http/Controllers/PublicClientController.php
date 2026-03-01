@@ -44,6 +44,7 @@ class PublicClientController extends Controller
         $client = Client::where('phone', $validated['phone'])->first();
 
         if (! $client) {
+
             // 👤 NOWY KLIENT
             $client = Client::create([
                 'firm_id'                  => $firm->id,
@@ -56,6 +57,27 @@ class PublicClientController extends Controller
                 'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
                 'terms_accepted_at'        => $now,
             ]);
+
+        } else {
+
+            // 🔵 KLIENT ISTNIEJE
+
+            if (is_null($client->password)) {
+
+                // 🟢 Przypadek A: klient z karnetu bez hasła
+                $client->update([
+                    'password' => Hash::make($validated['password']),
+                ]);
+
+            } else {
+
+                // 🔴 Przypadek B: konto już aktywne — nie nadpisujemy hasła
+                return back()
+                    ->withErrors([
+                        'phone' => 'Konto z tym numerem już istnieje. Zaloguj się.',
+                    ])
+                    ->withInput();
+            }
         }
 
         /*

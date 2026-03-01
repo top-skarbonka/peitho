@@ -56,7 +56,7 @@
     </div>
 
     {{-- KPI --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <div class="bg-white rounded-xl p-6 shadow">
             <p class="text-slate-500 text-sm">Klienci</p>
             <p class="text-3xl font-bold">{{ $totalClients }}</p>
@@ -75,6 +75,14 @@
         <div class="bg-white rounded-xl p-6 shadow">
             <p class="text-slate-500 text-sm">Średnio / transakcję</p>
             <p class="text-3xl font-bold">{{ number_format($avgPoints,2,',',' ') }}</p>
+        </div>
+
+        {{-- 🔐 NOWE KPI: SMS DZIŚ --}}
+        <div class="bg-white rounded-xl p-6 shadow border-l-4 border-purple-500">
+            <p class="text-slate-500 text-sm">SMS dziś (OTP)</p>
+            <p class="text-3xl font-bold text-purple-600">
+                {{ $smsToday ?? 0 }}
+            </p>
         </div>
     </div>
 
@@ -143,7 +151,6 @@
 
 </div>
 
-{{-- CHARTS --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>

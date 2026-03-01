@@ -19,6 +19,43 @@ class AdminFirmController extends Controller
     public function index()
     {
         $firms = Firm::orderByDesc('id')->get();
+
+        // ✅ SMS dziś (OTP) – agregacja w 1 zapytaniu (bez N+1)
+        $smsToday = \DB::table('sms_logs')
+            ->select('firm_id', \DB::raw('COUNT(*) as total'))
+            ->where('type', 'otp')
+            ->whereDate('created_at', today())
+            ->groupBy('firm_id')
+            ->pluck('total', 'firm_id');
+
+        // ✅ Status ostatniego SMS (OTP) per firma – 1 pobranie + grupowanie w PHP
+        $lastSmsStatus = \DB::table('sms_logs')
+            ->select('firm_id', 'status')
+            ->where('type', 'otp')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('firm_id')
+            ->map(function ($rows) {
+                return $rows->first()->status ?? null;
+            });
+
+        $firms->transform(function ($firm) use ($smsToday, $lastSmsStatus) {
+
+            $firm->sms_today = $smsToday[$firm->id] ?? 0;
+
+            $status = $lastSmsStatus[$firm->id] ?? null;
+
+            if (! $status) {
+                $firm->otp_status = 'none';
+            } elseif ($status === 'success') {
+                $firm->otp_status = 'ok';
+            } else {
+                $firm->otp_status = 'error';
+            }
+
+            return $firm;
+        });
+
         return view('admin.firms.index', compact('firms'));
     }
 
