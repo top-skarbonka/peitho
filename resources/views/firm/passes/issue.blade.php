@@ -2,46 +2,94 @@
 
 @section('content')
 
-<h2>🎫 Wydaj karnet klientowi</h2>
+<div class="space-y-8">
 
-@if(session('success'))
-    <div style="color: green; margin-bottom: 15px;">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if($passTypes->isEmpty())
-    <p style="color:red;">
-        Najpierw musisz utworzyć typ karnetu.
-        <a href="{{ route('company.pass_types') }}">Przejdź tutaj</a>
-    </p>
-@else
-
-<form method="POST" action="{{ route('company.passes.issue') }}">
-    @csrf
-
+    {{-- HEADER --}}
     <div>
-        <label>Telefon klienta:</label><br>
-        <input type="text" name="phone" required>
+        <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-2">
+            🎫 Wydaj karnet klientowi
+        </h1>
+        <p class="text-slate-500 mt-1">
+            Wprowadź numer telefonu klienta i wybierz typ karnetu.
+        </p>
     </div>
 
-    <div style="margin-top:10px;">
-        <label>Typ karnetu:</label><br>
-        <select name="pass_type_id" required>
-            @foreach($passTypes as $type)
-                <option value="{{ $type->id }}">
-                    {{ $type->name }} ({{ $type->entries }} wejść)
-                </option>
-            @endforeach
-        </select>
-    </div>
+    {{-- SUCCESS --}}
+    @if(session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl">
+            {{ session('success') }}
+        </div>
+    @endif
 
-    <div style="margin-top:15px;">
-        <button type="submit">🎫 Wydaj karnet</button>
-    </div>
+    {{-- BRAK TYPÓW --}}
+    @if($passTypes->isEmpty())
 
-</form>
+        <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-5 rounded-2xl">
+            <p class="font-semibold mb-2">
+                Najpierw musisz utworzyć typ karnetu.
+            </p>
+            <a href="{{ route('company.pass_types') }}"
+               class="inline-block mt-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                Przejdź do typów karnetów
+            </a>
+        </div>
 
-@endif
+    @else
+
+        {{-- HERO BOX --}}
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-2xl p-8 shadow-lg">
+
+            <h3 class="text-xl font-semibold mb-2">
+                🎟️ Wydanie nowego karnetu
+            </h3>
+
+            <p class="text-indigo-100 mb-6">
+                Po zatwierdzeniu klient otrzyma aktywny karnet w systemie.
+            </p>
+
+            <form method="POST"
+                  action="{{ route('company.passes.issue') }}"
+                  class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @csrf
+
+                <div>
+                    <label class="block text-sm mb-1">
+                        Telefon klienta
+                    </label>
+                    <input type="text"
+                           name="phone"
+                           required
+                           class="w-full rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                </div>
+
+                <div>
+                    <label class="block text-sm mb-1">
+                        Typ karnetu
+                    </label>
+                    <select name="pass_type_id"
+                            required
+                            class="w-full rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        @foreach($passTypes as $type)
+                            <option value="{{ $type->id }}">
+                                {{ $type->name }} ({{ $type->entries }} wejść)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <button type="submit"
+                            class="mt-4 bg-white text-indigo-600 font-semibold px-6 py-2 rounded-lg hover:bg-indigo-50 transition">
+                        🎫 Wydaj karnet
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    @endif
+
+</div>
 
 @endsection

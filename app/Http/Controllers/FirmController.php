@@ -34,7 +34,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | DASHBOARD (FIX 500 + STABILNY)
+    | DASHBOARD (ROZSZERZONY O LOGI WEJŚĆ KARNETÓW)
     |--------------------------------------------------------------------------
     */
     public function dashboard()
@@ -75,6 +75,13 @@ class FirmController extends Controller
                 ->count();
         }
 
+        // ✅ NOWE – OSTATNIE 10 WEJŚĆ Z KARNETÓW
+        $entryLogs = DB::table('pass_entry_logs')
+            ->where('firm_id', $firm->id)
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get();
+
         return view('firm.dashboard', [
             'totalClients'      => $totalClients,
             'totalTransactions' => $totalTransactions,
@@ -84,6 +91,7 @@ class FirmController extends Controller
             'chartValues'       => $dailyValues,
             'monthlyLabels'     => $monthlyLabels,
             'monthlyValues'     => $monthlyValues,
+            'entryLogs'         => $entryLogs, // ✅ tylko to dodane
         ]);
     }
 
@@ -281,11 +289,9 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 🎫 WYDANIE KARNETU KLIENTOWI (MVP)
+    | 🎫 WYDANIE KARNETU
     |--------------------------------------------------------------------------
     */
-
-    // ✅ DODANE (KONIECZNE) – route wskazuje na tę metodę
     public function issuePassForm()
     {
         $firm = $this->firm();
@@ -306,16 +312,6 @@ class FirmController extends Controller
             'phone' => 'required|string|min:6|max:32',
             'pass_type_id' => 'required|integer',
         ]);
-
-        // 🔥 NOWA BLOKADA: tylko jeden aktywny karnet per firma
-        $existingActive = DB::table('user_passes')
-            ->where('firm_id', $firm->id)
-            ->where('status', 'active')
-            ->exists();
-
-        if ($existingActive) {
-            return back()->with('error', 'Klient posiada już aktywny karnet dla tej firmy.');
-        }
 
         DB::transaction(function () use ($request, $firm) {
 
@@ -361,7 +357,7 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | 🎫 LISTA WYDANYCH KARNETÓW (MVP)
+    | 🎫 LISTA WYDANYCH KARNETÓW
     |--------------------------------------------------------------------------
     */
     public function issuedPasses(Request $request)

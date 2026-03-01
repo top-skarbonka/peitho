@@ -6,17 +6,45 @@
 
     <title>@yield('title', 'Panel Firmy — Looply')</title>
 
-    {{-- ✅ FAVICON (NAJWAŻNIEJSZE) --}}
     <link rel="icon" type="image/png" href="{{ asset('branding/icon.png') }}">
     <link rel="shortcut icon" href="{{ asset('branding/icon.png') }}">
-
-    {{-- iPhone / Safari --}}
     <link rel="apple-touch-icon" href="{{ asset('branding/icon.png') }}">
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body { background: #f5f7fb; }
+        body { background: #f6f8fc; }
+
+        .sidebar {
+            width: 240px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            letter-spacing: .08em;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #94a3b8;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all .15s ease;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: #f1f5f9;
+        }
+
+        .sidebar-shadow {
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
 
         @media (max-width: 768px) {
             aside { display: none; }
@@ -27,70 +55,106 @@
 <body class="text-slate-800">
 
 {{-- MOBILE TOP BAR --}}
-<div class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b">
-
-    {{-- 🔥 LOGO zamiast emoji --}}
-    <div class="flex items-center gap-2">
-        <img src="{{ asset('branding/logo.png') }}" class="h-8">
-    </div>
-
-    <button onclick="toggleMenu()" class="text-2xl">☰</button>
+<div class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b sidebar-shadow">
+    <img src="{{ asset('branding/logo.png') }}" class="h-7">
+    <button onclick="toggleMenu()" class="text-xl text-slate-700">☰</button>
 </div>
-
 
 {{-- MOBILE MENU --}}
 <div id="mobileMenu"
      class="fixed inset-0 bg-black/40 z-50 hidden md:hidden"
      onclick="toggleMenu()">
 
-    <div class="bg-white w-64 h-full p-5" onclick="event.stopPropagation()">
+    <div class="bg-white w-64 h-full p-6 overflow-y-auto"
+         onclick="event.stopPropagation()">
 
-        <img src="{{ asset('branding/logo.png') }}" class="h-8 mb-6">
+        <img src="{{ asset('branding/logo.png') }}" class="h-7 mb-8">
 
-        <nav class="space-y-2 text-sm">
-            <a href="{{ route('company.dashboard') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📊 Dashboard</a>
-            <a href="{{ route('company.loyalty.cards') }}" class="block px-3 py-2 rounded hover:bg-slate-100">⭐ Karty</a>
-            <a href="{{ route('company.scan.form') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📷 Skanuj QR</a>
-            <a href="{{ route('company.points.form') }}" class="block px-3 py-2 rounded hover:bg-slate-100">💎 Punkty</a>
-            <a href="{{ route('company.transactions') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📜 Transakcje</a>
+        <nav class="space-y-6 text-sm">
 
-            <form method="POST" action="{{ route('company.logout') }}" class="pt-3 mt-3 border-t">
+            <div>
+                <p class="nav-section-title mb-2">Główne</p>
+                <a href="{{ route('company.dashboard') }}" class="nav-link">📊 Dashboard</a>
+            </div>
+
+            <div>
+                <p class="nav-section-title mb-2">Program lojalnościowy</p>
+                <div class="space-y-1">
+                    <a href="{{ route('company.loyalty.cards') }}" class="nav-link">⭐ Karty</a>
+                    <a href="{{ route('company.scan.form') }}" class="nav-link">📷 Skanuj QR</a>
+                    <a href="{{ route('company.points.form') }}" class="nav-link">💎 Punkty</a>
+                    <a href="{{ route('company.transactions') }}" class="nav-link">📜 Transakcje</a>
+                </div>
+            </div>
+
+            <div>
+                <p class="nav-section-title mb-2">Karnety</p>
+                <div class="space-y-1">
+                    <a href="{{ route('company.pass_types') }}" class="nav-link">🎫 Typy karnetów</a>
+                    <a href="{{ route('company.passes.issue_form') }}" class="nav-link">➕ Wydaj karnet</a>
+                    <a href="{{ route('company.passes.index') }}" class="nav-link">📋 Wydane karnety</a>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('company.logout') }}" class="pt-6 border-t">
                 @csrf
-                <button class="w-full text-left px-3 py-2 rounded text-red-600 hover:bg-red-50">
+                <button class="w-full text-left nav-link text-red-600 hover:bg-red-50">
                     🚪 Wyloguj
                 </button>
             </form>
+
         </nav>
     </div>
 </div>
 
-
 <div class="min-h-screen flex">
 
     {{-- DESKTOP SIDEBAR --}}
-    <aside class="hidden md:block w-64 bg-white border-r px-5 py-6">
+    <aside class="hidden md:flex md:flex-col sidebar bg-white border-r sidebar-shadow px-6 py-8">
 
-        {{-- 🔥 LOGO --}}
-        <img src="{{ asset('branding/logo.png') }}" class="h-9 mb-8">
+        <div class="mb-10 flex justify-center">
+            <img src="{{ asset('branding/logo.png') }}" class="h-7 object-contain">
+        </div>
 
-        <nav class="space-y-1 text-sm">
-            <a href="{{ route('company.dashboard') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📊 Dashboard</a>
-            <a href="{{ route('company.loyalty.cards') }}" class="block px-3 py-2 rounded hover:bg-slate-100">⭐ Karty</a>
-            <a href="{{ route('company.scan.form') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📷 Skanuj QR</a>
-            <a href="{{ route('company.points.form') }}" class="block px-3 py-2 rounded hover:bg-slate-100">💎 Punkty</a>
-            <a href="{{ route('company.transactions') }}" class="block px-3 py-2 rounded hover:bg-slate-100">📜 Transakcje</a>
+        <nav class="space-y-6 text-sm flex-1">
 
-            <form method="POST" action="{{ route('company.logout') }}" class="pt-3 mt-3 border-t">
-                @csrf
-                <button class="w-full text-left px-3 py-2 rounded text-red-600 hover:bg-red-50">
-                    🚪 Wyloguj
-                </button>
-            </form>
+            <div>
+                <p class="nav-section-title mb-3">Główne</p>
+                <a href="{{ route('company.dashboard') }}" class="nav-link">📊 Dashboard</a>
+            </div>
+
+            <div>
+                <p class="nav-section-title mb-3">Program lojalnościowy</p>
+                <div class="space-y-1">
+                    <a href="{{ route('company.loyalty.cards') }}" class="nav-link">⭐ Karty</a>
+                    <a href="{{ route('company.scan.form') }}" class="nav-link">📷 Skanuj QR</a>
+                    <a href="{{ route('company.points.form') }}" class="nav-link">💎 Punkty</a>
+                    <a href="{{ route('company.transactions') }}" class="nav-link">📜 Transakcje</a>
+                </div>
+            </div>
+
+            <div>
+                <p class="nav-section-title mb-3">Karnety</p>
+                <div class="space-y-1">
+                    <a href="{{ route('company.pass_types') }}" class="nav-link">🎫 Typy karnetów</a>
+                    <a href="{{ route('company.passes.issue_form') }}" class="nav-link">➕ Wydaj karnet</a>
+                    <a href="{{ route('company.passes.index') }}" class="nav-link">📋 Wydane karnety</a>
+                </div>
+            </div>
+
         </nav>
+
+        <form method="POST" action="{{ route('company.logout') }}" class="pt-6 border-t">
+            @csrf
+            <button class="w-full text-left nav-link text-red-600 hover:bg-red-50">
+                🚪 Wyloguj
+            </button>
+        </form>
+
     </aside>
 
     {{-- CONTENT --}}
-    <main class="flex-1 px-4 md:px-8 py-6">
+    <main class="flex-1 px-6 md:px-10 py-8">
         @yield('content')
     </main>
 

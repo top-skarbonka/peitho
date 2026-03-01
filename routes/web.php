@@ -258,6 +258,9 @@ Route::prefix('public-pass/{slug}/{token}')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
     ->group(function () {
 
+        Route::get('/', [PublicPassController::class, 'showPhoneForm'])
+            ->name('public-pass.form');
+
         Route::post('/send-otp', [PublicPassController::class, 'sendOtp'])
             ->name('public-pass.send-otp');
 
