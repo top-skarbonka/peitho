@@ -54,6 +54,10 @@
 
 <body class="text-slate-800">
 
+@php
+$firm = auth()->guard('company')->user();
+@endphp
+
 {{-- MOBILE TOP BAR --}}
 <div class="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b sidebar-shadow">
     <img src="{{ asset('branding/logo.png') }}" class="h-7">
@@ -77,16 +81,28 @@
                 <a href="{{ route('company.dashboard') }}" class="nav-link">📊 Dashboard</a>
             </div>
 
+            {{-- PROGRAM LOJALNOŚCIOWY --}}
+            @if($firm->has_stickers || $firm->has_points)
             <div>
                 <p class="nav-section-title mb-2">Program lojalnościowy</p>
                 <div class="space-y-1">
+
+                    @if($firm->has_stickers)
                     <a href="{{ route('company.loyalty.cards') }}" class="nav-link">⭐ Karty</a>
                     <a href="{{ route('company.scan.form') }}" class="nav-link">📷 Skanuj QR</a>
+                    @endif
+
+                    @if($firm->has_points)
                     <a href="{{ route('company.points.form') }}" class="nav-link">💎 Punkty</a>
                     <a href="{{ route('company.transactions') }}" class="nav-link">📜 Transakcje</a>
+                    @endif
+
                 </div>
             </div>
+            @endif
 
+            {{-- KARNETY --}}
+            @if($firm->has_passes)
             <div>
                 <p class="nav-section-title mb-2">Karnety</p>
                 <div class="space-y-1">
@@ -95,6 +111,7 @@
                     <a href="{{ route('company.passes.index') }}" class="nav-link">📋 Wydane karnety</a>
                 </div>
             </div>
+            @endif
 
             <form method="POST" action="{{ route('company.logout') }}" class="pt-6 border-t">
                 @csrf
@@ -123,16 +140,28 @@
                 <a href="{{ route('company.dashboard') }}" class="nav-link">📊 Dashboard</a>
             </div>
 
+            {{-- PROGRAM LOJALNOŚCIOWY --}}
+            @if($firm->has_stickers || $firm->has_points)
             <div>
                 <p class="nav-section-title mb-3">Program lojalnościowy</p>
                 <div class="space-y-1">
+
+                    @if($firm->has_stickers)
                     <a href="{{ route('company.loyalty.cards') }}" class="nav-link">⭐ Karty</a>
                     <a href="{{ route('company.scan.form') }}" class="nav-link">📷 Skanuj QR</a>
+                    @endif
+
+                    @if($firm->has_points)
                     <a href="{{ route('company.points.form') }}" class="nav-link">💎 Punkty</a>
                     <a href="{{ route('company.transactions') }}" class="nav-link">📜 Transakcje</a>
+                    @endif
+
                 </div>
             </div>
+            @endif
 
+            {{-- KARNETY --}}
+            @if($firm->has_passes)
             <div>
                 <p class="nav-section-title mb-3">Karnety</p>
                 <div class="space-y-1">
@@ -141,6 +170,7 @@
                     <a href="{{ route('company.passes.index') }}" class="nav-link">📋 Wydane karnety</a>
                 </div>
             </div>
+            @endif
 
         </nav>
 

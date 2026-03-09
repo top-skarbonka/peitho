@@ -97,6 +97,11 @@ class AdminFirmController extends Controller
             'subscription_ends_at' => now()->addDays(14),
             'plan' => 'starter',
             'billing_period' => 'monthly',
+
+            // ✅ NOWE POLA PROGRAMÓW
+            'has_stickers' => $request->has('has_stickers'),
+            'has_points'   => $request->has('has_points'),
+            'has_passes'   => $request->has('has_passes'),
         ]);
 
         Mail::to($firm->email)->send(
@@ -166,6 +171,11 @@ class AdminFirmController extends Controller
             'plan',
             'billing_period',
         ]);
+
+        // ✅ NOWE POLA PROGRAMÓW
+        $data['has_stickers'] = $request->has('has_stickers');
+        $data['has_points']   = $request->has('has_points');
+        $data['has_passes']   = $request->has('has_passes');
 
         if ($request->filled('card_template')) {
             $data['card_template'] = $request->card_template;
