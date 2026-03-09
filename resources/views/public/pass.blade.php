@@ -181,7 +181,7 @@ async function sendOtp() {
     try {
         const phone = document.getElementById('phone').value;
 
-        const res = await fetch(`/public-pass/${slug}/${token}/send-otp`, {
+        const res = await fetch(`/pass/${slug}/${token}/send-otp`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ async function verifyOtp() {
         const phone = document.getElementById('phone').value;
         const otp = document.getElementById('otp').value;
 
-        const res = await fetch(`/public-pass/${slug}/${token}/verify-otp`, {
+        const res = await fetch(`/pass/${slug}/${token}/verify-otp`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

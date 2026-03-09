@@ -76,12 +76,7 @@ class FirmController extends Controller
         for ($h = 0; $h < 24; $h++) {
             $hours[$h] = $hoursRaw[$h]->total ?? 0;
         }
-public function dashboard()
-{
-    return view('firm.dashboard', [
-        'test' => 'DASHBOARD DZIAŁA 🎉'
-    ]);
-}
+
         return view('firm.dashboard', [
             'totalClients'      => $totalClients,
             'totalTransactions' => $totalTransactions,
@@ -121,7 +116,7 @@ public function dashboard()
             ->where('program_id', $programId);
 
         if ($phone) {
-            $query->whereHas('client', fn($q) => $q->where('phone', $phone));
+            $query->whereHas('client', fn ($q) => $q->where('phone', $phone));
         }
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
@@ -130,16 +125,16 @@ public function dashboard()
             $query->whereDate('created_at', '<=', $dateTo);
         }
         if ($minPoints !== null && $minPoints !== '') {
-            $query->where('points', '>=', (int)$minPoints);
+            $query->where('points', '>=', (int) $minPoints);
         }
         if ($maxPoints !== null && $maxPoints !== '') {
-            $query->where('points', '<=', (int)$maxPoints);
+            $query->where('points', '<=', (int) $maxPoints);
         }
         if ($minAmount !== null && $minAmount !== '') {
-            $query->where('amount', '>=', (float)$minAmount);
+            $query->where('amount', '>=', (float) $minAmount);
         }
         if ($maxAmount !== null && $maxAmount !== '') {
-            $query->where('amount', '<=', (float)$maxAmount);
+            $query->where('amount', '<=', (float) $maxAmount);
         }
 
         $transactions = $query
@@ -151,7 +146,7 @@ public function dashboard()
         $clientSummary = null;
         if ($phone) {
             $clientSummary = Transaction::where('program_id', $programId)
-                ->whereHas('client', fn($q) => $q->where('phone', $phone))
+                ->whereHas('client', fn ($q) => $q->where('phone', $phone))
                 ->selectRaw('SUM(points) AS total_points, COUNT(*) AS total_transactions')
                 ->first();
         }
@@ -161,14 +156,26 @@ public function dashboard()
             ->where('program_id', $programId);
 
         if ($phone) {
-            $chartQuery->whereHas('client', fn($q) => $q->where('phone', $phone));
+            $chartQuery->whereHas('client', fn ($q) => $q->where('phone', $phone));
         }
-        if ($dateFrom) $chartQuery->whereDate('created_at', '>=', $dateFrom);
-        if ($dateTo)   $chartQuery->whereDate('created_at', '<=', $dateTo);
-        if ($minPoints !== null && $minPoints !== '') $chartQuery->where('points', '>=', $minPoints);
-        if ($maxPoints !== null && $maxPoints !== '') $chartQuery->where('points', '<=', $maxPoints);
-        if ($minAmount !== null && $minAmount !== '') $chartQuery->where('amount', '>=', $minAmount);
-        if ($maxAmount !== null && $maxAmount !== '') $chartQuery->where('amount', '<=', $maxAmount);
+        if ($dateFrom) {
+            $chartQuery->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $chartQuery->whereDate('created_at', '<=', $dateTo);
+        }
+        if ($minPoints !== null && $minPoints !== '') {
+            $chartQuery->where('points', '>=', $minPoints);
+        }
+        if ($maxPoints !== null && $maxPoints !== '') {
+            $chartQuery->where('points', '<=', $maxPoints);
+        }
+        if ($minAmount !== null && $minAmount !== '') {
+            $chartQuery->where('amount', '>=', $minAmount);
+        }
+        if ($maxAmount !== null && $maxAmount !== '') {
+            $chartQuery->where('amount', '<=', $maxAmount);
+        }
 
         $chartData = $chartQuery
             ->groupBy('date')
@@ -197,10 +204,14 @@ public function dashboard()
     public function scan($code)
     {
         $card = LoyaltyCard::where('qr_code', $code)->first();
-        if ($card) return view('firm.scan.card', compact('card'));
+        if ($card) {
+            return view('firm.scan.card', compact('card'));
+        }
 
         $voucher = GiftVoucher::where('qr_code', $code)->first();
-        if ($voucher) return view('firm.scan.voucher', compact('voucher'));
+        if ($voucher) {
+            return view('firm.scan.voucher', compact('voucher'));
+        }
 
         return "Nie znaleziono karty ani vouchera.";
     }
@@ -287,7 +298,7 @@ public function dashboard()
             ->where('program_id', $programId)
             ->first();
 
-        if (!$client) {
+        if (! $client) {
             return back()->withErrors(['phone' => 'Nie znaleziono klienta.']);
         }
 

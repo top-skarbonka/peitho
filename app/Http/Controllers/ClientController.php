@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
 
@@ -178,5 +180,61 @@ class ClientController extends Controller
         }
 
         return $this->showCard($card);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PORTFEL — USTAWIENIE HASŁA PRZEZ LINK Z SMS (TOKEN)
+    |--------------------------------------------------------------------------
+    */
+
+    public function activateForm(string $token)
+    {
+        $client = Client::where('activation_token', $token)->first();
+
+        if (! $client) {
+            abort(404, 'Nieprawidłowy token.');
+        }
+
+        if ($client->activation_token_expires_at && now()->greaterThan($client->activation_token_expires_at)) {
+            abort(410, 'Token wygasł.');
+        }
+
+        return view('client.activate', [
+            'token' => $token,
+            'phone' => $client->phone,
+        ]);
+    }
+
+    public function activateSubmit(Request $request, string $token)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $client = Client::where('activation_token', $token)->first();
+
+        if (! $client) {
+            abort(404, 'Nieprawidłowy token.');
+        }
+
+        if ($client->activation_token_expires_at && now()->greaterThan($client->activation_token_expires_at)) {
+            abort(410, 'Token wygasł.');
+        }
+
+        DB::transaction(function () use ($client, $request) {
+            $client->password = Hash::make((string) $request->input('password'));
+            $client->password_set = 1;
+            $client->activation_token = null;
+            $client->activation_token_expires_at = null;
+            $client->save();
+        });
+
+        // logujemy klienta automatycznie po ustawieniu hasła
+        Auth::guard('client')->login($client);
+
+        return redirect()
+            ->route('client.dashboard')
+            ->with('success', 'Hasło ustawione ✅ Możesz się teraz logować numerem telefonu.');
     }
 }

@@ -26,8 +26,15 @@ class ClientAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // 🔧 NORMALIZACJA NUMERU TELEFONU (9 cyfr w bazie)
+        $normalizedPhone = preg_replace('/\D+/', '', $data['phone']);
+
+        if (str_starts_with($normalizedPhone, '48') && strlen($normalizedPhone) === 11) {
+            $normalizedPhone = substr($normalizedPhone, 2);
+        }
+
         $ok = Auth::guard('client')->attempt([
-            'phone'    => $data['phone'],
+            'phone'    => $normalizedPhone,
             'password' => $data['password'],
         ]);
 
@@ -40,8 +47,9 @@ class ClientAuthController extends Controller
         // Bezpieczna sesja
         $request->session()->regenerate();
 
-        // ✅ PO LOGOWANIU → PORTFEL KART (DASHBOARD)
-return redirect()->route('client.dashboard');    }
+        // ✅ PO LOGOWANIU → PORTFEL (DASHBOARD)
+        return redirect()->route('client.dashboard');
+    }
 
     /**
      * Wylogowanie klienta

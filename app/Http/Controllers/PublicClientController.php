@@ -37,7 +37,7 @@ class PublicClientController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 🔍 1️⃣ SPRAWDZAMY CZY KLIENT JUŻ ISTNIEJE (PORTFEL GLOBALNY)
+        | 🔍 1️⃣ GLOBALNY KLIENT
         |--------------------------------------------------------------------------
         */
 
@@ -45,7 +45,7 @@ class PublicClientController extends Controller
 
         if (! $client) {
 
-            // 👤 NOWY KLIENT
+            // 👤 NOWY KLIENT (SELF REGISTER)
             $client = Client::create([
                 'firm_id'                  => $firm->id,
                 'program_id'               => $firm->program_id,
@@ -64,25 +64,27 @@ class PublicClientController extends Controller
 
             if (is_null($client->password)) {
 
-                // 🟢 Przypadek A: klient z karnetu bez hasła
+                // 🟢 Był z karnetu – ustawiamy pierwsze hasło
                 $client->update([
                     'password' => Hash::make($validated['password']),
                 ]);
 
             } else {
 
-                // 🔴 Przypadek B: konto już aktywne — nie nadpisujemy hasła
-                return back()
-                    ->withErrors([
-                        'phone' => 'Konto z tym numerem już istnieje. Zaloguj się.',
-                    ])
-                    ->withInput();
+                // 🔐 Konto aktywne – sprawdzamy hasło
+                if (! Hash::check($validated['password'], $client->password)) {
+                    return back()
+                        ->withErrors([
+                            'password' => 'Nieprawidłowe hasło do istniejącego portfela.',
+                        ])
+                        ->withInput();
+                }
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | 🔒 2️⃣ BLOKADA DUPLIKATU KARTY DLA TEJ SAMEJ FIRMY
+        | 🔒 2️⃣ BLOKADA DUPLIKATU KARTY DLA TEJ FIRMY
         |--------------------------------------------------------------------------
         */
 
@@ -91,11 +93,8 @@ class PublicClientController extends Controller
             ->first();
 
         if ($existingCard) {
-            return back()
-                ->withErrors([
-                    'phone' => 'Masz już kartę w tej firmie.',
-                ])
-                ->withInput();
+            auth('client')->login($client);
+            return redirect()->route('client.dashboard');
         }
 
         /*
@@ -117,7 +116,7 @@ class PublicClientController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | 🛡 4️⃣ LOG RODO – DECYZJA PRZY REJESTRACJI
+        | 🛡 4️⃣ LOG RODO
         |--------------------------------------------------------------------------
         */
 

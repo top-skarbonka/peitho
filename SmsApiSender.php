@@ -30,22 +30,26 @@ class SmsApiSender
 
         // Normalizacja numeru
         $phone = preg_replace('/\D+/', '', $phone);
-
         if (strlen($phone) === 9) {
             $phone = '48' . $phone;
         }
 
         try {
 
+            $payload = [
+                'messages' => [
+                    [
+                        'to'   => $phone,
+                        'body' => $message,
+                        'from' => 'Test',
+                    ]
+                ]
+            ];
+
             $response = Http::timeout(15)
                 ->withToken($token)
-                ->asForm()
-                ->post('https://api.smsapi.pl/sms.do', [
-                    'to'      => $phone,
-                    'message' => $message,
-                    'from'    => 'Test',
-                    'format'  => 'json',
-                ]);
+                ->acceptJson()
+                ->post('https://api.smsapi.pl/v2/sms', $payload);
 
             $body = $response->json();
 
@@ -54,14 +58,14 @@ class SmsApiSender
                     'ok' => false,
                     'status' => 'failed',
                     'provider_message_id' => null,
-                    'error' => $body['message'] ?? $body['error'] ?? 'HTTP ' . $response->status(),
+                    'error' => $body['message'] ?? json_encode($body),
                 ];
             }
 
             return [
                 'ok' => true,
                 'status' => 'sent',
-                'provider_message_id' => $body['list'][0]['id'] ?? null,
+                'provider_message_id' => $body['messages'][0]['id'] ?? null,
                 'error' => null,
             ];
 

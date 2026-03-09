@@ -209,4 +209,10 @@ class AdminFirmController extends Controller
 
         return back()->with('success', 'Abonament przedłużony o 365 dni ✅');
     }
+
+    // ✅ DODANE – wymagane przez route('admin.firms.activity')
+    public function activity(Firm $firm)
+    {
+        return view('admin.firms.activity', compact('firm'));
+    }
 }

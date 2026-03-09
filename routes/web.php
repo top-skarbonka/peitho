@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FirmController;
 use App\Http\Controllers\Auth\FirmAuthController;
 use App\Http\Controllers\Auth\ClientAuthController;
+use App\Http\Controllers\Auth\ClientSetPasswordController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\PublicClientController;
+use App\Http\Controllers\PublicPassController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminFirmController;
 use App\Http\Controllers\Admin\ConsentExportController;
@@ -59,7 +61,7 @@ Route::prefix('company')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| PANEL FIRMY — SaaS CORE 🔥
+| PANEL FIRMY — SaaS CORE
 |--------------------------------------------------------------------------
 */
 
@@ -76,7 +78,7 @@ Route::prefix('company')
         Route::get('/points', [FirmController::class, 'showPointsForm'])
             ->name('company.points.form');
 
-        Route::post('/points/add', [FirmController::class, 'addPoints'])
+        Route::post('/points', [FirmController::class, 'addPoints'])
             ->name('company.points.add');
 
         Route::get('/loyalty-cards', [FirmController::class, 'loyaltyCards'])
@@ -100,9 +102,10 @@ Route::prefix('company')
         Route::post('/scan', [FirmController::class, 'scanQr'])
             ->name('company.scan');
 
+
         /*
         |--------------------------------------------------------------------------
-        | 🎫 KARNETY — MVP PRODUKCJA
+        | KARNETY
         |--------------------------------------------------------------------------
         */
 
@@ -118,7 +121,6 @@ Route::prefix('company')
         Route::post('/passes/issue', [FirmController::class, 'issuePass'])
             ->name('company.passes.issue');
 
-        // ✅ LISTA WYDANYCH KARNETÓW (to było brakujące)
         Route::get('/passes', [FirmController::class, 'issuedPasses'])
             ->name('company.passes.index');
     });
@@ -145,6 +147,22 @@ Route::post('/join/{slug}', [PublicClientController::class, 'registerByFirm'])
 
 /*
 |--------------------------------------------------------------------------
+| PUBLIC — WEJŚCIE NA KARNET (QR)
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/pass/{slug}/{token}', [PublicPassController::class, 'showPhoneForm'])
+    ->name('public-pass.form');
+
+Route::post('/pass/{slug}/{token}/send-otp', [PublicPassController::class, 'sendOtp'])
+    ->name('public-pass.send-otp');
+
+Route::post('/pass/{slug}/{token}/verify-otp', [PublicPassController::class, 'verifyOtp'])
+    ->name('public-pass.verify-otp');
+
+
+/*
+|--------------------------------------------------------------------------
 | PANEL KLIENTA
 |--------------------------------------------------------------------------
 */
@@ -159,6 +177,12 @@ Route::prefix('client')->group(function () {
 
     Route::post('/logout', [ClientAuthController::class, 'logout'])
         ->name('client.logout');
+
+    Route::get('/set-password/{token}', [ClientSetPasswordController::class, 'show'])
+        ->name('client.set_password.show');
+
+    Route::post('/set-password/{token}', [ClientSetPasswordController::class, 'store'])
+        ->name('client.set_password.store');
 
     Route::middleware('auth:client')->group(function () {
 
@@ -201,7 +225,7 @@ Route::prefix('admin')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN — PANEL 🔥🔥🔥
+| ADMIN — PANEL
 |--------------------------------------------------------------------------
 */
 
@@ -224,47 +248,21 @@ Route::prefix('admin')
         Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])
             ->name('admin.firms.edit');
 
-        Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
-            ->name('admin.firms.activity');
-
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
             ->name('admin.firms.update');
 
-        Route::post('/firms/{firm}/block', [AdminFirmController::class, 'forceBlock'])
-            ->name('admin.firms.block');
+        Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
+            ->name('admin.firms.activity');
 
-        Route::post('/firms/{firm}/unblock', [AdminFirmController::class, 'forceUnblock'])
-            ->name('admin.firms.unblock');
-
-        Route::post('/firms/{firm}/extend30', [AdminFirmController::class, 'extend30'])
+        Route::post('/firms/{firm}/extend-30', [AdminFirmController::class, 'extend30'])
             ->name('admin.firms.extend30');
 
-        Route::post('/firms/{firm}/extend365', [AdminFirmController::class, 'extend365'])
+        Route::post('/firms/{firm}/extend-365', [AdminFirmController::class, 'extend365'])
             ->name('admin.firms.extend365');
 
-        Route::post('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
+        Route::post('/firms/{firm}/block', [AdminFirmController::class, 'block'])
+            ->name('admin.firms.block');
+
+        Route::get('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
             ->name('admin.consents.export.csv');
-    });
-
-/*
-|--------------------------------------------------------------------------
-| PUBLIC PASS (QR → OTP → ODJĘCIE WEJŚCIA)
-|--------------------------------------------------------------------------
-*/
-
-use App\Http\Controllers\PublicPassController;
-
-Route::prefix('public-pass/{slug}/{token}')
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
-    ->group(function () {
-
-        Route::get('/', [PublicPassController::class, 'showPhoneForm'])
-            ->name('public-pass.form');
-
-        Route::post('/send-otp', [PublicPassController::class, 'sendOtp'])
-            ->name('public-pass.send-otp');
-
-        Route::post('/verify-otp', [PublicPassController::class, 'verifyOtp'])
-            ->name('public-pass.verify-otp');
-
     });
