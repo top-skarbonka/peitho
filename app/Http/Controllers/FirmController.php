@@ -26,7 +26,7 @@ class FirmController extends Controller
     {
         $firm = Auth::guard('company')->user();
 
-        if (! $firm) {
+        if (!$firm) {
             abort(403, 'Brak zalogowanej firmy');
         }
 
@@ -89,25 +89,24 @@ class FirmController extends Controller
             ->count();
 
         return view('firm.dashboard', [
-            'totalClients'      => $totalClients,
+            'totalClients' => $totalClients,
             'totalTransactions' => $totalTransactions,
-            'totalPoints'       => $totalPoints,
-            'avgPoints'         => $avgPoints,
-            'chartLabels'       => $dailyLabels,
-            'chartValues'       => $dailyValues,
-            'monthlyLabels'     => $monthlyLabels,
-            'monthlyValues'     => $monthlyValues,
-            'entryLogs'         => $entryLogs,
-            'smsToday'          => $smsToday,
+            'totalPoints' => $totalPoints,
+            'avgPoints' => $avgPoints,
+            'chartLabels' => $dailyLabels,
+            'chartValues' => $dailyValues,
+            'monthlyLabels' => $monthlyLabels,
+            'monthlyValues' => $monthlyValues,
+            'entryLogs' => $entryLogs,
+            'smsToday' => $smsToday,
         ]);
     }
 
     /*
     |--------------------------------------------------------------------------
-    | PUNKTY ZA ZAKUPY (NOWA FUNKCJA)
+    | PUNKTY ZA ZAKUPY
     |--------------------------------------------------------------------------
     */
-
     public function showPointsForm()
     {
         $firm = $this->firm();
@@ -117,7 +116,7 @@ class FirmController extends Controller
             ->first();
 
         return view('firm.points.index', [
-            'settings' => $settings
+            'settings' => $settings,
         ]);
     }
 
@@ -129,23 +128,16 @@ class FirmController extends Controller
             'points_per_currency' => 'required|integer|min:1|max:10000',
         ]);
 
-        DB::table('program_settings')
-            ->updateOrInsert(
-                ['firm_id' => $firm->id],
-                [
-                    'points_per_currency' => $request->points_per_currency,
-                    'updated_at' => now(),
-                ]
-            );
+        DB::table('program_settings')->updateOrInsert(
+            ['firm_id' => $firm->id],
+            [
+                'points_per_currency' => $request->points_per_currency,
+                'updated_at' => now(),
+            ]
+        );
 
         return back()->with('success', 'Zapisano ustawienia punktów');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALIAS ROUTE (NAPRAWA addPoints)
-    |--------------------------------------------------------------------------
-    */
 
     public function addPoints(Request $request)
     {
@@ -154,10 +146,76 @@ class FirmController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | DODAWANIE PUNKTÓW KLIENTOWI
+    |--------------------------------------------------------------------------
+    */
+    public function showAddClientPointsForm()
+    {
+        return view('firm.points.add-client');
+    }
+
+    public function storeClientPoints(Request $request)
+    {
+        $firm = $this->firm();
+
+        $request->validate([
+            'phone' => 'required|string',
+            'amount' => 'required|integer|min:1',
+        ]);
+
+        $phone = preg_replace('/\D+/', '', $request->phone);
+
+        if (strlen($phone) === 11 && str_starts_with($phone, '48')) {
+            $phone = substr($phone, 2);
+        }
+
+        $client = DB::table('clients')->where('phone', $phone)->first();
+
+        if (!$client) {
+            $clientId = DB::table('clients')->insertGetId([
+                'program_id' => 1,
+                'phone' => $phone,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            $clientId = $client->id;
+        }
+
+        $settings = DB::table('program_settings')
+            ->where('firm_id', $firm->id)
+            ->first();
+
+        $divider = $settings->points_per_currency ?? 10;
+        $points = (int) floor($request->amount / $divider);
+
+        DB::table('client_points')->updateOrInsert(
+            [
+                'client_id' => $clientId,
+                'firm_id' => $firm->id,
+            ],
+            [
+                'points' => DB::raw("points + {$points}"),
+                'updated_at' => now(),
+            ]
+        );
+
+        DB::table('client_point_logs')->insert([
+            'client_id' => $clientId,
+            'firm_id' => $firm->id,
+            'points' => $points,
+            'amount' => $request->amount,
+            'created_at' => now(),
+        ]);
+
+        return back()->with('success', "Dodano {$points} punktów");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | KARTY STAŁEGO KLIENTA
     |--------------------------------------------------------------------------
     */
-
     public function loyaltyCards()
     {
         $firm = $this->firm();
@@ -175,7 +233,6 @@ class FirmController extends Controller
     | LINK REJESTRACYJNY
     |--------------------------------------------------------------------------
     */
-
     public function generateRegistrationLink()
     {
         $firm = $this->firm();
@@ -183,8 +240,8 @@ class FirmController extends Controller
         RegistrationToken::where('firm_id', $firm->id)->delete();
 
         $token = RegistrationToken::create([
-            'firm_id'    => $firm->id,
-            'token'      => Str::uuid(),
+            'firm_id' => $firm->id,
+            'token' => Str::uuid(),
             'expires_at' => now()->addDays(30),
         ]);
 
@@ -199,7 +256,6 @@ class FirmController extends Controller
     | RĘCZNE NAKLEJKI
     |--------------------------------------------------------------------------
     */
-
     public function addStamp(LoyaltyCard $card)
     {
         $firm = $this->firm();
@@ -220,8 +276,8 @@ class FirmController extends Controller
 
         LoyaltyStamp::create([
             'loyalty_card_id' => $card->id,
-            'firm_id'         => $firm->id,
-            'description'     => 'Naklejka (ręcznie)',
+            'firm_id' => $firm->id,
+            'description' => 'Naklejka (ręcznie)',
         ]);
 
         AuditLogger::log(
@@ -239,4 +295,119 @@ class FirmController extends Controller
         return back()->with('success', 'Dodano naklejkę');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | KARNETY
+    |--------------------------------------------------------------------------
+    */
+
+    public function passTypes()
+    {
+        $firm = $this->firm();
+
+        $passTypes = DB::table('company_pass_types')
+            ->where('firm_id', $firm->id)
+            ->orderByDesc('id')
+            ->get();
+
+        return view('firm.pass-types.index', compact('passTypes'));
+    }
+
+    public function storePassType(Request $request)
+    {
+        $firm = $this->firm();
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'entries' => 'required|integer|min:1|max:1000',
+        ]);
+
+        DB::table('company_pass_types')->insert([
+            'firm_id' => $firm->id,
+            'name' => $request->name,
+            'entries' => $request->entries,
+            'is_active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return back()->with('success', 'Dodano typ karnetu');
+    }
+
+    public function issuePassForm()
+    {
+        $firm = $this->firm();
+
+        $passTypes = DB::table('company_pass_types')
+            ->where('firm_id', $firm->id)
+            ->where('is_active', 1)
+            ->get();
+
+        return view('firm.passes.issue', compact('passTypes'));
+    }
+
+    public function issuePass(Request $request)
+    {
+        $firm = $this->firm();
+
+        $request->validate([
+            'phone' => 'required|string',
+            'pass_type_id' => 'required|integer'
+        ]);
+
+        $phone = preg_replace('/\D+/', '', $request->phone);
+
+        $client = DB::table('clients')->where('phone', $phone)->first();
+
+        if (!$client) {
+            $clientId = DB::table('clients')->insertGetId([
+                'program_id' => 1,
+                'phone' => $phone,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } else {
+            $clientId = $client->id;
+        }
+
+        $passType = DB::table('company_pass_types')->where('id', $request->pass_type_id)->first();
+
+        DB::table('user_passes')->insert([
+            'client_id' => $clientId,
+            'firm_id' => $firm->id,
+            'pass_type_id' => $passType->id,
+            'total_entries' => $passType->entries,
+            'remaining_entries' => $passType->entries,
+            'status' => 'active',
+            'activated_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return back()->with('success', 'Karnet został wydany');
+    }
+
+    public function issuedPasses()
+    {
+        $firm = $this->firm();
+
+        $passes = DB::table('user_passes as up')
+            ->join('clients as c', 'c.id', '=', 'up.client_id')
+            ->join('company_pass_types as pt', 'pt.id', '=', 'up.pass_type_id')
+            ->where('up.firm_id', $firm->id)
+            ->select([
+                'up.id',
+                'c.phone',
+                'pt.name as pass_type_name',
+                'up.total_entries',
+                'up.remaining_entries',
+                'up.status',
+                'up.activated_at',
+                'up.created_at'
+            ])
+            ->orderByDesc('up.id')
+            ->get();
+
+        return view('firm.passes.index', compact('passes'));
+    }
 }

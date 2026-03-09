@@ -81,6 +81,16 @@ Route::prefix('company')
         Route::post('/points', [FirmController::class, 'addPoints'])
             ->name('company.points.add');
 
+        /*
+        | NOWE ROUTY DODAWANIA PUNKTÓW KLIENTOWI
+        */
+
+        Route::get('/points/add-client', [FirmController::class, 'showAddClientPointsForm'])
+            ->name('company.points.client.form');
+
+        Route::post('/points/add-client', [FirmController::class, 'storeClientPoints'])
+            ->name('company.points.client.store');
+
         Route::get('/loyalty-cards', [FirmController::class, 'loyaltyCards'])
             ->name('company.loyalty.cards');
 
@@ -202,67 +212,3 @@ Route::prefix('client')->group(function () {
             ->name('client.loyalty.card.show');
     });
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN — LOGIN
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')->group(function () {
-
-    Route::get('/login', [AdminAuthController::class, 'show'])
-        ->name('admin.login');
-
-    Route::post('/login', [AdminAuthController::class, 'login'])
-        ->name('admin.login.submit');
-
-    Route::post('/logout', [AdminAuthController::class, 'logout'])
-        ->name('admin.logout');
-});
-
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN — PANEL
-|--------------------------------------------------------------------------
-*/
-
-Route::prefix('admin')
-    ->middleware('admin.simple')
-    ->group(function () {
-
-        Route::get('/', fn () => redirect()->route('admin.firms.index'))
-            ->name('admin.dashboard');
-
-        Route::get('/firms', [AdminFirmController::class, 'index'])
-            ->name('admin.firms.index');
-
-        Route::get('/firms/create', [AdminFirmController::class, 'create'])
-            ->name('admin.firms.create');
-
-        Route::post('/firms', [AdminFirmController::class, 'store'])
-            ->name('admin.firms.store');
-
-        Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])
-            ->name('admin.firms.edit');
-
-        Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])
-            ->name('admin.firms.update');
-
-        Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])
-            ->name('admin.firms.activity');
-
-        Route::post('/firms/{firm}/extend-30', [AdminFirmController::class, 'extend30'])
-            ->name('admin.firms.extend30');
-
-        Route::post('/firms/{firm}/extend-365', [AdminFirmController::class, 'extend365'])
-            ->name('admin.firms.extend365');
-
-        Route::post('/firms/{firm}/block', [AdminFirmController::class, 'block'])
-            ->name('admin.firms.block');
-
-        Route::get('/consents/export/csv', [ConsentExportController::class, 'exportCsv'])
-            ->name('admin.consents.export.csv');
-    });

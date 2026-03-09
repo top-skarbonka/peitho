@@ -37,6 +37,14 @@ Zapisz ustawienia
 
 <hr style="margin:30px 0;">
 
+<a href="{{ route('company.points.client.form') }}">
+<button style="padding:10px 20px;">
+Dodaj punkty klientowi
+</button>
+</a>
+
+<hr style="margin:30px 0;">
+
 <p>Przykład działania:</p>
 
 <ul>
