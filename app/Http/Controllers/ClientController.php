@@ -49,7 +49,29 @@ class ClientController extends Controller
                 });
             });
 
-        // 🔥 NOWE: pobieranie karnetów
+        /*
+        |--------------------------------------------------------------------------
+        | NOWE: PUNKTY LOJALNOŚCIOWE
+        |--------------------------------------------------------------------------
+        */
+
+        $points = DB::table('client_points as cp')
+            ->join('firms as f', 'f.id', '=', 'cp.firm_id')
+            ->where('cp.client_id', $client->id)
+            ->select([
+                'cp.points',
+                'f.name as firm_name',
+                'f.slug as firm_slug'
+            ])
+            ->orderByDesc('cp.id')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | KARNETY
+        |--------------------------------------------------------------------------
+        */
+
         $passes = DB::table('user_passes as up')
             ->join('company_pass_types as pt', 'pt.id', '=', 'up.pass_type_id')
             ->join('firms as f', 'f.id', '=', 'up.firm_id')
@@ -70,7 +92,8 @@ class ClientController extends Controller
         return view('client.dashboard', [
             'client'  => $client,
             'grouped' => $grouped,
-            'passes'  => $passes, // 🔥 przekazujemy do widoku
+            'passes'  => $passes,
+            'points'  => $points,   // ← NOWE
         ]);
     }
 
@@ -182,12 +205,6 @@ class ClientController extends Controller
         return $this->showCard($card);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PORTFEL — USTAWIENIE HASŁA PRZEZ LINK Z SMS (TOKEN)
-    |--------------------------------------------------------------------------
-    */
-
     public function activateForm(string $token)
     {
         $client = Client::where('activation_token', $token)->first();
@@ -230,7 +247,6 @@ class ClientController extends Controller
             $client->save();
         });
 
-        // logujemy klienta automatycznie po ustawieniu hasła
         Auth::guard('client')->login($client);
 
         return redirect()

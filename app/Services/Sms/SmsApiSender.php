@@ -43,7 +43,7 @@ class SmsApiSender
                 ->post('https://api.smsapi.pl/sms.do', [
                     'to'      => $phone,
                     'message' => $message,
-                    'from'    => 'Test',
+'from'    => config('smsapi.sender'),
                     'format'  => 'json',
                 ]);
 

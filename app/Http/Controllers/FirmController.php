@@ -169,6 +169,8 @@ class FirmController extends Controller
             $phone = substr($phone, 2);
         }
 
+        $phoneForSms = '48' . $phone;
+
         $client = DB::table('clients')->where('phone', $phone)->first();
 
         if (!$client) {
@@ -189,13 +191,18 @@ class FirmController extends Controller
         $divider = $settings->points_per_currency ?? 10;
         $points = (int) floor($request->amount / $divider);
 
+        $existingPoints = DB::table('client_points')
+            ->where('client_id', $clientId)
+            ->where('firm_id', $firm->id)
+            ->first();
+
         DB::table('client_points')->updateOrInsert(
             [
                 'client_id' => $clientId,
                 'firm_id' => $firm->id,
             ],
             [
-                'points' => DB::raw("points + {$points}"),
+                'points' => DB::raw("COALESCE(points,0) + {$points}"),
                 'updated_at' => now(),
             ]
         );
@@ -207,6 +214,51 @@ class FirmController extends Controller
             'amount' => $request->amount,
             'created_at' => now(),
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | SMS ZAPROSZENIE DO PORTFELA (tylko przy pierwszych punktach)
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$existingPoints) {
+
+            $link = url('/join/' . $firm->slug);
+            $message = "Masz nowe punkty w programie lojalnościowym {$firm->name}. Sprawdź szczegóły: {$link}";
+
+            try {
+                $sms = new SmsApiSender();
+                $smsResult = $sms->send($phoneForSms, $message);
+
+                DB::table('sms_logs')->insert([
+                    'firm_id' => $firm->id,
+                    'client_id' => $clientId,
+                    'phone' => $phoneForSms,
+                    'type' => 'points_invite',
+                    'provider' => 'smsapi',
+                    'provider_message_id' => $smsResult['provider_message_id'] ?? null,
+                    'status' => $smsResult['status'] ?? (($smsResult['ok'] ?? false) ? 'sent' : 'failed'),
+                    'error_message' => $smsResult['error'] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                \Log::error('SMS invite error: ' . $e->getMessage());
+
+                DB::table('sms_logs')->insert([
+                    'firm_id' => $firm->id,
+                    'client_id' => $clientId,
+                    'phone' => $phoneForSms,
+                    'type' => 'points_invite',
+                    'provider' => 'smsapi',
+                    'provider_message_id' => null,
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
 
         return back()->with('success', "Dodano {$points} punktów");
     }

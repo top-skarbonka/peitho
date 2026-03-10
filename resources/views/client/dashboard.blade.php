@@ -48,7 +48,6 @@
             place-items: center;
         }
 
-        /* ✅ DODANE (MINIMALNIE): przycisk do zgód w prawym górnym rogu */
         .top-action {
             display: inline-flex;
             align-items: center;
@@ -78,7 +77,6 @@
             opacity: .95;
         }
 
-        /* Na bardzo małych ekranach zostawiamy samą ikonkę (czytelnie, mobile-first) */
         @media (max-width: 520px) {
             .top-action span { display: none; }
             .top-action { width: 44px; padding: 0; border-radius: 14px; }
@@ -170,7 +168,6 @@
         </div>
     </div>
 
-    {{-- ✅ DODANE: szybki skrót do panelu zgód --}}
     <a href="{{ url('/client/consents') }}" class="top-action" title="Zgody marketingowe">
         <i class="fa-solid fa-shield-halved"></i>
         <span>Zgody</span>
@@ -180,6 +177,12 @@
 {{-- ===================== KATEGORIE ===================== --}}
 <div class="categories">
     <div class="category active" data-filter="all">Wszystkie</div>
+
+    @if(isset($points) && $points->count())
+        <div class="category" data-filter="points">
+            ⭐ Punkty
+        </div>
+    @endif
 
     @foreach($grouped as $category => $cards)
         <div class="category" data-filter="{{ $category }}">
@@ -196,6 +199,30 @@
 
 {{-- ===================== GRID ===================== --}}
 <div class="cards-grid">
+
+{{-- PUNKTY --}}
+@if(isset($points))
+    @foreach($points as $p)
+
+        <div class="card" data-category="points">
+            <div class="brand">{{ $p->firm_name }}</div>
+
+            <div class="sub">
+                Program punktowy
+            </div>
+
+            <div class="sub">
+                Saldo punktów:
+                <strong>{{ $p->points }}</strong>
+            </div>
+
+            <div class="progress">
+                <span style="width: 100%"></span>
+            </div>
+        </div>
+
+    @endforeach
+@endif
 
 {{-- KARTY LOJALNOŚCIOWE --}}
 @foreach($grouped as $category => $cards)
@@ -223,7 +250,6 @@
 
     @endforeach
 @endforeach
-
 
 {{-- KARNETY --}}
 @if(isset($passes))
