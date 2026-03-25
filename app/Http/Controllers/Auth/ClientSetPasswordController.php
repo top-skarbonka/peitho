@@ -11,16 +11,12 @@ class ClientSetPasswordController extends Controller
 {
     public function show(string $token)
     {
-        $client = Client::where('activation_token', $token)->first();
+        // 🔥 ZMIANA — password_reset_token zamiast activation_token
+        $client = Client::where('password_reset_token', $token)->first();
 
         if (! $client) {
             return redirect()->route('client.login')
                 ->with('error', 'Link jest nieprawidłowy lub wygasł.');
-        }
-
-        if ($client->activation_token_expires_at && now()->gt($client->activation_token_expires_at)) {
-            return redirect()->route('client.login')
-                ->with('error', 'Link wygasł. Poproś obsługę o wysłanie nowego SMS.');
         }
 
         return view('client.set-password', [
@@ -31,29 +27,27 @@ class ClientSetPasswordController extends Controller
 
     public function store(Request $request, string $token)
     {
-        $client = Client::where('activation_token', $token)->first();
+        // 🔥 ZMIANA — password_reset_token
+        $client = Client::where('password_reset_token', $token)->first();
 
         if (! $client) {
             return redirect()->route('client.login')
                 ->with('error', 'Link jest nieprawidłowy lub wygasł.');
         }
 
-        if ($client->activation_token_expires_at && now()->gt($client->activation_token_expires_at)) {
-            return redirect()->route('client.login')
-                ->with('error', 'Link wygasł. Poproś obsługę o wysłanie nowego SMS.');
-        }
-
         $data = $request->validate([
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:4', 'confirmed'],
         ]);
 
         $client->password = Hash::make($data['password']);
         $client->password_set = 1;
-        $client->activation_token = null;
-        $client->activation_token_expires_at = null;
+
+        // 🔥 czyścimy token
+        $client->password_reset_token = null;
+
         $client->save();
 
         return redirect()->route('client.login')
-            ->with('success', 'Hasło ustawione ✅ Możesz się zalogować numerem telefonu.');
+            ->with('success', 'Hasło zmienione ✅ Możesz się zalogować.');
     }
 }

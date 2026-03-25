@@ -81,10 +81,6 @@ Route::prefix('company')
         Route::post('/points', [FirmController::class, 'addPoints'])
             ->name('company.points.add');
 
-        /*
-        | NOWE ROUTY DODAWANIA PUNKTÓW KLIENTOWI
-        */
-
         Route::get('/points/add-client', [FirmController::class, 'showAddClientPointsForm'])
             ->name('company.points.client.form');
 
@@ -111,13 +107,6 @@ Route::prefix('company')
 
         Route::post('/scan', [FirmController::class, 'scanQr'])
             ->name('company.scan');
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | KARNETY
-        |--------------------------------------------------------------------------
-        */
 
         Route::get('/pass-types', [FirmController::class, 'passTypes'])
             ->name('company.pass_types');
@@ -153,6 +142,16 @@ Route::get('/join/{slug}', [PublicClientController::class, 'showRegisterFormByFi
 
 Route::post('/join/{slug}', [PublicClientController::class, 'registerByFirm'])
     ->name('client.register.by_firm.submit');
+
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 RESET HASŁA — POPRAWKA
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/client/reset-password', [ClientAuthController::class, 'sendResetLink'])
+    ->name('client.password.reset');
 
 
 /*
@@ -212,6 +211,8 @@ Route::prefix('client')->group(function () {
             ->name('client.loyalty.card.show');
     });
 });
+
+
 /*
 |--------------------------------------------------------------------------
 | ADMIN — LOGIN

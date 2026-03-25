@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class ClientController extends Controller
 {
@@ -49,12 +50,6 @@ class ClientController extends Controller
                 });
             });
 
-        /*
-        |--------------------------------------------------------------------------
-        | NOWE: PUNKTY LOJALNOŚCIOWE
-        |--------------------------------------------------------------------------
-        */
-
         $points = DB::table('client_points as cp')
             ->join('firms as f', 'f.id', '=', 'cp.firm_id')
             ->where('cp.client_id', $client->id)
@@ -65,12 +60,6 @@ class ClientController extends Controller
             ])
             ->orderByDesc('cp.id')
             ->get();
-
-        /*
-        |--------------------------------------------------------------------------
-        | KARNETY
-        |--------------------------------------------------------------------------
-        */
 
         $passes = DB::table('user_passes as up')
             ->join('company_pass_types as pt', 'pt.id', '=', 'up.pass_type_id')
@@ -93,7 +82,7 @@ class ClientController extends Controller
             'client'  => $client,
             'grouped' => $grouped,
             'passes'  => $passes,
-            'points'  => $points,   // ← NOWE
+            'points'  => $points,
         ]);
     }
 
@@ -252,5 +241,28 @@ class ClientController extends Controller
         return redirect()
             ->route('client.dashboard')
             ->with('success', 'Hasło ustawione ✅ Możesz się teraz logować numerem telefonu.');
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required'
+        ]);
+
+        $client = Client::where('phone', $request->phone)->first();
+
+        if (!$client) {
+            return back()->withErrors([
+                'phone' => 'Nie znaleziono konta z tym numerem.'
+            ]);
+        }
+
+        $token = Str::random(32);
+
+        $client->update([
+            'password_reset_token' => $token
+        ]);
+
+        return redirect()->route('client.set_password.show', ['token' => $token]);
     }
 }

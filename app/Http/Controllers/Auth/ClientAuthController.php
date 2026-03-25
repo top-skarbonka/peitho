@@ -5,20 +5,16 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Client;
+use Illuminate\Support\Str;
 
 class ClientAuthController extends Controller
 {
-    /**
-     * Formularz logowania klienta
-     */
     public function showLoginForm()
     {
         return view('client.auth.login');
     }
 
-    /**
-     * Logowanie klienta (PHONE + PASSWORD)
-     */
     public function login(Request $request)
     {
         $data = $request->validate([
@@ -26,7 +22,6 @@ class ClientAuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // 🔧 NORMALIZACJA NUMERU TELEFONU (9 cyfr w bazie)
         $normalizedPhone = preg_replace('/\D+/', '', $data['phone']);
 
         if (str_starts_with($normalizedPhone, '48') && strlen($normalizedPhone) === 11) {
@@ -44,16 +39,44 @@ class ClientAuthController extends Controller
             ]);
         }
 
-        // Bezpieczna sesja
         $request->session()->regenerate();
 
-        // ✅ PO LOGOWANIU → PORTFEL (DASHBOARD)
         return redirect()->route('client.dashboard');
     }
 
     /**
-     * Wylogowanie klienta
+     * 🔥 FINALNY RESET HASŁA
      */
+    public function sendResetLink(Request $request)
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string'],
+        ]);
+
+        $normalizedPhone = preg_replace('/\D+/', '', $data['phone']);
+
+        if (str_starts_with($normalizedPhone, '48') && strlen($normalizedPhone) === 11) {
+            $normalizedPhone = substr($normalizedPhone, 2);
+        }
+
+        $client = Client::where('phone', $normalizedPhone)->first();
+
+        if (! $client) {
+            return back()->withErrors([
+                'phone' => 'Nie znaleziono konta z tym numerem telefonu',
+            ]);
+        }
+
+        // 🔥 GENERUJ TOKEN
+        $token = Str::random(64);
+
+        $client->password_reset_token = $token;
+        $client->save();
+
+        // 🔥 KLUCZOWE — przekierowanie
+        return redirect('/client/set-password/' . $token);
+    }
+
     public function logout(Request $request)
     {
         Auth::guard('client')->logout();

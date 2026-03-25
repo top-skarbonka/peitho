@@ -6,24 +6,18 @@
     <h2 style="margin-bottom:6px;">➕ Panel administratora</h2>
     <p style="color:#666;margin-bottom:24px;">Rejestracja firm i zgodność z RODO</p>
 
-    {{-- TABS --}}
     <div style="display:flex;gap:10px;margin-bottom:24px;">
-        <button type="button"
-                onclick="showTab('firm')"
-                id="tab-btn-firm"
+        <button type="button" onclick="showTab('firm')" id="tab-btn-firm"
                 style="flex:1;padding:12px;border-radius:12px;border:2px solid #6a5af9;background:#6a5af9;color:#fff;font-weight:700;">
             🏢 Rejestracja firmy
         </button>
 
-        <button type="button"
-                onclick="showTab('consents')"
-                id="tab-btn-consents"
+        <button type="button" onclick="showTab('consents')" id="tab-btn-consents"
                 style="flex:1;padding:12px;border-radius:12px;border:2px solid #ddd;background:#fff;color:#333;font-weight:700;">
             🧩 Eksport zgód (UODO)
         </button>
     </div>
 
-    {{-- SUCCESS --}}
     @if(session('success'))
         <div style="background:#e7fff1;border:1px solid #86efac;padding:14px;border-radius:10px;margin-bottom:20px;">
             <strong>Firma utworzona</strong><br><br>
@@ -33,19 +27,15 @@
         </div>
     @endif
 
-    {{-- ERRORS --}}
     @if($errors->any())
         <div style="background:#ffecec;border:1px solid #ffb3b3;padding:12px;border-radius:10px;margin-bottom:20px;">
             {{ $errors->first() }}
         </div>
     @endif
 
-    {{-- TAB: FIRMA --}}
     <div id="tab-firm">
 
-        <form method="POST"
-              action="{{ route('admin.firms.store') }}"
-              enctype="multipart/form-data">
+        <form method="POST" action="{{ route('admin.firms.store') }}" enctype="multipart/form-data">
             @csrf
 
             <h4>🏢 Dane firmy</h4>
@@ -56,46 +46,22 @@
 
             <input name="city" placeholder="Miasto" required style="width:100%;padding:12px;margin-bottom:10px">
             <input name="address" placeholder="Adres" required style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="postal_code" placeholder="Kod pocztowy" required style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="nip" placeholder="NIP (opcjonalnie)" style="width:100%;padding:12px;margin-bottom:20px">
+            <input name="postal_code" placeholder="Kod pocztowy" required style="width:100%;padding:12px;margin-bottom:20px">
 
             <hr style="margin:24px 0">
 
             <h4>🧠 Typ programu</h4>
 
             <select name="program_type" required style="width:100%;padding:12px;margin-bottom:20px">
-                <option value="cards">Wirtualna karta (naklejki)</option>
-                <option value="passes">Karnety (wejścia)</option>
+                <option value="points">Program punktowy ⭐</option>
+                <option value="cards">Wirtualna karta (naklejki) 💳</option>
+                <option value="passes">Karnety (wejścia) 🎫</option>
             </select>
 
             <hr style="margin:24px 0">
 
-            <h4>⚙️ Funkcje programu</h4>
-
-            <label>
-                <input type="checkbox" name="has_stickers" value="1">
-                Naklejki
-            </label>
-            <br>
-
-            <label>
-                <input type="checkbox" name="has_points" value="1">
-                Punkty
-            </label>
-            <br>
-
-            <label>
-                <input type="checkbox" name="has_passes" value="1">
-                Karnety
-            </label>
-
-            <hr style="margin:24px 0">
-
             <h4>🖼 Logo firmy</h4>
-            <input type="file"
-                   name="logo"
-                   accept="image/*"
-                   style="width:100%;padding:12px;margin-bottom:20px">
+            <input type="file" name="logo" accept="image/*" style="width:100%;padding:12px;margin-bottom:20px">
 
             <hr style="margin:24px 0">
 
@@ -107,14 +73,8 @@
                 <option value="pizzeria">Pizzeria 🍕</option>
                 <option value="kebab">Kebab 🌯</option>
                 <option value="cafe">Kawiarnia ☕</option>
-                <option value="workshop">Warsztat samochodowy ⚒️</option>
+                <option value="workshop">Warsztat ⚒️</option>
             </select>
-
-            <h4>🔗 Linki</h4>
-
-            <input name="facebook_url" placeholder="Facebook (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="instagram_url" placeholder="Instagram (URL)" style="width:100%;padding:12px;margin-bottom:10px">
-            <input name="google_url" placeholder="Google / opinie / strona" style="width:100%;padding:12px;margin-bottom:20px">
 
             <button type="submit"
                     style="width:100%;padding:14px;border:none;border-radius:14px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6a5af9,#ff5fa2);">
@@ -125,7 +85,6 @@
 
     <div id="tab-consents" style="display:none;">
         <h4>🧩 Eksport zgód marketingowych (RODO / UODO)</h4>
-        <p style="color:#666">Ten moduł już działa ✔</p>
     </div>
 
 </div>

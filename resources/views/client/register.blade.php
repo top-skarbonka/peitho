@@ -41,9 +41,23 @@
 
                 <ul style="margin:0; padding-left:18px;">
                     @foreach ($errors->all() as $error)
-                        <li style="margin-bottom:4px;">
-                            {{ $error }}
-                        </li>
+
+                        @if ($error === 'validation.min.string')
+                            <li style="margin-bottom:4px;">
+                                Hasło musi mieć minimum 4 znaki.
+                            </li>
+
+                        @elseif (str_contains($error, 'Nieprawidłowe hasło'))
+                            <li style="margin-bottom:4px;">
+                                Masz już portfel. Wpisz swoje hasło, które ustawiłeś wcześniej.
+                            </li>
+
+                        @else
+                            <li style="margin-bottom:4px;">
+                                {{ $error }}
+                            </li>
+                        @endif
+
                     @endforeach
                 </ul>
 
@@ -67,9 +81,13 @@
             <label style="font-weight:600;">
                 Numer telefonu <span style="color:red">*</span>
             </label>
-            <input type="text" name="phone" value="{{ old('phone') }}" required
+            <input type="text" id="phone" name="phone" value="{{ old('phone') }}" required
                    placeholder="Np. 500600700"
-                   style="width:100%;padding:14px;border-radius:12px;border:2px solid #6a5af9;margin-bottom:14px;font-size:16px;">
+                   style="width:100%;padding:14px;border-radius:12px;border:2px solid #6a5af9;margin-bottom:6px;font-size:16px;">
+
+            <div id="phoneError" style="display:none;color:red;font-size:13px;margin-bottom:14px;">
+                📱 Najpierw wpisz swój numer telefonu
+            </div>
 
             {{-- KOD POCZTOWY --}}
             <label style="font-weight:600;">Kod pocztowy (opcjonalnie)</label>
@@ -81,7 +99,13 @@
             <label style="font-weight:600;">Hasło</label>
             <input type="password" name="password" required
                    placeholder="Minimum 4 znaki"
-                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
+                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:6px;">
+
+            <div style="text-align:right; margin-bottom:14px;">
+                <a href="#" onclick="resetPassword(); return false;" style="font-size:13px;color:#6a5af9;text-decoration:underline;">
+                    Nie pamiętasz hasła?
+                </a>
+            </div>
 
             {{-- ZGODA MARKETINGOWA --}}
             <div style="
@@ -93,11 +117,7 @@
                 margin-bottom:16px;
             ">
                 <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
-                    <input
-                        type="checkbox"
-                        name="sms_marketing_consent"
-                        value="1"
-                    >
+                    <input type="checkbox" name="sms_marketing_consent" value="1">
                     <div>
                         <strong>✨ Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
                         <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
@@ -109,26 +129,16 @@
                 </label>
             </div>
 
-            {{-- REGULAMIN + POLITYKA --}}
-            <label style="
-                display:flex;
-                gap:10px;
-                font-size:14px;
-                margin-bottom:18px;
-                align-items:flex-start;
-            ">
+            {{-- REGULAMIN --}}
+            <label style="display:flex;gap:10px;font-size:14px;margin-bottom:18px;align-items:flex-start;">
                 <input type="checkbox" required>
                 <span>
                     Akceptuję
-                    <a href="/docs/regulamin.pdf"
-                       target="_blank"
-                       style="color:#6a5af9;font-weight:700;text-decoration:underline;">
+                    <a href="/docs/regulamin.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         regulamin
                     </a>
                     oraz
-                    <a href="/docs/polityka%20prywatnosci.pdf"
-                       target="_blank"
-                       style="color:#6a5af9;font-weight:700;text-decoration:underline;">
+                    <a href="/docs/polityka%20prywatnosci.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         politykę prywatności
                     </a>
                 </span>
@@ -156,4 +166,26 @@
 
     </div>
 </div>
+
+<script>
+function resetPassword() {
+    const phoneInput = document.getElementById('phone');
+    const error = document.getElementById('phoneError');
+
+    if (!phoneInput.value) {
+        phoneInput.style.border = '2px solid red';
+        error.style.display = 'block';
+        phoneInput.focus();
+        return;
+    }
+
+    alert('Wyślemy link do ustawienia hasła 📩');
+}
+
+document.getElementById('phone').addEventListener('input', function () {
+    this.style.border = '2px solid #6a5af9';
+    document.getElementById('phoneError').style.display = 'none';
+});
+</script>
+
 @endsection

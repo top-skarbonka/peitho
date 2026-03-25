@@ -20,7 +20,6 @@ class AdminFirmController extends Controller
     {
         $firms = Firm::orderByDesc('id')->get();
 
-        // ✅ SMS dziś (OTP) – agregacja w 1 zapytaniu (bez N+1)
         $smsToday = \DB::table('sms_logs')
             ->select('firm_id', \DB::raw('COUNT(*) as total'))
             ->where('type', 'otp')
@@ -28,7 +27,6 @@ class AdminFirmController extends Controller
             ->groupBy('firm_id')
             ->pluck('total', 'firm_id');
 
-        // ✅ Status ostatniego SMS (OTP) per firma – 1 pobranie + grupowanie w PHP
         $lastSmsStatus = \DB::table('sms_logs')
             ->select('firm_id', 'status')
             ->where('type', 'otp')
@@ -73,12 +71,17 @@ class AdminFirmController extends Controller
             'address'       => 'required|string|max:255',
             'postal_code'   => 'required|string|max:20',
             'phone'         => 'nullable|string|max:20',
-            'program_type'  => 'required|in:cards,passes',
+            'program_type'  => 'required|in:points,cards,passes',
             'card_template' => 'required|in:classic,florist,hair_salon,pizzeria,kebab,cafe,workshop',
         ]);
 
         $plainPassword = Str::random(10);
         $slug = Str::slug($request->name) . '-' . rand(1000, 9999);
+
+        // 🔥 LOGIKA PROGRAMU
+        $hasPoints = $request->program_type === 'points';
+        $hasStickers = $request->program_type === 'cards';
+        $hasPasses = $request->program_type === 'passes';
 
         $firm = Firm::create([
             'firm_id'       => $slug,
@@ -98,10 +101,10 @@ class AdminFirmController extends Controller
             'plan' => 'starter',
             'billing_period' => 'monthly',
 
-            // ✅ NOWE POLA PROGRAMÓW
-            'has_stickers' => $request->has('has_stickers'),
-            'has_points'   => $request->has('has_points'),
-            'has_passes'   => $request->has('has_passes'),
+            // ✅ KLUCZOWE
+            'has_points'   => $hasPoints,
+            'has_stickers'=> $hasStickers,
+            'has_passes'  => $hasPasses,
         ]);
 
         Mail::to($firm->email)->send(
@@ -172,7 +175,6 @@ class AdminFirmController extends Controller
             'billing_period',
         ]);
 
-        // ✅ NOWE POLA PROGRAMÓW
         $data['has_stickers'] = $request->has('has_stickers');
         $data['has_points']   = $request->has('has_points');
         $data['has_passes']   = $request->has('has_passes');
@@ -220,7 +222,6 @@ class AdminFirmController extends Controller
         return back()->with('success', 'Abonament przedłużony o 365 dni ✅');
     }
 
-    // ✅ DODANE – wymagane przez route('admin.firms.activity')
     public function activity(Firm $firm)
     {
         return view('admin.firms.activity', compact('firm'));
