@@ -2,6 +2,10 @@
 
 @section('content')
 
+@php
+    $firm = auth()->guard('company')->user();
+@endphp
+
 <div class="space-y-8">
 
     {{-- HEADER --}}
@@ -39,6 +43,185 @@
 
     </div>
 
+    {{-- 🔥 RANKING TOP KLIENTÓW --}}
+    @php
+        $topClients = \Illuminate\Support\Facades\DB::table('client_points as cp')
+            ->join('clients as c', 'c.id', '=', 'cp.client_id')
+            ->where('cp.firm_id', $firm->id)
+            ->orderByDesc('cp.points')
+            ->limit(5)
+            ->get(['c.phone', 'cp.points']);
+    @endphp
+
+    <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-bold mb-4">🏆 TOP klienci</h2>
+
+        <div class="space-y-2">
+            @foreach($topClients as $index => $c)
+                <div class="flex justify-between bg-slate-50 p-3 rounded-lg">
+                    <span>#{{ $index+1 }} — {{ $c->phone }}</span>
+                    <span class="font-bold">{{ $c->points }} pkt</span>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- 🔍 FILTR --}}
+    <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-bold mb-4">🔍 Szukaj klienta</h2>
+
+        <input
+            type="text"
+            id="searchPhone"
+            placeholder="Wpisz numer telefonu..."
+            onkeyup="filterClients()"
+            class="border p-2 rounded w-full max-w-md"
+        >
+    </div>
+
+    {{-- 🔥 LISTA KLIENTÓW --}}
+    @php
+        $clients = \Illuminate\Support\Facades\DB::table('client_point_logs as l')
+            ->join('clients as c', 'c.id', '=', 'l.client_id')
+            ->where('l.firm_id', $firm->id)
+            ->select('c.phone')
+            ->distinct()
+            ->orderBy('c.phone')
+            ->get();
+    @endphp
+
+    <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-bold mb-4">👥 Klienci</h2>
+
+        <div id="clientsList" class="flex flex-wrap gap-2">
+            @foreach($clients as $c)
+                <button 
+                    data-phone="{{ $c->phone }}"
+                    onclick="loadClientHistory('{{ $c->phone }}')"
+                    class="client-btn px-4 py-2 bg-slate-100 hover:bg-indigo-100 rounded-lg">
+                    {{ $c->phone }}
+                </button>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- 🔥 HISTORIA WYBRANEGO KLIENTA --}}
+    <div id="clientHistoryBox" class="bg-white rounded-xl p-6 shadow hidden">
+        <h2 class="text-xl font-bold mb-4">📱 Historia klienta</h2>
+
+        <div id="clientHistoryContent"></div>
+    </div>
+
+    {{-- 🔥 OGÓLNA HISTORIA --}}
+    @php
+        $logs = \Illuminate\Support\Facades\DB::table('client_point_logs as l')
+            ->join('clients as c', 'c.id', '=', 'l.client_id')
+            ->where('l.firm_id', $firm->id)
+            ->orderByDesc('l.created_at')
+            ->limit(20)
+            ->get([
+                'c.phone',
+                'l.points',
+                'l.amount',
+                'l.created_at'
+            ]);
+    @endphp
+
+    <div class="bg-white rounded-xl p-6 shadow">
+        <h2 class="text-xl font-bold mb-4">📜 Ostatnie operacje</h2>
+
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-slate-500 border-b">
+                    <th class="py-2">Telefon</th>
+                    <th class="py-2">Punkty</th>
+                    <th class="py-2">Kwota</th>
+                    <th class="py-2">Data</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            @foreach($logs as $log)
+                <tr class="border-b">
+                    <td class="py-2">{{ $log->phone }}</td>
+
+                    <td class="py-2 font-semibold {{ $log->points > 0 ? 'text-green-600' : 'text-red-600' }}">
+                        {{ $log->points > 0 ? '+' : '' }}{{ $log->points }}
+                    </td>
+
+                    <td class="py-2">
+                        {{ $log->amount ? $log->amount . ' zł' : '-' }}
+                    </td>
+
+                    <td class="py-2 text-slate-500">
+                        {{ \Carbon\Carbon::parse($log->created_at)->format('d.m.Y H:i') }}
+                    </td>
+                </tr>
+            @endforeach
+
+            </tbody>
+        </table>
+    </div>
+
 </div>
+
+{{-- JS zostaje BEZ ZMIAN --}}
+<script>
+function loadClientHistory(phone) {
+    fetch('/api/client-points?phone=' + phone)
+        .then(res => res.json())
+        .then(data => {
+
+            let html = `<h3 class="mb-4">Klient: ${phone}</h3>`;
+
+            fetch('/company/api/client-history?phone=' + phone)
+                .then(res => res.json())
+                .then(logs => {
+
+                    html += '<table class="w-full text-sm">';
+                    html += `
+                        <tr class="text-left border-b">
+                            <th>Punkty</th>
+                            <th>Kwota</th>
+                            <th>Data</th>
+                        </tr>
+                    `;
+
+                    logs.forEach(l => {
+                        html += `
+                        <tr class="border-b">
+                            <td class="${l.points > 0 ? 'text-green-600' : 'text-red-600'}">
+                                ${l.points > 0 ? '+' : ''}${l.points}
+                            </td>
+                            <td>${l.amount ? l.amount + ' zł' : '-'}</td>
+                            <td>${l.created_at}</td>
+                        </tr>
+                        `;
+                    });
+
+                    html += '</table>';
+
+                    document.getElementById('clientHistoryBox').classList.remove('hidden');
+                    document.getElementById('clientHistoryContent').innerHTML = html;
+
+                });
+
+        });
+}
+
+function filterClients() {
+    const input = document.getElementById('searchPhone').value;
+
+    document.querySelectorAll('.client-btn').forEach(btn => {
+        const phone = btn.dataset.phone;
+
+        if (phone.includes(input)) {
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    });
+}
+</script>
 
 @endsection
