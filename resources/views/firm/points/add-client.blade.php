@@ -82,7 +82,6 @@ const delay = 500;
 
 function autoCheckClient() {
     clearTimeout(typingTimer);
-
     typingTimer = setTimeout(() => {
         checkClient();
     }, delay);
@@ -102,16 +101,22 @@ function checkClient() {
                 return;
             }
 
-            let html = `<h3>Masz: ${data.points} pkt</h3>`;
+            let statusColor = '#ccc';
+            let statusText = data.status;
 
-            // 🔥 FIX — zawsze pokazujemy (na razie 0)
-            const totalSaved = data.total_saved ?? 0;
+            if (data.status === 'VIP') statusColor = '#28a745';
+            if (data.status === 'aktywny') statusColor = '#ffc107';
+            if (data.status === 'śpioch') statusColor = '#dc3545';
 
-            html += `
-            <div style="background:#e6fffa;padding:12px;margin:10px 0;border-radius:8px;font-weight:bold;">
-                💰 Klient zaoszczędził: ${totalSaved} zł
-            </div>
+            let html = `
+                <div style="margin-bottom:10px;">
+                    <span style="background:${statusColor};color:white;padding:6px 12px;border-radius:20px;font-weight:bold;">
+                        ${statusText}
+                    </span>
+                </div>
             `;
+
+            html += `<h3>Masz: ${data.points} pkt</h3>`;
 
             if (data.rewards.length > 0) {
                 html += `
@@ -130,7 +135,7 @@ function checkClient() {
             if (data.next_reward) {
 
                 const missing = data.next_reward.points_required - data.points;
-                const estimatedAmount = missing / data.points_per_currency;
+                const estimatedAmount = missing * data.points_per_currency;
 
                 html += `
                 <div style="background:#e2e3ff;padding:12px;margin:10px 0;border-radius:8px;">
@@ -144,21 +149,23 @@ function checkClient() {
                 `;
             }
 
-            const bestReward = data.rewards.length > 0 
-                ? data.rewards[data.rewards.length - 1] 
-                : null;
-
             html += '<div style="margin-top:10px;">';
+
+            // 🔥 NOWE — znajdź najlepszy reward
+            const bestReward = data.rewards.reduce((max, r) => r.reward_value > max.reward_value ? r : max, data.rewards[0]);
 
             data.rewards.forEach(r => {
 
                 const remaining = data.points - r.points_required;
-                const isBest = bestReward && bestReward.id === r.id;
+                const isBest = r.id === bestReward.id;
+
+                const bg = isBest ? '#5aa04f' : '#6a5af9';
+                const label = isBest ? '🔥 NAJLEPSZY WYBÓR<br>' : '';
 
                 html += `
                 <form method="POST" action="${redeemUrl}" 
                       onsubmit="return confirm('Na pewno wykorzystać ${r.label}? Zostanie ${remaining} pkt.');"
-                      style="margin-bottom:12px;">
+                      style="margin-bottom:10px;">
 
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="client_id" value="${data.client_id}">
@@ -167,19 +174,9 @@ function checkClient() {
                     <button 
                         type="submit"
                         onclick="this.disabled=true; this.innerText='Przetwarzanie...'; this.form.submit();"
-                        style="
-                            width:260px;
-                            padding:12px;
-                            border:none;
-                            border-radius:10px;
-                            cursor:pointer;
-                            ${isBest 
-                                ? 'background:#16a34a;color:white;font-weight:bold;' 
-                                : 'background:#6a5af9;color:white;'}
-                        ">
+                        style="width:260px;padding:12px;background:${bg};color:white;border:none;border-radius:10px;cursor:pointer;">
 
-                        ${isBest ? '🔥 NAJLEPSZY WYBÓR<br>' : ''}
-
+                        ${label}
                         ${r.points_required} pkt → ${r.label}<br>
                         <small>Zostanie: ${remaining} pkt</small>
 

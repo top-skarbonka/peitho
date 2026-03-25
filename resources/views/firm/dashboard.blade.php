@@ -9,11 +9,11 @@
 <div class="space-y-8">
 
     {{-- HEADER --}}
-    <div>
-        <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-2">
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold flex items-center gap-2">
             📊 Statystyki programu lojalnościowego
         </h1>
-        <p class="text-slate-500 mt-1">
+        <p class="opacity-90 mt-1">
             Podgląd kondycji programu: klienci, punkty, aktywność.
         </p>
     </div>
@@ -21,24 +21,39 @@
     {{-- KPI --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-        <div class="bg-white rounded-xl p-6 shadow">
+        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
             <p class="text-slate-500 text-sm">Klienci</p>
-            <p class="text-3xl font-bold">{{ $totalClients ?? 0 }}</p>
+            <p class="text-3xl font-bold text-indigo-600">{{ $totalClients ?? 0 }}</p>
         </div>
 
-        <div class="bg-white rounded-xl p-6 shadow">
+        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
             <p class="text-slate-500 text-sm">Transakcje</p>
-            <p class="text-3xl font-bold">{{ $totalTransactions ?? 0 }}</p>
+            <p class="text-3xl font-bold text-indigo-600">{{ $totalTransactions ?? 0 }}</p>
         </div>
 
-        <div class="bg-white rounded-xl p-6 shadow">
+        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
             <p class="text-slate-500 text-sm">Suma punktów</p>
-            <p class="text-3xl font-bold">{{ number_format($totalPoints ?? 0, 2, ',', ' ') }}</p>
+            <p class="text-3xl font-bold text-indigo-600">{{ number_format($totalPoints ?? 0, 2, ',', ' ') }}</p>
         </div>
 
-        <div class="bg-white rounded-xl p-6 shadow">
+        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
             <p class="text-slate-500 text-sm">Średnio / transakcję</p>
-            <p class="text-3xl font-bold">{{ number_format($avgPoints ?? 0, 2, ',', ' ') }}</p>
+            <p class="text-3xl font-bold text-indigo-600">{{ number_format($avgPoints ?? 0, 2, ',', ' ') }}</p>
+        </div>
+
+    </div>
+
+    {{-- 🔥 WYKRESY --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="bg-white rounded-2xl p-6 shadow">
+            <h2 class="text-lg font-bold mb-4">📈 Nowi klienci</h2>
+            <canvas id="clientsChart"></canvas>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow">
+            <h2 class="text-lg font-bold mb-4">📊 Punkty</h2>
+            <canvas id="pointsChart"></canvas>
         </div>
 
     </div>
@@ -53,21 +68,21 @@
             ->get(['c.phone', 'cp.points']);
     @endphp
 
-    <div class="bg-white rounded-xl p-6 shadow">
+    <div class="bg-white rounded-2xl p-6 shadow">
         <h2 class="text-xl font-bold mb-4">🏆 TOP klienci</h2>
 
         <div class="space-y-2">
             @foreach($topClients as $index => $c)
-                <div class="flex justify-between bg-slate-50 p-3 rounded-lg">
+                <div class="flex justify-between bg-gradient-to-r from-slate-50 to-indigo-50 p-3 rounded-xl">
                     <span>#{{ $index+1 }} — {{ $c->phone }}</span>
-                    <span class="font-bold">{{ $c->points }} pkt</span>
+                    <span class="font-bold text-indigo-600">{{ $c->points }} pkt</span>
                 </div>
             @endforeach
         </div>
     </div>
 
     {{-- 🔍 FILTR --}}
-    <div class="bg-white rounded-xl p-6 shadow">
+    <div class="bg-white rounded-2xl p-6 shadow">
         <h2 class="text-xl font-bold mb-4">🔍 Szukaj klienta</h2>
 
         <input
@@ -75,7 +90,7 @@
             id="searchPhone"
             placeholder="Wpisz numer telefonu..."
             onkeyup="filterClients()"
-            class="border p-2 rounded w-full max-w-md"
+            class="border p-3 rounded-xl w-full max-w-md focus:ring-2 focus:ring-indigo-400 outline-none"
         >
     </div>
 
@@ -90,7 +105,7 @@
             ->get();
     @endphp
 
-    <div class="bg-white rounded-xl p-6 shadow">
+    <div class="bg-white rounded-2xl p-6 shadow">
         <h2 class="text-xl font-bold mb-4">👥 Klienci</h2>
 
         <div id="clientsList" class="flex flex-wrap gap-2">
@@ -98,7 +113,7 @@
                 <button 
                     data-phone="{{ $c->phone }}"
                     onclick="loadClientHistory('{{ $c->phone }}')"
-                    class="client-btn px-4 py-2 bg-slate-100 hover:bg-indigo-100 rounded-lg">
+                    class="client-btn px-4 py-2 bg-slate-100 hover:bg-indigo-500 hover:text-white transition rounded-xl">
                     {{ $c->phone }}
                 </button>
             @endforeach
@@ -106,7 +121,7 @@
     </div>
 
     {{-- 🔥 HISTORIA WYBRANEGO KLIENTA --}}
-    <div id="clientHistoryBox" class="bg-white rounded-xl p-6 shadow hidden">
+    <div id="clientHistoryBox" class="bg-white rounded-2xl p-6 shadow hidden">
         <h2 class="text-xl font-bold mb-4">📱 Historia klienta</h2>
 
         <div id="clientHistoryContent"></div>
@@ -127,7 +142,7 @@
             ]);
     @endphp
 
-    <div class="bg-white rounded-xl p-6 shadow">
+    <div class="bg-white rounded-2xl p-6 shadow">
         <h2 class="text-xl font-bold mb-4">📜 Ostatnie operacje</h2>
 
         <table class="w-full text-sm">
@@ -142,7 +157,7 @@
             <tbody>
 
             @foreach($logs as $log)
-                <tr class="border-b">
+                <tr class="border-b hover:bg-slate-50">
                     <td class="py-2">{{ $log->phone }}</td>
 
                     <td class="py-2 font-semibold {{ $log->points > 0 ? 'text-green-600' : 'text-red-600' }}">
@@ -165,7 +180,37 @@
 
 </div>
 
-{{-- JS zostaje BEZ ZMIAN --}}
+{{-- Chart.js --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const clientsData = @json($clientsPerDay ?? []);
+const pointsData = @json($pointsPerDay ?? []);
+
+new Chart(document.getElementById('clientsChart'), {
+    type: 'line',
+    data: {
+        labels: clientsData.map(i => i.date),
+        datasets: [{
+            label: 'Klienci',
+            data: clientsData.map(i => i.count)
+        }]
+    }
+});
+
+new Chart(document.getElementById('pointsChart'), {
+    type: 'bar',
+    data: {
+        labels: pointsData.map(i => i.date),
+        datasets: [{
+            label: 'Punkty',
+            data: pointsData.map(i => i.total)
+        }]
+    }
+});
+</script>
+
+{{-- JS zostaje --}}
 <script>
 function loadClientHistory(phone) {
     fetch('/api/client-points?phone=' + phone)

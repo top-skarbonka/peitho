@@ -108,23 +108,35 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
 
     $nextReward = $rewards->first(fn($r) => $points < $r->points_required);
 
-    /*
-    |--------------------------------------------------------------------------
-    | 🔥 NOWE — OSZCZĘDNOŚCI (REALNE)
-    |--------------------------------------------------------------------------
-    */
-
     $usedPoints = DB::table('client_point_logs')
         ->where('client_id', $client->id)
         ->where('firm_id', $firm->id)
         ->where('points', '<', 0)
         ->sum('points');
 
-    // points są ujemne → robimy dodatnie
     $usedPoints = abs($usedPoints);
 
-    // przeliczamy na zł wg ustawień firmy
     $totalSaved = $usedPoints / $pointsPerCurrency;
+
+    // 🔥 JEDYNA NOWA LOGIKA — STATUS
+    $lastActivity = DB::table('client_point_logs')
+        ->where('client_id', $client->id)
+        ->where('firm_id', $firm->id)
+        ->max('created_at');
+
+    $status = 'nowy';
+
+    if ($lastActivity) {
+        $days = now()->diffInDays($lastActivity);
+
+        if ($days <= 7) {
+            $status = 'VIP';
+        } elseif ($days <= 30) {
+            $status = 'aktywny';
+        } else {
+            $status = 'śpioch';
+        }
+    }
 
     return response()->json([
         'success' => true,
@@ -134,5 +146,40 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
         'next_reward' => $nextReward,
         'points_per_currency' => $pointsPerCurrency,
         'total_saved' => round($totalSaved, 2),
+        'status' => $status, // 🔥 NOWE
     ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 API — HISTORIA KLIENTA (NAPRAWIONE)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:company'])->get('/company/api/client-history', function (\Illuminate\Http\Request $request) {
+
+    $phone = preg_replace('/\D+/', '', $request->phone);
+
+    if (str_starts_with($phone, '48') && strlen($phone) === 11) {
+        $phone = substr($phone, 2);
+    }
+
+    $client = DB::table('clients')->where('phone', $phone)->first();
+
+    if (!$client) {
+        return response()->json([]);
+    }
+
+    $firm = auth()->guard('company')->user();
+
+    return DB::table('client_point_logs')
+        ->where('client_id', $client->id)
+        ->where('firm_id', $firm->id)
+        ->orderByDesc('created_at')
+        ->limit(20)
+        ->get([
+            'points',
+            'amount',
+            DB::raw("DATE_FORMAT(created_at, '%d.%m.%Y %H:%i') as created_at")
+        ]);
 });
