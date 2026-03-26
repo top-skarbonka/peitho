@@ -38,9 +38,10 @@ style="padding:8px;width:250px;"
 <label>Kwota paragonu</label>
 
 <input
-type="number"
+type="text"
 name="amount"
-min="1"
+placeholder="np. 100,60"
+inputmode="decimal"
 required
 style="padding:8px;width:150px;"
 >
@@ -151,7 +152,6 @@ function checkClient() {
 
             html += '<div style="margin-top:10px;">';
 
-            // 🔥 NOWE — znajdź najlepszy reward
             const bestReward = data.rewards.reduce((max, r) => r.reward_value > max.reward_value ? r : max, data.rewards[0]);
 
             data.rewards.forEach(r => {

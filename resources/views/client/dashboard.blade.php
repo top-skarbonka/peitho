@@ -242,7 +242,7 @@
             </div>
 
             <div class="card-footer">
-                <a href="{{ route('client.loyalty.card.show', $item['card']->id) }}" class="show-btn">
+                <a href="{{ route('client.card.show', $item['card']->id) }}" class="show-btn">
                     Pokaż kartę
                 </a>
             </div>

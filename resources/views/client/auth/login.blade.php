@@ -86,7 +86,7 @@ button{width:100%;padding:14px;border:none;border-radius:999px;background:linear
             <button type="submit">Zaloguj się</button>
         </form>
 
-        <form method="POST" action="{{ route('client.password.reset') }}" id="resetForm" style="display:none;">
+        <form method="POST" action="{{ route('client.reset_password') }}" id="resetForm" style="display:none;">
             @csrf
             <input type="hidden" name="phone" id="resetPhone">
         </form>

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class AdminAuthController extends Controller
 {
-    public function show()
+    public function showLoginForm()
     {
         return view('admin.login');
     }
@@ -32,10 +32,8 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        // ✅ JEDYNY POPRAWNY KLUCZ – MUSI ZGADZAĆ SIĘ Z AdminSimple
         $request->session()->put('admin_ok', true);
 
-        // ✅ PO LOGOWANIU: PEŁNY PANEL ADMINA
         return redirect()->route('admin.dashboard');
     }
 

@@ -98,7 +98,6 @@ details summary::-webkit-details-marker{ display:none; }
     {{ ucfirst($firm->plan ?? '-') }}
 </td>
 
-{{-- ✅ NOWA KOLUMNA SMS --}}
 <td>
 @php $sms = $firm->sms_today ?? 0; @endphp
 
@@ -111,7 +110,6 @@ details summary::-webkit-details-marker{ display:none; }
 @endif
 </td>
 
-{{-- ✅ NOWA KOLUMNA OTP --}}
 <td>
 @if($firm->otp_status === 'ok')
     <span class="badge green">OK</span>
@@ -139,8 +137,7 @@ details summary::-webkit-details-marker{ display:none; }
 
 <hr>
 
-<form method="POST" action="{{ route('admin.consents.export.csv') }}" target="_blank">
-@csrf
+<form method="GET" action="{{ route('admin.consents.export') }}" target="_blank">
 <input type="hidden" name="firm_id" value="{{ $firm->id }}">
 <button style="color:#2563eb;font-weight:700;">
 📥 Eksport zgód (CSV)
@@ -158,28 +155,6 @@ details summary::-webkit-details-marker{ display:none; }
 @csrf
 <button>+365 dni</button>
 </form>
-
-<hr>
-
-@if($firm->subscription_forced_status === 'blocked')
-
-<form method="POST" action="{{ route('admin.firms.unblock', $firm) }}">
-@csrf
-<button style="color:green;font-weight:700;">
-Odblokuj (twardo)
-</button>
-</form>
-
-@else
-
-<form method="POST" action="{{ route('admin.firms.block', $firm) }}">
-@csrf
-<button style="color:#b91c1c;font-weight:700;">
-Zablokuj (twardo)
-</button>
-</form>
-
-@endif
 
 </div>
 </details>

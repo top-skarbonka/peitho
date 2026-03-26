@@ -12,28 +12,16 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('company.points.add') }}">
-@csrf
-
-<div style="margin-bottom:15px;">
-<label>Ile zł = 1 punkt</label>
-
-<input
-type="number"
-name="points_per_currency"
-value="{{ $settings->points_per_currency ?? 10 }}"
-min="1"
-required
-style="padding:8px;width:200px;"
->
-
+<div style="background:#f8f9fa;padding:15px;margin-bottom:20px;border-radius:8px;border:1px solid #e5e7eb;">
+    <p style="margin:0 0 8px 0;"><strong>Aktualny przelicznik:</strong></p>
+    <p style="margin:0;font-size:18px;">
+        {{ $settings->points_per_currency ?? 10 }} zł = 1 punkt
+    </p>
 </div>
 
-<button type="submit" style="padding:10px 20px;">
-Zapisz ustawienia
-</button>
-
-</form>
+<p style="margin-bottom:20px;color:#666;">
+    Przelicznik punktów jest ustawiany przez administratora systemu.
+</p>
 
 <hr style="margin:30px 0;">
 
@@ -48,9 +36,9 @@ Dodaj punkty klientowi
 <p>Przykład działania:</p>
 
 <ul>
-<li>1 punkt = 10 zł</li>
+<li>1 punkt = {{ $settings->points_per_currency ?? 10 }} zł</li>
 <li>Klient kupuje za 120 zł</li>
-<li>Dostaje 12 punktów</li>
+<li>Dostaje {{ floor(120 / ($settings->points_per_currency ?? 10)) }} punktów</li>
 </ul>
 
 </div>

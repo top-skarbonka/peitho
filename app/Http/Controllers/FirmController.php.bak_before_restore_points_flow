@@ -48,6 +48,13 @@ class FirmController extends Controller
             ? $totalPoints / $totalTransactions
             : 0;
 
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 NOWE — WYKRESY (REALNE DANE)
+        |--------------------------------------------------------------------------
+        */
+
+        // 📈 Klienci per dzień (ostatnie 14 dni)
         $clientsPerDay = DB::table('loyalty_cards')
             ->where('firm_id', $firm->id)
             ->selectRaw("DATE(created_at) as date, COUNT(DISTINCT client_id) as count")
@@ -55,6 +62,7 @@ class FirmController extends Controller
             ->orderBy('date')
             ->get();
 
+        // 📊 Punkty per dzień (ostatnie 14 dni)
         $pointsPerDay = DB::table('client_point_logs')
             ->where('firm_id', $firm->id)
             ->where('points', '>', 0)
@@ -62,6 +70,12 @@ class FirmController extends Controller
             ->groupBy('date')
             ->orderBy('date')
             ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 NOWE — TREND (MINIMALNA ZMIANA)
+        |--------------------------------------------------------------------------
+        */
 
         $currentPoints = DB::table('client_point_logs')
             ->where('firm_id', $firm->id)
@@ -125,33 +139,48 @@ class FirmController extends Controller
             $phone = substr($phone, 2);
         }
 
-        $phoneForSms = '48' . $phone;
-
         $amount = (float) str_replace(',', '.', $request->amount);
 
         if ($amount <= 0) {
             return back()->withErrors(['amount' => 'Kwota musi być większa od zera']);
         }
 
+        $client = DB::table('clients')->where('phone', $phone)->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 NOWE — JEŚLI BRAK PORTFELA W TEJ FIRMIE, WYŚLIJ SMS Z LINKIEM
+        |--------------------------------------------------------------------------
+        */
+        if (!$client) {
+            $link = route('public.client.register.form', ['slug' => $firm->slug]);
+
+            $message = "Dolacz do programu lojalnosciowego {$firm->name}. Zarejestruj sie tutaj: {$link}";
+
+            app(SmsApiSender::class)->send($phone, $message);
+
+            return back()->with('success', 'Klient nie ma jeszcze portfela. Wysłano SMS z linkiem do rejestracji.');
+        }
+
+        $hasCardInThisFirm = LoyaltyCard::where('client_id', $client->id)
+            ->where('firm_id', $firm->id)
+            ->exists();
+
+        if (!$hasCardInThisFirm) {
+            $link = route('public.client.register.form', ['slug' => $firm->slug]);
+
+            $message = "Dolacz do programu lojalnosciowego {$firm->name}. Zarejestruj sie tutaj: {$link}";
+
+            app(SmsApiSender::class)->send($phone, $message);
+
+            return back()->with('success', 'Klient nie ma jeszcze portfela w tej firmie. Wysłano SMS z linkiem do rejestracji.');
+        }
+
         $whole = floor($amount);
         $fraction = round($amount - $whole, 2);
 
-        // 100,50 = 100 / dopiero powyżej 0,50 podbijamy o 1 zł
+        // ✅ 100,50 = 100 / dopiero powyżej 0,50 podbijamy o 1 zł
         $billAmountForPoints = $fraction > 0.50 ? $whole + 1 : $whole;
-
-        $client = DB::table('clients')->where('phone', $phone)->first();
-
-        if (!$client) {
-            $clientId = DB::table('clients')->insertGetId([
-                'firm_id' => $firm->id,
-                'program_id' => 1,
-                'phone' => $phone,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $clientId = $client->id;
-        }
 
         $settings = DB::table('program_settings')
             ->where('firm_id', $firm->id)
@@ -161,13 +190,13 @@ class FirmController extends Controller
         $points = (int) floor($billAmountForPoints / $divider);
 
         $existing = DB::table('client_points')
-            ->where('client_id', $clientId)
+            ->where('client_id', $client->id)
             ->where('firm_id', $firm->id)
             ->first();
 
         if ($existing) {
             DB::table('client_points')
-                ->where('client_id', $clientId)
+                ->where('client_id', $client->id)
                 ->where('firm_id', $firm->id)
                 ->update([
                     'points' => $existing->points + $points,
@@ -175,7 +204,7 @@ class FirmController extends Controller
                 ]);
         } else {
             DB::table('client_points')->insert([
-                'client_id' => $clientId,
+                'client_id' => $client->id,
                 'firm_id' => $firm->id,
                 'points' => $points,
                 'created_at' => now(),
@@ -184,56 +213,12 @@ class FirmController extends Controller
         }
 
         DB::table('client_point_logs')->insert([
-            'client_id' => $clientId,
+            'client_id' => $client->id,
             'firm_id' => $firm->id,
             'points' => $points,
             'amount' => round($amount, 2),
             'created_at' => now(),
         ]);
-
-        $hasCardInThisFirm = LoyaltyCard::where('client_id', $clientId)
-            ->where('firm_id', $firm->id)
-            ->exists();
-
-        // SMS onboarding tylko jeśli klient nie ma jeszcze karty/portfela w tej firmie
-        if (!$hasCardInThisFirm) {
-            $link = route('public.client.register.form', ['slug' => $firm->slug]);
-            $message = "Masz nowe punkty w programie lojalnosciowym {$firm->name}. Dokoncz rejestracje tutaj: {$link}";
-
-            try {
-                $smsResult = app(SmsApiSender::class)->send($phoneForSms, $message);
-
-                DB::table('sms_logs')->insert([
-                    'firm_id' => $firm->id,
-                    'client_id' => $clientId,
-                    'phone' => $phoneForSms,
-                    'type' => 'points_invite',
-                    'provider' => 'smsapi',
-                    'provider_message_id' => $smsResult['provider_message_id'] ?? null,
-                    'status' => $smsResult['status'] ?? (($smsResult['ok'] ?? false) ? 'sent' : 'failed'),
-                    'error_message' => $smsResult['error'] ?? null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                return back()->with('success', "Dodano {$points} punktów i wysłano SMS z linkiem do rejestracji.");
-            } catch (\Throwable $e) {
-                DB::table('sms_logs')->insert([
-                    'firm_id' => $firm->id,
-                    'client_id' => $clientId,
-                    'phone' => $phoneForSms,
-                    'type' => 'points_invite',
-                    'provider' => 'smsapi',
-                    'provider_message_id' => null,
-                    'status' => 'failed',
-                    'error_message' => $e->getMessage(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                return back()->with('success', "Dodano {$points} punktów. SMS nie został wysłany.");
-            }
-        }
 
         return back()->with('success', "Dodano {$points} punktów");
     }

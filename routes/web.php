@@ -63,6 +63,84 @@ Route::prefix('company')
 
 /*
 |--------------------------------------------------------------------------
+| 🔥 KLIENT — LOGOWANIE / PORTFEL / ZGODY / HASŁO
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('client')->group(function () {
+    Route::get('/login', [ClientAuthController::class, 'showLoginForm'])->name('client.login');
+    Route::post('/login', [ClientAuthController::class, 'login'])->name('client.login.submit');
+    Route::post('/logout', [ClientAuthController::class, 'logout'])->name('client.logout');
+
+    Route::post('/reset-password', [ClientAuthController::class, 'sendResetLink'])
+        ->name('client.reset_password');
+
+    Route::get('/set-password/{token}', [ClientSetPasswordController::class, 'show'])
+        ->name('client.set_password.show');
+    Route::post('/set-password/{token}', [ClientSetPasswordController::class, 'store'])
+        ->name('client.set_password.store');
+
+    Route::get('/activate/{token}', [ClientController::class, 'activateForm'])
+        ->name('client.activate.form');
+    Route::post('/activate/{token}', [ClientController::class, 'activateSubmit'])
+        ->name('client.activate.submit');
+});
+
+Route::prefix('client')
+    ->middleware(['auth:client'])
+    ->group(function () {
+        Route::get('/dashboard', [ClientController::class, 'dashboard'])->name('client.dashboard');
+        Route::get('/consents', [ClientController::class, 'consents'])->name('client.consents');
+        Route::post('/consents/{card}', [ClientController::class, 'updateConsent'])->name('client.consents.update');
+
+        Route::get('/card', [ClientController::class, 'loyaltyCard'])->name('client.card');
+        Route::get('/card/{card}', [ClientController::class, 'showCard'])->name('client.card.show');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 PUBLIC — REJESTRACJA KLIENTA DO FIRMY
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/register/firm/{slug}', [PublicClientController::class, 'showRegisterFormByFirm'])
+    ->name('public.client.register.form');
+
+Route::post('/register/firm/{slug}', [PublicClientController::class, 'registerByFirm'])
+    ->name('public.client.register.submit');
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 ADMIN — PRZYWRÓCONE TRASY PANELU
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('admin')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+});
+
+Route::prefix('admin')
+    ->middleware(['admin.simple'])
+    ->group(function () {
+
+        Route::get('/', fn () => redirect()->route('admin.firms.index'))->name('admin.dashboard');
+
+        Route::get('/firms', [AdminFirmController::class, 'index'])->name('admin.firms.index');
+        Route::get('/firms/create', [AdminFirmController::class, 'create'])->name('admin.firms.create');
+        Route::post('/firms', [AdminFirmController::class, 'store'])->name('admin.firms.store');
+        Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])->name('admin.firms.edit');
+        Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])->name('admin.firms.update');
+        Route::post('/firms/{firm}/extend30', [AdminFirmController::class, 'extend30'])->name('admin.firms.extend30');
+        Route::post('/firms/{firm}/extend365', [AdminFirmController::class, 'extend365'])->name('admin.firms.extend365');
+        Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])->name('admin.firms.activity');
+
+        Route::get('/consents/export', [ConsentExportController::class, 'export'])->name('admin.consents.export');
+    });
+
+/*
+|--------------------------------------------------------------------------
 | 🔥 API — PUNKTY + REWARDS + OSZCZĘDNOŚCI
 |--------------------------------------------------------------------------
 */
@@ -118,7 +196,6 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
 
     $totalSaved = $usedPoints / $pointsPerCurrency;
 
-    // 🔥 JEDYNA NOWA LOGIKA — STATUS
     $lastActivity = DB::table('client_point_logs')
         ->where('client_id', $client->id)
         ->where('firm_id', $firm->id)
@@ -146,13 +223,13 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
         'next_reward' => $nextReward,
         'points_per_currency' => $pointsPerCurrency,
         'total_saved' => round($totalSaved, 2),
-        'status' => $status, // 🔥 NOWE
+        'status' => $status,
     ]);
 });
 
 /*
 |--------------------------------------------------------------------------
-| 🔥 API — HISTORIA KLIENTA (NAPRAWIONE)
+| 🔥 API — HISTORIA KLIENTA
 |--------------------------------------------------------------------------
 */
 
