@@ -31,9 +31,16 @@ class FirmController extends Controller
     {
         $firm = $this->firm();
 
-        $totalClients = LoyaltyCard::where('firm_id', $firm->id)
-            ->distinct('client_id')
-            ->count('client_id');
+        $totalClients = DB::table(function ($query) use ($firm) {
+            $query->select('client_id')
+                ->from('loyalty_cards')
+                ->where('firm_id', $firm->id)
+                ->union(
+                    DB::table('client_points')
+                        ->select('client_id')
+                        ->where('firm_id', $firm->id)
+                );
+        }, 'clients_union')->distinct('client_id')->count('client_id');
 
         $totalTransactions = DB::table('client_point_logs')
             ->where('firm_id', $firm->id)
@@ -153,6 +160,11 @@ class FirmController extends Controller
             $clientId = $client->id;
         }
 
+        $alreadyHadPointsRelation = DB::table('client_points')
+            ->where('client_id', $clientId)
+            ->where('firm_id', $firm->id)
+            ->exists();
+
         $settings = DB::table('program_settings')
             ->where('firm_id', $firm->id)
             ->first();
@@ -191,12 +203,8 @@ class FirmController extends Controller
             'created_at' => now(),
         ]);
 
-        $hasCardInThisFirm = LoyaltyCard::where('client_id', $clientId)
-            ->where('firm_id', $firm->id)
-            ->exists();
-
-        // SMS onboarding tylko jeśli klient nie ma jeszcze karty/portfela w tej firmie
-        if (!$hasCardInThisFirm) {
+        // SMS onboarding tylko przy pierwszej relacji punktowej klienta z tą firmą
+        if (!$alreadyHadPointsRelation) {
             $link = route('public.client.register.form', ['slug' => $firm->slug]);
             $message = "Masz nowe punkty w programie lojalnosciowym {$firm->name}. Dokoncz rejestracje tutaj: {$link}";
 
