@@ -43,6 +43,19 @@
 
     </div>
 
+    {{-- 🔥 NOWE — TREND 7 DNI --}}
+    <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+        <p class="text-slate-500 text-sm">Trend 7 dni</p>
+
+        <p class="text-3xl font-bold {{ ($trend ?? 0) >= 0 ? 'text-green-600' : 'text-red-600' }}">
+            {{ ($trend ?? 0) >= 0 ? '+' : '' }}{{ number_format($trend ?? 0, 1, ',', ' ') }}%
+        </p>
+
+        <p class="text-sm text-slate-500 mt-1">
+            {{ number_format($currentPoints ?? 0, 0, ',', ' ') }} pkt vs {{ number_format($previousPoints ?? 0, 0, ',', ' ') }} pkt
+        </p>
+    </div>
+
     {{-- 🔥 WYKRESY --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 

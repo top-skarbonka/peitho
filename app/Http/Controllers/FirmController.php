@@ -71,13 +71,40 @@ class FirmController extends Controller
             ->orderBy('date')
             ->get();
 
+        /*
+        |--------------------------------------------------------------------------
+        | 🔥 NOWE — TREND (MINIMALNA ZMIANA)
+        |--------------------------------------------------------------------------
+        */
+
+        $currentPoints = DB::table('client_point_logs')
+            ->where('firm_id', $firm->id)
+            ->where('points', '>', 0)
+            ->whereBetween('created_at', [now()->subDays(7), now()])
+            ->sum('points');
+
+        $previousPoints = DB::table('client_point_logs')
+            ->where('firm_id', $firm->id)
+            ->where('points', '>', 0)
+            ->whereBetween('created_at', [now()->subDays(14), now()->subDays(7)])
+            ->sum('points');
+
+        $trend = 0;
+
+        if ($previousPoints > 0) {
+            $trend = (($currentPoints - $previousPoints) / $previousPoints) * 100;
+        }
+
         return view('firm.dashboard', compact(
             'totalClients',
             'totalTransactions',
             'totalPoints',
             'avgPoints',
             'clientsPerDay',
-            'pointsPerDay'
+            'pointsPerDay',
+            'currentPoints',
+            'previousPoints',
+            'trend'
         ));
     }
 
