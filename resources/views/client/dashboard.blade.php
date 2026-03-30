@@ -264,6 +264,149 @@
             color: rgba(248,250,252,.58);
         }
 
+        .points-card-enhanced {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .points-card-enhanced::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(168,85,247,.16), transparent 45%);
+            pointer-events: none;
+        }
+
+        .points-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 800;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.10);
+        }
+
+        .points-main-value {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .points-main-label {
+            font-size: .9rem;
+            color: var(--text-soft);
+            margin-bottom: 16px;
+        }
+
+        .points-stats {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .points-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .points-stat-label {
+            font-size: .82rem;
+            color: var(--text-soft);
+        }
+
+        .points-stat-value {
+            font-size: .95rem;
+            font-weight: 800;
+            text-align: right;
+        }
+
+        .points-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .points-action-btn,
+        .points-action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: .84rem;
+            font-weight: 800;
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.08);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .points-action-btn:hover,
+        .points-action-link:hover {
+            background: rgba(255,255,255,.12);
+        }
+
+        .points-details {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,.10);
+            display: none;
+        }
+
+        .points-details.open {
+            display: block;
+        }
+
+        .points-details-title {
+            font-size: .85rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .points-reward-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .points-reward-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.08);
+            font-size: .84rem;
+        }
+
+        .points-reward-item.active {
+            border-color: rgba(236,72,153,.45);
+            background: rgba(236,72,153,.10);
+        }
+
+        .points-reward-status {
+            font-weight: 800;
+            font-size: .76rem;
+            color: #f9a8d4;
+            white-space: nowrap;
+        }
+
         @media (max-width: 640px) {
             .wallet-popup-backdrop {
                 padding: 12px;
@@ -291,6 +434,10 @@
 
             .wallet-popup-box li {
                 font-size: .89rem;
+            }
+
+            .points-actions {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -376,7 +523,6 @@
     </a>
 </header>
 
-{{-- ===================== KATEGORIE ===================== --}}
 <div class="categories">
     <div class="category active" data-filter="all">Wszystkie</div>
 
@@ -399,34 +545,158 @@
     @endif
 </div>
 
-{{-- ===================== GRID ===================== --}}
 <div class="cards-grid">
 
-{{-- PUNKTY --}}
 @if(isset($points))
     @foreach($points as $p)
 
-        <div class="card" data-category="points">
-            <div class="brand">{{ $p->firm_name }}</div>
+        @php
+            $firmSlug = (string) ($p->firm_slug ?? '');
+            $firmName = trim((string) ($p->firm_name ?? ''));
+            $firmNameLower = mb_strtolower($firmName);
 
-            <div class="sub">
-                Program punktowy
-            </div>
+            $isSpecialPointsBox =
+                $firmSlug === 'mocne-branie'
+                || $firmSlug === 'dani-fishing-daniel-poryczynski'
+                || $firmNameLower === 'mocne branie'
+                || $firmNameLower === 'dani-fishing daniel poryczyński'
+                || $firmNameLower === 'dani-fishing daniel poryczynski';
 
-            <div class="sub">
-                Saldo punktów:
-                <strong>{{ $p->points }}</strong>
-            </div>
+            $rewardThresholds = [
+                200  => 10,
+                300  => 15,
+                400  => 20,
+                500  => 25,
+                600  => 30,
+                700  => 35,
+                800  => 40,
+                900  => 45,
+                1000 => 50,
+            ];
 
-            <div class="progress">
-                <span style="width: 100%"></span>
+            $availableRewardPoints = null;
+            $availableRewardValue = null;
+            $nextRewardPoints = null;
+            $nextRewardValue = null;
+
+            foreach ($rewardThresholds as $threshold => $rewardValue) {
+                if ((int) $p->points >= $threshold) {
+                    $availableRewardPoints = $threshold;
+                    $availableRewardValue = $rewardValue;
+                } elseif ($nextRewardPoints === null) {
+                    $nextRewardPoints = $threshold;
+                    $nextRewardValue = $rewardValue;
+                }
+            }
+
+            $missingToNextReward = $nextRewardPoints !== null
+                ? max(0, $nextRewardPoints - (int) $p->points)
+                : 0;
+
+            $detailsId = 'points-details-' . $loop->index;
+        @endphp
+
+        @if($isSpecialPointsBox)
+            <div class="card points-card-enhanced" data-category="points">
+                <div class="points-badge">
+                    <i class="fa-solid fa-gift"></i>
+                    <span>Program punktowy</span>
+                </div>
+
+                <div class="brand">{{ $p->firm_name }}</div>
+
+                <div class="points-main-value">{{ (int) $p->points }} pkt</div>
+                <div class="points-main-label">Aktualne saldo punktów</div>
+
+                <div class="points-stats">
+                    <div class="points-stat">
+                        <div class="points-stat-label">Dostępny rabat</div>
+                        <div class="points-stat-value">
+                            @if($availableRewardValue !== null)
+                                {{ $availableRewardValue }} zł
+                            @else
+                                Jeszcze niedostępny
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="points-stat">
+                        <div class="points-stat-label">Do kolejnego rabatu</div>
+                        <div class="points-stat-value">
+                            @if($nextRewardValue !== null)
+                                brakuje {{ $missingToNextReward }} pkt
+                            @else
+                                Masz najwyższy próg
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($nextRewardValue !== null)
+                        <div class="points-stat">
+                            <div class="points-stat-label">Kolejny rabat</div>
+                            <div class="points-stat-value">{{ $nextRewardValue }} zł</div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="progress">
+                    <span style="width: {{ $nextRewardPoints ? min(100, ((int) $p->points / $nextRewardPoints) * 100) : 100 }}%"></span>
+                </div>
+
+                <div class="points-actions">
+                    <button type="button" class="points-action-btn" onclick="togglePointsDetails('{{ $detailsId }}', this)">
+                        <i class="fa-solid fa-chevron-down"></i>
+                        <span>Pokaż progi rabatowe</span>
+                    </button>
+
+                    <a href="{{ url('/regulaminy/regulamin-mocne-branie.pdf') }}" target="_blank" rel="noopener noreferrer" class="points-action-link">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Regulamin PDF</span>
+                    </a>
+                </div>
+
+                <div class="points-details" id="{{ $detailsId }}">
+                    <div class="points-details-title">Dostępne progi punktowe</div>
+
+                    <div class="points-reward-list">
+                        @foreach($rewardThresholds as $threshold => $rewardValue)
+                            <div class="points-reward-item {{ (int) $p->points >= $threshold ? 'active' : '' }}">
+                                <span>{{ $threshold }} pkt = {{ $rewardValue }} zł rabatu</span>
+
+                                <span class="points-reward-status">
+                                    @if((int) $p->points >= $threshold)
+                                        Aktywny
+                                    @else
+                                        Brakuje {{ $threshold - (int) $p->points }} pkt
+                                    @endif
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
-        </div>
+        @else
+            <div class="card" data-category="points">
+                <div class="brand">{{ $p->firm_name }}</div>
+
+                <div class="sub">
+                    Program punktowy
+                </div>
+
+                <div class="sub">
+                    Saldo punktów:
+                    <strong>{{ $p->points }}</strong>
+                </div>
+
+                <div class="progress">
+                    <span style="width: 100%"></span>
+                </div>
+            </div>
+        @endif
 
     @endforeach
 @endif
 
-{{-- KARTY LOJALNOŚCIOWE --}}
 @foreach($grouped as $category => $cards)
     @foreach($cards as $item)
 
@@ -453,7 +723,6 @@
     @endforeach
 @endforeach
 
-{{-- KARNETY --}}
 @if(isset($passes))
     @foreach($passes as $pass)
 
@@ -506,6 +775,35 @@ document.querySelectorAll('.category').forEach(button => {
 function closeWalletInstallPopup() {
     localStorage.setItem('looply_wallet_popup_closed', '1');
     document.getElementById('walletInstallPopup').style.display = 'none';
+}
+
+function togglePointsDetails(detailsId, button) {
+    const details = document.getElementById(detailsId);
+
+    if (!details) {
+        return;
+    }
+
+    details.classList.toggle('open');
+
+    const icon = button.querySelector('i');
+    const label = button.querySelector('span');
+
+    if (details.classList.contains('open')) {
+        if (icon) {
+            icon.className = 'fa-solid fa-chevron-up';
+        }
+        if (label) {
+            label.textContent = 'Ukryj progi rabatowe';
+        }
+    } else {
+        if (icon) {
+            icon.className = 'fa-solid fa-chevron-down';
+        }
+        if (label) {
+            label.textContent = 'Pokaż progi rabatowe';
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
