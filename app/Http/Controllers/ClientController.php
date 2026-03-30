@@ -26,6 +26,10 @@ class ClientController extends Controller
 
         $cards = LoyaltyCard::with(['firm', 'stamps'])
             ->where('client_id', $client->id)
+            ->whereHas('firm', function ($query) {
+                $query->where('program_type', 'cards')
+                    ->orWhere('has_stickers', 1);
+            })
             ->get();
 
         $grouped = $cards
@@ -96,7 +100,40 @@ class ClientController extends Controller
 
         $cards = LoyaltyCard::with('firm')
             ->where('client_id', $client->id)
-            ->get();
+            ->get()
+            ->keyBy('firm_id');
+
+        $pointFirmIds = DB::table('client_points')
+            ->where('client_id', $client->id)
+            ->pluck('firm_id');
+
+        foreach ($pointFirmIds as $firmId) {
+            if (! $cards->has($firmId)) {
+                $card = LoyaltyCard::firstOrCreate(
+                    [
+                        'client_id' => $client->id,
+                        'firm_id'   => $firmId,
+                    ],
+                    [
+                        'max_stamps'     => 10,
+                        'current_stamps' => 0,
+                        'status'         => 'active',
+                    ]
+                );
+
+                $card->load('firm');
+                $cards->put($firmId, $card);
+            }
+        }
+
+        $cards = $cards
+            ->filter(function ($card) {
+                return $card->firm !== null;
+            })
+            ->sortBy(function ($card) {
+                return mb_strtolower((string) $card->firm->name);
+            })
+            ->values();
 
         return view('client.consents', [
             'cards' => $cards,
@@ -184,6 +221,10 @@ class ClientController extends Controller
 
         $card = LoyaltyCard::with(['firm', 'stamps'])
             ->where('client_id', $client->id)
+            ->whereHas('firm', function ($query) {
+                $query->where('program_type', 'cards')
+                    ->orWhere('has_stickers', 1);
+            })
             ->latest()
             ->first();
 

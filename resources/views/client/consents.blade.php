@@ -161,6 +161,16 @@
             opacity:.7;
             line-height:1.4;
         }
+
+        .empty {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 18px;
+            font-size: .95rem;
+            line-height: 1.6;
+            opacity: .9;
+        }
     </style>
 </head>
 <body>
@@ -178,40 +188,46 @@
 
     <div class="intro">
         Twój numer telefonu jest jeden, ale <strong>zgody są osobne dla każdej firmy</strong>.<br>
-        Możesz w każdej chwili cofnąć lub przywrócić zgodę — bez wpływu na inne karty.
+        Możesz w każdej chwili cofnąć lub przywrócić zgodę — bez wpływu na inne firmy.
     </div>
 
-    <div class="grid">
-        @foreach($cards as $card)
-            <div class="card">
-                <div>
-                    <div class="firm">{{ $card->firm->name }}</div>
-                    <div class="desc">
-                        Zgoda na SMS / komunikację marketingową
+    @if($cards->isEmpty())
+        <div class="empty">
+            Nie masz jeszcze żadnych firm przypisanych do zgód marketingowych.
+        </div>
+    @else
+        <div class="grid">
+            @foreach($cards as $card)
+                <div class="card">
+                    <div>
+                        <div class="firm">{{ $card->firm->name }}</div>
+                        <div class="desc">
+                            Zgoda na SMS / komunikację marketingową
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <span class="status" id="status-{{ $card->id }}">
+                            {{ $card->marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
+                        </span>
+
+                        <label class="switch">
+                            <input
+                                type="checkbox"
+                                data-id="{{ $card->id }}"
+                                {{ $card->marketing_consent ? 'checked' : '' }}
+                            >
+                            <span class="slider"></span>
+                        </label>
                     </div>
                 </div>
-
-                <div class="footer">
-                    <span class="status" id="status-{{ $card->id }}">
-                        {{ $card->marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
-                    </span>
-
-                    <label class="switch">
-                        <input
-                            type="checkbox"
-                            data-id="{{ $card->id }}"
-                            {{ $card->marketing_consent ? 'checked' : '' }}
-                        >
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-        @endforeach
-    </div>
+            @endforeach
+        </div>
+    @endif
 
     <div class="note">
-        ℹ️ Zmiany będą zapisywane automatycznie.<br>
-        Każda karta ma swoją niezależną zgodę (RODO).
+        ℹ️ Zmiany zapisują się automatycznie.<br>
+        Zgoda jest ustawiana osobno dla każdej firmy.
     </div>
 
 </div>
@@ -219,10 +235,13 @@
 <script>
 document.querySelectorAll('.switch input').forEach(toggle => {
     toggle.addEventListener('change', function() {
-
         const cardId = this.dataset.id;
         const statusLabel = document.getElementById('status-' + cardId);
         const consent = this.checked ? 1 : 0;
+        const previousChecked = !this.checked;
+        const currentToggle = this;
+
+        currentToggle.disabled = true;
 
         fetch(`/client/consents/${cardId}`, {
             method: 'POST',
@@ -235,15 +254,23 @@ document.querySelectorAll('.switch input').forEach(toggle => {
                 marketing_consent: consent
             })
         })
-        .then(res => res.json())
-        .then(data => {
-            statusLabel.textContent = consent ? 'Aktywna' : 'Nieaktywna';
+        .then(async res => {
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error('Błąd zapisu');
+            }
+
+            statusLabel.textContent = data.marketing_consent ? 'Aktywna' : 'Nieaktywna';
         })
         .catch(() => {
             alert('Błąd zapisu. Spróbuj ponownie.');
-            toggle.checked = !consent;
+            currentToggle.checked = previousChecked;
+            statusLabel.textContent = previousChecked ? 'Aktywna' : 'Nieaktywna';
+        })
+        .finally(() => {
+            currentToggle.disabled = false;
         });
-
     });
 });
 </script>
