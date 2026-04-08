@@ -59,6 +59,27 @@ class Firm extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
+    | RELACJE
+    |--------------------------------------------------------------------------
+    */
+
+    public function promotions()
+    {
+        return $this->hasMany(\App\Models\FirmPromotion::class);
+    }
+
+    public function locations()
+    {
+        return $this->hasMany(\App\Models\FirmLocation::class);
+    }
+
+    public function recommendations()
+    {
+        return $this->hasMany(\App\Models\FirmRecommendation::class);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | HELPERY
     |--------------------------------------------------------------------------
     */

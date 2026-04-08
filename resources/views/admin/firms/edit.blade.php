@@ -109,12 +109,39 @@
 
 <hr>
 
-{{-- LOGO --}}
+{{-- 🖼 LOGO --}}
 <h4>🖼 Logo</h4>
 <input type="file"
        name="logo"
        accept="image/*"
        style="width:100%;padding:12px;margin-bottom:30px">
+
+<hr>
+
+{{-- 🔥 NOWE: PROMOCJE (UI ONLY) --}}
+<h4>🔥 Promocje (nowy moduł)</h4>
+<div style="background:#f9fafb;padding:14px;border-radius:12px;margin-bottom:20px;">
+    <p style="font-size:14px;color:#666;">
+        Tutaj będziesz dodawać promocje do karty firmy (zdjęcia + hasła).<br>
+        W kolejnym kroku podłączymy zapis do bazy.
+    </p>
+</div>
+
+{{-- 📍 NOWE: LOKALIZACJE --}}
+<h4>📍 Lokalizacje (nowy moduł)</h4>
+<div style="background:#f9fafb;padding:14px;border-radius:12px;margin-bottom:20px;">
+    <p style="font-size:14px;color:#666;">
+        Obsługa wielu adresów firmy (Dojazd).
+    </p>
+</div>
+
+{{-- 🤝 NOWE: POLECANE --}}
+<h4>🤝 Polecane miejsca</h4>
+<div style="background:#f9fafb;padding:14px;border-radius:12px;margin-bottom:30px;">
+    <p style="font-size:14px;color:#666;">
+        Tutaj przypiszesz kategorie i firmy polecane (np. Jedzenie, Sklepy).
+    </p>
+</div>
 
 <button type="submit" style="
     width:100%;
