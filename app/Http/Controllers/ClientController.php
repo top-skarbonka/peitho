@@ -190,8 +190,8 @@ class ClientController extends Controller
 
         $current = min($card->stamps->count(), $maxStamps);
 
-        $displayCode = str_pad((string) $card->id, 8, '0', STR_PAD_LEFT);
-        $qrPayload = $card->qr_code ?: ('CARD:' . $card->id);
+        $displayCode = $client->phone;
+        $qrPayload = $client->phone;
 
         $qr = QrCode::format('svg')
             ->size(170)

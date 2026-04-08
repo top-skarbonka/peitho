@@ -350,6 +350,110 @@
     </button>
 </form>
 
+<hr>
+
+{{-- 🤝 POLECANE FIRMY --}}
+<h4>🤝 Polecane firmy</h4>
+
+@if($recommendations->isEmpty())
+<div style="background:#f9fafb;padding:14px;border-radius:12px;margin-bottom:20px;">
+    Brak polecanych firm
+</div>
+@else
+    @foreach($recommendations as $recommendation)
+    <div style="background:#f9fafb;padding:14px;border-radius:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+            <div style="flex:1;">
+                <strong>
+                    {{ $recommendation->recommendedFirm->name ?? 'Brak firmy' }}
+                </strong><br>
+
+                <div style="margin-top:6px;font-size:14px;color:#4b5563;">
+                    Kategoria:
+                    <strong>{{ $recommendation->category->name ?? 'Brak kategorii' }}</strong>
+                </div>
+
+                @if($recommendation->promo_text)
+                    <div style="margin-top:6px;">{{ $recommendation->promo_text }}</div>
+                @endif
+
+                <div style="margin-top:8px;font-size:13px;color:#6b7280;">
+                    @if(!is_null($recommendation->sort_order))
+                        Kolejność: {{ $recommendation->sort_order }}
+                    @endif
+                </div>
+            </div>
+
+            <form method="POST"
+                  action="{{ route('admin.firms.recommendations.destroy', [$firm, $recommendation]) }}"
+                  onsubmit="return confirm('Na pewno usunąć polecaną firmę?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" style="
+                    border:none;
+                    background:#dc2626;
+                    color:#fff;
+                    border-radius:10px;
+                    padding:8px 10px;
+                    font-weight:700;
+                    cursor:pointer;
+                ">
+                    🗑
+                </button>
+            </form>
+        </div>
+    </div>
+    @endforeach
+@endif
+
+<form method="POST"
+      action="{{ route('admin.firms.recommendations.store', $firm) }}"
+      style="background:#fff;border:2px dashed #ddd;padding:16px;border-radius:12px;margin-top:20px;">
+    @csrf
+
+    <h5 style="margin-top:0;">➕ Dodaj polecaną firmę</h5>
+
+    <select name="category_id"
+            required
+            style="width:100%;padding:10px;margin-bottom:10px">
+        <option value="">Wybierz kategorię</option>
+        @foreach($recommendationCategories as $category)
+            <option value="{{ $category->id }}">{{ $category->name }}</option>
+        @endforeach
+    </select>
+
+    <select name="recommended_firm_id"
+            required
+            style="width:100%;padding:10px;margin-bottom:10px">
+        <option value="">Wybierz firmę</option>
+        @foreach($allFirms as $recommendedFirm)
+            @if($recommendedFirm->id !== $firm->id)
+                <option value="{{ $recommendedFirm->id }}">{{ $recommendedFirm->name }}</option>
+            @endif
+        @endforeach
+    </select>
+
+    <input name="promo_text"
+           placeholder="Hasło promo (np. -15% dla klientów Looply)"
+           style="width:100%;padding:10px;margin-bottom:10px">
+
+    <input name="sort_order"
+           placeholder="Kolejność (np. 1)"
+           style="width:100%;padding:10px;margin-bottom:10px">
+
+    <button type="submit" style="
+        width:100%;
+        padding:10px;
+        border:none;
+        border-radius:10px;
+        background:#111;
+        color:#fff;
+        font-weight:700;
+    ">
+        ➕ Dodaj polecaną firmę
+    </button>
+</form>
+
 <div style="margin-top:16px;text-align:center;">
     <a href="{{ route('admin.firms.index') }}" style="color:#666;text-decoration:none;font-weight:600;">
         ← Wróć do listy firm

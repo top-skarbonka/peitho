@@ -290,6 +290,26 @@ class AdminFirmController extends Controller
         return back()->with('success', 'Lokalizacja została dodana ✅');
     }
 
+    public function storeRecommendation(Request $request, Firm $firm)
+    {
+        $validated = $request->validate([
+            'recommended_firm_id' => 'required|integer|different:firm_id',
+            'category_id' => 'required|integer',
+            'promo_text' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        FirmRecommendation::create([
+            'firm_id' => $firm->id,
+            'recommended_firm_id' => $validated['recommended_firm_id'],
+            'category_id' => $validated['category_id'],
+            'promo_text' => $validated['promo_text'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+        ]);
+
+        return back()->with('success', 'Polecana firma została dodana ✅');
+    }
+
     public function destroyPromotion(Firm $firm, FirmPromotion $promotion)
     {
         if ($promotion->firm_id !== $firm->id) {
@@ -310,6 +330,17 @@ class AdminFirmController extends Controller
         $location->delete();
 
         return back()->with('success', 'Lokalizacja została usunięta ✅');
+    }
+
+    public function destroyRecommendation(Firm $firm, FirmRecommendation $recommendation)
+    {
+        if ($recommendation->firm_id !== $firm->id) {
+            abort(404);
+        }
+
+        $recommendation->delete();
+
+        return back()->with('success', 'Polecana firma została usunięta ✅');
     }
 
     public function extend30(Firm $firm)

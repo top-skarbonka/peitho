@@ -86,6 +86,7 @@ body{
 /* ===== QR ===== */
 .qr-section svg{width:150px;height:150px;}
 .code-number{font-size:1.7rem;font-weight:800;letter-spacing:2px;color:#222;margin-top:6px;}
+.code-label{font-size:.9rem;color:#666;margin-top:8px;}
 
 /* ===== GLASS ===== */
 .glass-box{
@@ -128,7 +129,8 @@ details summary{cursor:pointer;font-weight:600;}
 
     <div class="qr-section">
         {!! $qr !!}
-        <div class="code-number">{{ $displayCode }}</div>
+        <div class="code-number">{{ $client->phone }}</div>
+        <div class="code-label">Pokaż ten kod przy zakupie</div>
     </div>
 </div>
 
