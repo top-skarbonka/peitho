@@ -6,8 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Mail\FirmCreatedMail;
 use App\Mail\FirmWelcomeGuideMail;
 use App\Models\Firm;
+use App\Models\FirmPromotion;
+use App\Models\FirmLocation;
+use App\Models\FirmRecommendation;
 use App\Models\LoyaltyCard;
 use App\Models\LoyaltyStamp;
+use App\Models\RecommendationCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -135,12 +139,41 @@ class AdminFirmController extends Controller
 
         $cardsCount = LoyaltyCard::where('firm_id', $firm->id)->count();
 
+        $promotions = FirmPromotion::where('firm_id', $firm->id)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $locations = FirmLocation::where('firm_id', $firm->id)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $recommendations = FirmRecommendation::with(['recommendedFirm', 'category'])
+            ->where('firm_id', $firm->id)
+            ->orderBy('category_id')
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $recommendationCategories = RecommendationCategory::where('is_active', 1)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $allFirms = Firm::orderBy('name')->get(['id', 'name']);
+
         return view('admin.firms.edit', compact(
             'firm',
             'totalStamps',
             'monthStamps',
             'clientsCount',
-            'cardsCount'
+            'cardsCount',
+            'promotions',
+            'locations',
+            'recommendations',
+            'recommendationCategories',
+            'allFirms'
         ));
     }
 
@@ -198,6 +231,85 @@ class AdminFirmController extends Controller
         }
 
         return back()->with('success', 'Zapisano zmiany ✅');
+    }
+
+    public function storePromotion(Request $request, Firm $firm)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'promo_text' => 'nullable|string|max:255',
+            'image' => 'nullable|image|max:4096',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $data = [
+            'firm_id' => $firm->id,
+            'title' => $validated['title'],
+            'promo_text' => $validated['promo_text'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->boolean('is_active'),
+        ];
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('firm-promotions', 'public');
+        }
+
+        FirmPromotion::create($data);
+
+        return back()->with('success', 'Promocja została dodana ✅');
+    }
+
+    public function storeLocation(Request $request, Firm $firm)
+    {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'google_maps_url' => 'nullable|string',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        FirmLocation::create([
+            'firm_id' => $firm->id,
+            'name' => $validated['name'] ?? null,
+            'address' => $validated['address'],
+            'city' => $validated['city'] ?? null,
+            'postal_code' => $validated['postal_code'] ?? null,
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'google_maps_url' => $validated['google_maps_url'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+            'is_active' => $request->boolean('is_active'),
+        ]);
+
+        return back()->with('success', 'Lokalizacja została dodana ✅');
+    }
+
+    public function destroyPromotion(Firm $firm, FirmPromotion $promotion)
+    {
+        if ($promotion->firm_id !== $firm->id) {
+            abort(404);
+        }
+
+        $promotion->delete();
+
+        return back()->with('success', 'Promocja została usunięta ✅');
+    }
+
+    public function destroyLocation(Firm $firm, FirmLocation $location)
+    {
+        if ($location->firm_id !== $firm->id) {
+            abort(404);
+        }
+
+        $location->delete();
+
+        return back()->with('success', 'Lokalizacja została usunięta ✅');
     }
 
     public function extend30(Firm $firm)

@@ -133,9 +133,6 @@ Route::prefix('admin')
         Route::get('/firms/{firm}/edit', [AdminFirmController::class, 'edit'])->name('admin.firms.edit');
         Route::put('/firms/{firm}', [AdminFirmController::class, 'update'])->name('admin.firms.update');
         Route::post('/firms/{firm}/promotions', [AdminFirmController::class, 'storePromotion'])->name('admin.firms.promotions.store');
-        Route::post('/firms/{firm}/locations', [AdminFirmController::class, 'storeLocation'])->name('admin.firms.locations.store');
-        Route::delete('/firms/{firm}/promotions/{promotion}', [AdminFirmController::class, 'destroyPromotion'])->name('admin.firms.promotions.destroy');
-        Route::delete('/firms/{firm}/locations/{location}', [AdminFirmController::class, 'destroyLocation'])->name('admin.firms.locations.destroy');
         Route::post('/firms/{firm}/extend30', [AdminFirmController::class, 'extend30'])->name('admin.firms.extend30');
         Route::post('/firms/{firm}/extend365', [AdminFirmController::class, 'extend365'])->name('admin.firms.extend365');
         Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])->name('admin.firms.activity');
