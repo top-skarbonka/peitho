@@ -36,14 +36,13 @@ class SmsApiSender
         }
 
         try {
-
             $response = Http::timeout(15)
                 ->withToken($token)
                 ->asForm()
                 ->post('https://api.smsapi.pl/sms.do', [
                     'to'      => $phone,
                     'message' => $message,
-'from'    => config('smsapi.sender'),
+                    'from'    => config('smsapi.from'),
                     'format'  => 'json',
                 ]);
 
@@ -64,7 +63,6 @@ class SmsApiSender
                 'provider_message_id' => $body['list'][0]['id'] ?? null,
                 'error' => null,
             ];
-
         } catch (\Throwable $e) {
             return [
                 'ok' => false,
