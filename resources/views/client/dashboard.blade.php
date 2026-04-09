@@ -119,6 +119,10 @@
 
         .card.hidden { display:none; }
 
+        .card.clickable-card {
+            cursor: pointer;
+        }
+
         .brand { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
         .sub { font-size: .9rem; color: var(--text-soft); margin-bottom: 12px; }
 
@@ -361,6 +365,24 @@
             background: rgba(255,255,255,.12);
         }
 
+        .points-open-card {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: .84rem;
+            font-weight: 800;
+            border: 1px solid rgba(255,255,255,.12);
+            background: #fff;
+            color: #111;
+            margin-top: 6px;
+        }
+
         .points-details {
             margin-top: 14px;
             padding-top: 14px;
@@ -555,6 +577,8 @@
             $firmName = trim((string) ($p->firm_name ?? ''));
             $firmNameLower = mb_strtolower($firmName);
 
+            $linkedCardId = $p->linked_card_id ?? null;
+
             $isSpecialPointsBox =
                 $firmSlug === 'mocne-branie'
                 || $firmSlug === 'dani-fishing-daniel-poryczynski'
@@ -597,7 +621,13 @@
         @endphp
 
         @if($isSpecialPointsBox)
-            <div class="card points-card-enhanced" data-category="points">
+            <div
+                class="card points-card-enhanced {{ $linkedCardId ? 'clickable-card' : '' }}"
+                data-category="points"
+                @if($linkedCardId)
+                    onclick="window.location='{{ route('client.card.show', $linkedCardId) }}'"
+                @endif
+            >
                 <div class="points-badge">
                     <i class="fa-solid fa-gift"></i>
                     <span>Program punktowy</span>
@@ -643,13 +673,20 @@
                     <span style="width: {{ $nextRewardPoints ? min(100, ((int) $p->points / $nextRewardPoints) * 100) : 100 }}%"></span>
                 </div>
 
+                @if($linkedCardId)
+                    <a href="{{ route('client.card.show', $linkedCardId) }}" class="points-open-card" onclick="event.stopPropagation();">
+                        <i class="fa-solid fa-id-card"></i>
+                        <span>Pokaż kartę</span>
+                    </a>
+                @endif
+
                 <div class="points-actions">
-                    <button type="button" class="points-action-btn" onclick="togglePointsDetails('{{ $detailsId }}', this)">
+                    <button type="button" class="points-action-btn" onclick="event.stopPropagation(); togglePointsDetails('{{ $detailsId }}', this)">
                         <i class="fa-solid fa-chevron-down"></i>
                         <span>Pokaż progi rabatowe</span>
                     </button>
 
-                    <a href="{{ url('/regulaminy/regulamin-mocne-branie.pdf') }}" target="_blank" rel="noopener noreferrer" class="points-action-link">
+                    <a href="{{ url('/regulaminy/regulamin-mocne-branie.pdf') }}" target="_blank" rel="noopener noreferrer" class="points-action-link" onclick="event.stopPropagation();">
                         <i class="fa-solid fa-file-pdf"></i>
                         <span>Regulamin PDF</span>
                     </a>
@@ -676,7 +713,13 @@
                 </div>
             </div>
         @else
-            <div class="card" data-category="points">
+            <div
+                class="card {{ $linkedCardId ? 'clickable-card' : '' }}"
+                data-category="points"
+                @if($linkedCardId)
+                    onclick="window.location='{{ route('client.card.show', $linkedCardId) }}'"
+                @endif
+            >
                 <div class="brand">{{ $p->firm_name }}</div>
 
                 <div class="sub">
@@ -691,6 +734,14 @@
                 <div class="progress">
                     <span style="width: 100%"></span>
                 </div>
+
+                @if($linkedCardId)
+                    <div class="card-footer">
+                        <a href="{{ route('client.card.show', $linkedCardId) }}" class="show-btn" onclick="event.stopPropagation();">
+                            Pokaż kartę
+                        </a>
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -702,7 +753,11 @@
 
         @php $percent = ($item['current'] / $item['max']) * 100; @endphp
 
-        <div class="card" data-category="{{ $category }}">
+        <div
+            class="card clickable-card"
+            data-category="{{ $category }}"
+            onclick="window.location='{{ route('client.card.show', $item['card']->id) }}'"
+        >
             <div class="brand">{{ $item['card']->firm->name }}</div>
 
             <div class="sub">
@@ -714,7 +769,7 @@
             </div>
 
             <div class="card-footer">
-                <a href="{{ route('client.card.show', $item['card']->id) }}" class="show-btn">
+                <a href="{{ route('client.card.show', $item['card']->id) }}" class="show-btn" onclick="event.stopPropagation();">
                     Pokaż kartę
                 </a>
             </div>

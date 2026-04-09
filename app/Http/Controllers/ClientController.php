@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\FirmLocation;
+use App\Models\FirmPromotion;
+use App\Models\FirmRecommendation;
 use App\Models\LoyaltyCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,11 +59,18 @@ class ClientController extends Controller
 
         $points = DB::table('client_points as cp')
             ->join('firms as f', 'f.id', '=', 'cp.firm_id')
+            ->leftJoin('loyalty_cards as lc', function ($join) {
+                $join->on('lc.firm_id', '=', 'cp.firm_id')
+                    ->on('lc.client_id', '=', 'cp.client_id');
+            })
             ->where('cp.client_id', $client->id)
             ->select([
                 'cp.points',
+                'cp.firm_id',
+                'f.id as firm_id',
                 'f.name as firm_name',
-                'f.slug as firm_slug'
+                'f.slug as firm_slug',
+                'lc.id as linked_card_id',
             ])
             ->orderByDesc('cp.id')
             ->get();
@@ -198,16 +208,99 @@ class ClientController extends Controller
             ->margin(0)
             ->generate($qrPayload);
 
-        $template = $card->firm->card_template ?? 'classic';
+        $promotions = FirmPromotion::where('firm_id', $card->firm->id)
+            ->where('is_active', 1)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $locations = FirmLocation::where('firm_id', $card->firm->id)
+            ->where('is_active', 1)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $recommendations = FirmRecommendation::with(['recommendedFirm', 'category'])
+            ->where('firm_id', $card->firm->id)
+            ->orderBy('sort_order')
+            ->orderByDesc('id')
+            ->get();
+
+        $clientPoints = (int) (
+            DB::table('client_points')
+                ->where('client_id', $client->id)
+                ->where('firm_id', $card->firm->id)
+                ->value('points') ?? 0
+        );
+
+        $programSettings = DB::table('program_settings')
+            ->where('firm_id', $card->firm->id)
+            ->first();
+
+        $pointsPerCurrency = (int) ($programSettings->points_per_currency ?? 10);
+        if ($pointsPerCurrency < 1) {
+            $pointsPerCurrency = 10;
+        }
+
+        $rewards = DB::table('point_rewards')
+            ->where('firm_id', $card->firm->id)
+            ->orderBy('points_required')
+            ->get()
+            ->values();
+
+        if ($rewards->isEmpty() && (int) $card->firm->id === 43) {
+            $rewards = collect([
+                ['points_required' => 200,  'reward_name' => '10 zł rabatu'],
+                ['points_required' => 300,  'reward_name' => '15 zł rabatu'],
+                ['points_required' => 400,  'reward_name' => '20 zł rabatu'],
+                ['points_required' => 500,  'reward_name' => '25 zł rabatu'],
+                ['points_required' => 600,  'reward_name' => '30 zł rabatu'],
+                ['points_required' => 700,  'reward_name' => '35 zł rabatu'],
+                ['points_required' => 800,  'reward_name' => '40 zł rabatu'],
+                ['points_required' => 900,  'reward_name' => '45 zł rabatu'],
+                ['points_required' => 1000, 'reward_name' => '50 zł rabatu'],
+            ])->map(function ($reward) {
+                return (object) $reward;
+            })->values();
+        }
+
+        $availableReward = $rewards->filter(function ($reward) use ($clientPoints) {
+            return (int) $reward->points_required <= $clientPoints;
+        })->last();
+
+        $nextReward = $rewards->first(function ($reward) use ($clientPoints) {
+            return (int) $reward->points_required > $clientPoints;
+        });
+
+        $pointsToNextReward = $nextReward
+            ? max(0, (int) $nextReward->points_required - $clientPoints)
+            : 0;
+
+        $estimatedDiscount = round($clientPoints / $pointsPerCurrency, 2);
+
+        $card->firm->setRelation('promotions', $promotions);
+        $card->firm->setRelation('locations', $locations);
+        $card->firm->setRelation('recommendations', $recommendations);
+
+        $template = (int) $card->firm->id === 43
+            ? 'company_profile'
+            : ($card->firm->card_template ?? 'classic');
 
         return view("client.cards.$template", [
-            'card'        => $card,
-            'client'      => $client,
-            'firm'        => $card->firm,
-            'maxStamps'   => $maxStamps,
-            'current'     => $current,
-            'displayCode' => $displayCode,
-            'qr'          => $qr,
+            'card'               => $card,
+            'client'             => $client,
+            'firm'               => $card->firm,
+            'maxStamps'          => $maxStamps,
+            'current'            => $current,
+            'displayCode'        => $displayCode,
+            'qr'                 => $qr,
+            'clientPoints'       => $clientPoints,
+            'pointsPerCurrency'  => $pointsPerCurrency,
+            'estimatedDiscount'  => $estimatedDiscount,
+            'availableReward'    => $availableReward,
+            'nextReward'         => $nextReward,
+            'pointsToNextReward' => $pointsToNextReward,
+            'rewards'            => $rewards,
         ]);
     }
 
@@ -292,7 +385,7 @@ class ClientController extends Controller
 
         $client = Client::where('phone', $request->phone)->first();
 
-        if (!$client) {
+        if (! $client) {
             return back()->withErrors([
                 'phone' => 'Nie znaleziono konta z tym numerem.'
             ]);
