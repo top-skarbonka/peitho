@@ -32,6 +32,10 @@ placeholder="np. 732287103"
 required
 style="padding:8px;width:250px;"
 >
+
+<!-- 🔥 NOWE – LIVE STATUS ZGODY -->
+<div id="consentLiveBox" style="margin-top:10px;"></div>
+
 </div>
 
 <div style="margin-bottom:15px;">
@@ -118,6 +122,21 @@ function checkClient() {
                 </div>
             `;
 
+            // 🔥 INFO O ZGODZIE
+            if (data.marketing_consent === 1) {
+                html += `
+                <div style="background:#d4edda;padding:10px;margin-bottom:10px;border-radius:8px;font-weight:bold;">
+                    ✅ Klient wyraził zgodę marketingową
+                </div>
+                `;
+            } else {
+                html += `
+                <div style="background:#f8d7da;padding:10px;margin-bottom:10px;border-radius:8px;font-weight:bold;">
+                    ❌ Klient NIE wyraził zgody marketingowej
+                </div>
+                `;
+            }
+
             html += `<h3>Masz: ${data.points} pkt</h3>`;
 
             if (data.rewards.length > 0) {
@@ -193,7 +212,58 @@ function checkClient() {
 }
 
 
-// 🔥 UPDATE 2.2 – QR FLOW + UX BOOST
+// 🔥 NOWE – LIVE SPRAWDZANIE ZGODY W GÓRNYM POLU
+
+let liveTimer;
+
+document.getElementById('phone').addEventListener('input', function() {
+
+    clearTimeout(liveTimer);
+
+    const phone = this.value;
+
+    if (phone.length < 6) {
+        document.getElementById('consentLiveBox').innerHTML = '';
+        return;
+    }
+
+    liveTimer = setTimeout(() => {
+
+        fetch('/api/client-points?phone=' + phone)
+            .then(res => res.json())
+            .then(data => {
+
+                if (!data.success) {
+                    document.getElementById('consentLiveBox').innerHTML = '';
+                    return;
+                }
+
+                let html = '';
+
+                if (data.marketing_consent === 1) {
+                    html = `
+                    <div style="background:#d4edda;color:#155724;padding:10px;border-radius:8px;font-weight:bold;">
+                        ✅ Klient wyraził zgodę marketingową
+                    </div>
+                    `;
+                } else {
+                    html = `
+                    <div style="background:#f8d7da;color:#721c24;padding:10px;border-radius:8px;font-weight:bold;">
+                        ❌ Klient NIE wyraził zgody marketingowej
+                    </div>
+                    `;
+                }
+
+                document.getElementById('consentLiveBox').innerHTML = html;
+
+            });
+
+    }, 400);
+
+});
+
+
+// 🔥 QR FLOW (BEZ ZMIAN)
 
 document.addEventListener('DOMContentLoaded', function () {
 

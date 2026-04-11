@@ -61,6 +61,12 @@ Route::prefix('company')
             ->name('company.points.redeem');
     });
 
+/*
+|--------------------------------------------------------------------------
+| 🔥 KLIENT — LOGOWANIE / PORTFEL / ZGODY / HASŁO
+|--------------------------------------------------------------------------
+*/
+
 Route::prefix('client')->group(function () {
     Route::get('/login', [ClientAuthController::class, 'showLoginForm'])->name('client.login');
     Route::post('/login', [ClientAuthController::class, 'login'])->name('client.login.submit');
@@ -91,11 +97,23 @@ Route::prefix('client')
         Route::get('/card/{card}', [ClientController::class, 'showCard'])->name('client.card.show');
     });
 
+/*
+|--------------------------------------------------------------------------
+| 🔥 PUBLIC — REJESTRACJA KLIENTA DO FIRMY
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/register/firm/{slug}', [PublicClientController::class, 'showRegisterFormByFirm'])
     ->name('public.client.register.form');
 
 Route::post('/register/firm/{slug}', [PublicClientController::class, 'registerByFirm'])
     ->name('public.client.register.submit');
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 ADMIN — PRZYWRÓCONE TRASY PANELU
+|--------------------------------------------------------------------------
+*/
 
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -125,9 +143,6 @@ Route::prefix('admin')
         Route::get('/firms/{firm}/activity', [AdminFirmController::class, 'activity'])->name('admin.firms.activity');
 
         Route::get('/consents/export', [ConsentExportController::class, 'export'])->name('admin.consents.export');
-
-        // 🔥 NOWE — EXPORT PEŁNYCH DANYCH KLIENTA
-        Route::get('/api/export-client-data', [ConsentExportController::class, 'exportClientData']);
     });
 
 /*
@@ -160,11 +175,6 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
         ->where('client_id', $client->id)
         ->where('firm_id', $firm->id)
         ->value('points') ?? 0;
-
-    $marketingConsent = DB::table('loyalty_cards')
-        ->where('client_id', $client->id)
-        ->where('firm_id', $firm->id)
-        ->value('marketing_consent') ?? 0;
 
     $settings = DB::table('program_settings')
         ->where('firm_id', $firm->id)
@@ -220,6 +230,39 @@ Route::middleware(['auth:company'])->get('/api/client-points', function (\Illumi
         'points_per_currency' => $pointsPerCurrency,
         'total_saved' => round($totalSaved, 2),
         'status' => $status,
-        'marketing_consent' => (int) $marketingConsent,
     ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 🔥 API — HISTORIA KLIENTA
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:company'])->get('/company/api/client-history', function (\Illuminate\Http\Request $request) {
+
+    $phone = preg_replace('/\D+/', '', $request->phone);
+
+    if (str_starts_with($phone, '48') && strlen($phone) === 11) {
+        $phone = substr($phone, 2);
+    }
+
+    $client = DB::table('clients')->where('phone', $phone)->first();
+
+    if (!$client) {
+        return response()->json([]);
+    }
+
+    $firm = auth()->guard('company')->user();
+
+    return DB::table('client_point_logs')
+        ->where('client_id', $client->id)
+        ->where('firm_id', $firm->id)
+        ->orderByDesc('created_at')
+        ->limit(20)
+        ->get([
+            'points',
+            'amount',
+            DB::raw("DATE_FORMAT(created_at, '%d.%m.%Y %H:%i') as created_at")
+        ]);
 });

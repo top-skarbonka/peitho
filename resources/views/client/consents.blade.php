@@ -245,6 +245,7 @@ document.querySelectorAll('.switch input').forEach(toggle => {
 
         fetch(`/client/consents/${cardId}`, {
             method: 'POST',
+            credentials: 'same-origin', // 🔥 KLUCZOWY FIX
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

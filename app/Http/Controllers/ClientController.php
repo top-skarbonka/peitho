@@ -179,6 +179,21 @@ class ClientController extends Controller
         $card->marketing_consent_revoked_at = $newValue ? null : $now;
         $card->save();
 
+        // 🔥 LOG ZGODY (RODO)
+        DB::table('client_consents_logs')->insert([
+            'client_id'     => $client->id,
+            'phone'         => $client->phone, // ✅ JEDYNA ZMIANA
+            'firm_id'       => $card->firm_id,
+            'consent_type'  => 'sms_marketing',
+            'value'         => $newValue,
+            'ip_address'    => request()->ip(),
+            'user_agent'    => request()->userAgent(),
+            'source'        => 'panel_client',
+            'consent_text'  => 'Zgoda na komunikację marketingową SMS',
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
         return response()->json([
             'success' => true,
             'marketing_consent' => (bool) $newValue,
@@ -202,7 +217,6 @@ class ClientController extends Controller
 
         $displayCode = $client->phone;
 
-        // 🔥 TU JEST JEDYNA ZMIANA
         $qrPayload = url('/company/points/add-client?phone=' . $client->phone);
 
         $qr = QrCode::format('svg')

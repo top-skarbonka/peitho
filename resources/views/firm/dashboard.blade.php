@@ -21,126 +21,99 @@
     {{-- KPI --}}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+        <div class="bg-white rounded-2xl p-6 shadow">
             <p class="text-slate-500 text-sm">Klienci</p>
             <p class="text-3xl font-bold text-indigo-600">{{ $totalClients ?? 0 }}</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+        <div class="bg-white rounded-2xl p-6 shadow">
             <p class="text-slate-500 text-sm">Transakcje</p>
             <p class="text-3xl font-bold text-indigo-600">{{ $totalTransactions ?? 0 }}</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+        <div class="bg-white rounded-2xl p-6 shadow">
             <p class="text-slate-500 text-sm">Suma punktów</p>
             <p class="text-3xl font-bold text-indigo-600">{{ number_format($totalPoints ?? 0, 2, ',', ' ') }}</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
+        <div class="bg-white rounded-2xl p-6 shadow">
             <p class="text-slate-500 text-sm">Średnio / transakcję</p>
             <p class="text-3xl font-bold text-indigo-600">{{ number_format($avgPoints ?? 0, 2, ',', ' ') }}</p>
         </div>
 
     </div>
 
-    {{-- 🔥 NOWE — TREND 7 DNI --}}
-    <div class="bg-white rounded-2xl p-6 shadow hover:shadow-lg transition">
-        <p class="text-slate-500 text-sm">Trend 7 dni</p>
+    {{-- 🔥 KAFELKI --}}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-        <p class="text-3xl font-bold {{ ($trend ?? 0) >= 0 ? 'text-green-600' : 'text-red-600' }}">
-            {{ ($trend ?? 0) >= 0 ? '+' : '' }}{{ number_format($trend ?? 0, 1, ',', ' ') }}%
-        </p>
+        <div class="bg-white rounded-2xl p-5 shadow">
+            <p class="text-sm text-slate-500">🟢 Nowi klienci</p>
+            <p class="text-3xl font-bold text-green-600 mt-2">{{ $newClientsToday ?? 0 }}</p>
+        </div>
 
-        <p class="text-sm text-slate-500 mt-1">
-            {{ number_format($currentPoints ?? 0, 0, ',', ' ') }} pkt vs {{ number_format($previousPoints ?? 0, 0, ',', ' ') }} pkt
-        </p>
+        <div class="bg-white rounded-2xl p-5 shadow">
+            <p class="text-sm text-slate-500">🔁 Powracający</p>
+            <p class="text-3xl font-bold text-blue-600 mt-2">{{ $returningClientsToday ?? 0 }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow">
+            <p class="text-sm text-slate-500">💰 Transakcje nowych</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2">{{ $newTransactionsToday ?? 0 }}</p>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow">
+            <p class="text-sm text-slate-500">💰 Transakcje powracających</p>
+            <p class="text-3xl font-bold text-indigo-600 mt-2">{{ $returningTransactionsToday ?? 0 }}</p>
+        </div>
+
     </div>
 
-    {{-- 🔥 WYKRESY --}}
+    {{-- WYKRESY --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <div class="bg-white rounded-2xl p-6 shadow">
             <h2 class="text-lg font-bold mb-4">📈 Nowi klienci</h2>
-            <canvas id="clientsChart"></canvas>
+            <div style="height:300px;">
+                <canvas id="clientsChart"></canvas>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl p-6 shadow">
             <h2 class="text-lg font-bold mb-4">📊 Punkty</h2>
-            <canvas id="pointsChart"></canvas>
+            <div style="height:300px;">
+                <canvas id="pointsChart"></canvas>
+            </div>
         </div>
 
     </div>
 
-    {{-- 🔥 RANKING TOP KLIENTÓW --}}
-    @php
-        $topClients = \Illuminate\Support\Facades\DB::table('client_points as cp')
-            ->join('clients as c', 'c.id', '=', 'cp.client_id')
-            ->where('cp.firm_id', $firm->id)
-            ->orderByDesc('cp.points')
-            ->limit(5)
-            ->get(['c.phone', 'cp.points']);
-    @endphp
-
+    {{-- WYSZUKIWARKA --}}
     <div class="bg-white rounded-2xl p-6 shadow">
-        <h2 class="text-xl font-bold mb-4">🏆 TOP klienci</h2>
+        <h2 class="text-xl font-bold mb-4">🔍 Sprawdź klienta</h2>
 
-        <div class="space-y-2">
-            @foreach($topClients as $index => $c)
-                <div class="flex justify-between bg-gradient-to-r from-slate-50 to-indigo-50 p-3 rounded-xl">
-                    <span>#{{ $index+1 }} — {{ $c->phone }}</span>
-                    <span class="font-bold text-indigo-600">{{ $c->points }} pkt</span>
-                </div>
-            @endforeach
+        <div class="flex gap-3">
+            <input
+                type="text"
+                id="searchPhone"
+                placeholder="Wpisz numer telefonu..."
+                class="border p-3 rounded-xl w-full max-w-md"
+            >
+
+            <button
+                onclick="searchClient()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl">
+                Sprawdź
+            </button>
         </div>
     </div>
 
-    {{-- 🔍 FILTR --}}
-    <div class="bg-white rounded-2xl p-6 shadow">
-        <h2 class="text-xl font-bold mb-4">🔍 Szukaj klienta</h2>
-
-        <input
-            type="text"
-            id="searchPhone"
-            placeholder="Wpisz numer telefonu..."
-            onkeyup="filterClients()"
-            class="border p-3 rounded-xl w-full max-w-md focus:ring-2 focus:ring-indigo-400 outline-none"
-        >
-    </div>
-
-    {{-- 🔥 LISTA KLIENTÓW --}}
-    @php
-        $clients = \Illuminate\Support\Facades\DB::table('client_point_logs as l')
-            ->join('clients as c', 'c.id', '=', 'l.client_id')
-            ->where('l.firm_id', $firm->id)
-            ->select('c.phone')
-            ->distinct()
-            ->orderBy('c.phone')
-            ->get();
-    @endphp
-
-    <div class="bg-white rounded-2xl p-6 shadow">
-        <h2 class="text-xl font-bold mb-4">👥 Klienci</h2>
-
-        <div id="clientsList" class="flex flex-wrap gap-2">
-            @foreach($clients as $c)
-                <button 
-                    data-phone="{{ $c->phone }}"
-                    onclick="loadClientHistory('{{ $c->phone }}')"
-                    class="client-btn px-4 py-2 bg-slate-100 hover:bg-indigo-500 hover:text-white transition rounded-xl">
-                    {{ $c->phone }}
-                </button>
-            @endforeach
-        </div>
-    </div>
-
-    {{-- 🔥 HISTORIA WYBRANEGO KLIENTA --}}
+    {{-- HISTORIA --}}
     <div id="clientHistoryBox" class="bg-white rounded-2xl p-6 shadow hidden">
         <h2 class="text-xl font-bold mb-4">📱 Historia klienta</h2>
-
         <div id="clientHistoryContent"></div>
     </div>
 
-    {{-- 🔥 OGÓLNA HISTORIA --}}
+    {{-- LOGI --}}
     @php
         $logs = \Illuminate\Support\Facades\DB::table('client_point_logs as l')
             ->join('clients as c', 'c.id', '=', 'l.client_id')
@@ -171,7 +144,9 @@
 
             @foreach($logs as $log)
                 <tr class="border-b hover:bg-slate-50">
-                    <td class="py-2">{{ $log->phone }}</td>
+                    <td class="py-2">
+                        {{ substr($log->phone,0,3) . '***' . substr($log->phone,-3) }}
+                    </td>
 
                     <td class="py-2 font-semibold {{ $log->points > 0 ? 'text-green-600' : 'text-red-600' }}">
                         {{ $log->points > 0 ? '+' : '' }}{{ $log->points }}
@@ -193,7 +168,6 @@
 
 </div>
 
-{{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
@@ -208,7 +182,8 @@ new Chart(document.getElementById('clientsChart'), {
             label: 'Klienci',
             data: clientsData.map(i => i.count)
         }]
-    }
+    },
+    options: { responsive: true, maintainAspectRatio: false }
 });
 
 new Chart(document.getElementById('pointsChart'), {
@@ -219,66 +194,64 @@ new Chart(document.getElementById('pointsChart'), {
             label: 'Punkty',
             data: pointsData.map(i => i.total)
         }]
-    }
+    },
+    options: { responsive: true, maintainAspectRatio: false }
 });
-</script>
 
-{{-- JS zostaje --}}
-<script>
+function searchClient() {
+    const phone = document.getElementById('searchPhone').value;
+    loadClientHistory(phone);
+}
+
+/* 🔥 JEDYNA DODANA CZĘŚĆ */
 function loadClientHistory(phone) {
-    fetch('/api/client-points?phone=' + phone)
+
+    if (!phone) {
+        alert('Wpisz numer telefonu');
+        return;
+    }
+
+    fetch('/company/api/client-history?phone=' + phone)
         .then(res => res.json())
-        .then(data => {
+        .then(logs => {
 
             let html = `<h3 class="mb-4">Klient: ${phone}</h3>`;
 
-            fetch('/company/api/client-history?phone=' + phone)
-                .then(res => res.json())
-                .then(logs => {
+            if (!logs.length) {
+                html += `<p>Brak historii dla tego klienta</p>`;
+            } else {
 
-                    html += '<table class="w-full text-sm">';
+                html += '<table class="w-full text-sm">';
+                html += `
+                    <tr class="text-left border-b">
+                        <th>Punkty</th>
+                        <th>Kwota</th>
+                        <th>Data</th>
+                    </tr>
+                `;
+
+                logs.forEach(l => {
                     html += `
-                        <tr class="text-left border-b">
-                            <th>Punkty</th>
-                            <th>Kwota</th>
-                            <th>Data</th>
-                        </tr>
+                    <tr class="border-b">
+                        <td class="${l.points > 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${l.points > 0 ? '+' : ''}${l.points}
+                        </td>
+                        <td>${l.amount ? l.amount + ' zł' : '-'}</td>
+                        <td>${l.created_at}</td>
+                    </tr>
                     `;
-
-                    logs.forEach(l => {
-                        html += `
-                        <tr class="border-b">
-                            <td class="${l.points > 0 ? 'text-green-600' : 'text-red-600'}">
-                                ${l.points > 0 ? '+' : ''}${l.points}
-                            </td>
-                            <td>${l.amount ? l.amount + ' zł' : '-'}</td>
-                            <td>${l.created_at}</td>
-                        </tr>
-                        `;
-                    });
-
-                    html += '</table>';
-
-                    document.getElementById('clientHistoryBox').classList.remove('hidden');
-                    document.getElementById('clientHistoryContent').innerHTML = html;
-
                 });
 
+                html += '</table>';
+            }
+
+            document.getElementById('clientHistoryBox').classList.remove('hidden');
+            document.getElementById('clientHistoryContent').innerHTML = html;
+
+        })
+        .catch(() => {
+            alert('Błąd pobierania danych');
         });
-}
-
-function filterClients() {
-    const input = document.getElementById('searchPhone').value;
-
-    document.querySelectorAll('.client-btn').forEach(btn => {
-        const phone = btn.dataset.phone;
-
-        if (phone.includes(input)) {
-            btn.style.display = 'inline-block';
-        } else {
-            btn.style.display = 'none';
-        }
-    });
 }
 </script>
 

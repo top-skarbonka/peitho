@@ -14,7 +14,6 @@ class ConsentExportController extends Controller
 {
     /**
      * Eksport zgód marketingowych (RODO / UODO) – CSV
-     * Filtrowane po ID firmy
      */
     public function exportCsv(Request $request)
     {
@@ -24,7 +23,6 @@ class ConsentExportController extends Controller
 
         $firm = Firm::findOrFail($request->firm_id);
 
-        // 🔐 LOG ADMINA (AUDYT)
         SecurityLog::create([
             'actor_type' => 'admin',
             'actor_id'   => Auth::id(),
@@ -45,7 +43,6 @@ class ConsentExportController extends Controller
 
             $output = fopen('php://output', 'w');
 
-            // BOM dla Excela
             fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($output, [
@@ -96,5 +93,54 @@ class ConsentExportController extends Controller
         };
 
         return response()->stream($callback, Response::HTTP_OK, $headers);
+    }
+
+    /**
+     * 🔥 NOWE — EXPORT PEŁNYCH DANYCH KLIENTA (RODO)
+     */
+    public function exportClientData(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required',
+        ]);
+
+        $phone = preg_replace('/\D+/', '', $request->phone);
+
+        $client = DB::table('clients')->where('phone', $phone)->first();
+
+        if (!$client) {
+            return response()->json(['error' => 'Klient nie istnieje'], 404);
+        }
+
+        // 🔐 LOG ADMINA
+        SecurityLog::create([
+            'actor_type' => 'admin',
+            'actor_id'   => Auth::id(),
+            'action'     => 'export_client_full_data',
+            'target'     => 'client_id=' . $client->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $points = DB::table('client_points')
+            ->where('client_id', $client->id)
+            ->get();
+
+        $transactions = DB::table('client_point_logs')
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $consents = DB::table('client_consents_logs')
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return response()->json([
+            'client'       => $client,
+            'points'       => $points,
+            'transactions' => $transactions,
+            'consents'     => $consents,
+        ]);
     }
 }
