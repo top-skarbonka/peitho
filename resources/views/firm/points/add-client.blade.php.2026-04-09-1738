@@ -40,7 +40,6 @@ style="padding:8px;width:250px;"
 <input
 type="text"
 name="amount"
-id="amount"
 placeholder="np. 100,60"
 inputmode="decimal"
 required
@@ -191,36 +190,6 @@ function checkClient() {
             document.getElementById('clientBox').innerHTML = html;
         });
 }
-
-
-// 🔥 UPDATE 2.2 – QR FLOW + UX BOOST
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const phoneParam = urlParams.get('phone');
-
-    const phoneInput = document.getElementById('phone');
-    const amountInput = document.getElementById('amount');
-
-    if (phoneParam && phoneInput) {
-        phoneInput.value = phoneParam;
-        phoneInput.readOnly = true;
-    }
-
-    if (amountInput) {
-        amountInput.focus();
-
-        amountInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.form.submit();
-            }
-        });
-    }
-
-});
-
 </script>
 
 @endsection

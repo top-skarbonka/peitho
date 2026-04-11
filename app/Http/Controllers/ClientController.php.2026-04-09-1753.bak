@@ -201,9 +201,7 @@ class ClientController extends Controller
         $current = min($card->stamps->count(), $maxStamps);
 
         $displayCode = $client->phone;
-
-        // 🔥 TU JEST JEDYNA ZMIANA
-        $qrPayload = url('/company/points/add-client?phone=' . $client->phone);
+        $qrPayload = $client->phone;
 
         $qr = QrCode::format('svg')
             ->size(170)
@@ -250,6 +248,22 @@ class ClientController extends Controller
             ->get()
             ->values();
 
+        if ($rewards->isEmpty() && (int) $card->firm->id === 43) {
+            $rewards = collect([
+                ['points_required' => 200,  'reward_name' => '10 zł rabatu'],
+                ['points_required' => 300,  'reward_name' => '15 zł rabatu'],
+                ['points_required' => 400,  'reward_name' => '20 zł rabatu'],
+                ['points_required' => 500,  'reward_name' => '25 zł rabatu'],
+                ['points_required' => 600,  'reward_name' => '30 zł rabatu'],
+                ['points_required' => 700,  'reward_name' => '35 zł rabatu'],
+                ['points_required' => 800,  'reward_name' => '40 zł rabatu'],
+                ['points_required' => 900,  'reward_name' => '45 zł rabatu'],
+                ['points_required' => 1000, 'reward_name' => '50 zł rabatu'],
+            ])->map(function ($reward) {
+                return (object) $reward;
+            })->values();
+        }
+
         $availableReward = $rewards->filter(function ($reward) use ($clientPoints) {
             return (int) $reward->points_required <= $clientPoints;
         })->last();
@@ -288,5 +302,101 @@ class ClientController extends Controller
             'pointsToNextReward' => $pointsToNextReward,
             'rewards'            => $rewards,
         ]);
+    }
+
+    public function loyaltyCard()
+    {
+        $client = Auth::guard('client')->user();
+
+        if (! $client) {
+            return redirect()->route('client.login');
+        }
+
+        $card = LoyaltyCard::with(['firm', 'stamps'])
+            ->where('client_id', $client->id)
+            ->whereHas('firm', function ($query) {
+                $query->where('program_type', 'cards')
+                    ->orWhere('has_stickers', 1);
+            })
+            ->latest()
+            ->first();
+
+        if (! $card) {
+            abort(404, 'Brak przypisanej karty lojalnościowej');
+        }
+
+        return $this->showCard($card);
+    }
+
+    public function activateForm(string $token)
+    {
+        $client = Client::where('activation_token', $token)->first();
+
+        if (! $client) {
+            abort(404, 'Nieprawidłowy token.');
+        }
+
+        if ($client->activation_token_expires_at && now()->greaterThan($client->activation_token_expires_at)) {
+            abort(410, 'Token wygasł.');
+        }
+
+        return view('client.activate', [
+            'token' => $token,
+            'phone' => $client->phone,
+        ]);
+    }
+
+    public function activateSubmit(Request $request, string $token)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $client = Client::where('activation_token', $token)->first();
+
+        if (! $client) {
+            abort(404, 'Nieprawidłowy token.');
+        }
+
+        if ($client->activation_token_expires_at && now()->greaterThan($client->activation_token_expires_at)) {
+            abort(410, 'Token wygasł.');
+        }
+
+        DB::transaction(function () use ($client, $request) {
+            $client->password = Hash::make((string) $request->input('password'));
+            $client->password_set = 1;
+            $client->activation_token = null;
+            $client->activation_token_expires_at = null;
+            $client->save();
+        });
+
+        Auth::guard('client')->login($client);
+
+        return redirect()
+            ->route('client.dashboard')
+            ->with('success', 'Hasło ustawione ✅ Możesz się teraz logować numerem telefonu.');
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required'
+        ]);
+
+        $client = Client::where('phone', $request->phone)->first();
+
+        if (! $client) {
+            return back()->withErrors([
+                'phone' => 'Nie znaleziono konta z tym numerem.'
+            ]);
+        }
+
+        $token = Str::random(32);
+
+        $client->update([
+            'password_reset_token' => $token
+        ]);
+
+        return redirect()->route('client.set_password.show', ['token' => $token]);
     }
 }

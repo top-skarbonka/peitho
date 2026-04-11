@@ -133,11 +133,11 @@
                 <input type="checkbox" required>
                 <span>
                     Akceptuję
-                    <a href="/docs/regulamin.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
+                    <a href="https://looply.net.pl/docs/regulamin.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         regulamin
                     </a>
                     oraz
-                    <a href="/docs/polityka%20prywatnosci.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
+                    <a href="https://looply.net.pl/docs/polityka.html" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
                         politykę prywatności
                     </a>
                 </span>
