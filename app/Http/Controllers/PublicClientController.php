@@ -26,11 +26,14 @@ class PublicClientController extends Controller
         $firm = Firm::where('slug', $slug)->firstOrFail();
 
         $validated = $request->validate([
-            'phone'                 => 'required|min:6',
-            'password'              => 'required|min:4',
-            'name'                  => 'nullable|string|max:255',
-            'postal_code'           => 'nullable|string|max:20',
-            'sms_marketing_consent' => 'nullable|in:1',
+            'phone'                    => 'required|min:6',
+            'password'                 => 'required|min:4',
+            'name'                     => 'nullable|string|max:255',
+            'email'                    => 'nullable|email|max:255',
+            'postal_code'              => 'nullable|string|max:20',
+            'sms_marketing_consent'    => 'nullable|in:1',
+            'email_marketing_consent'  => 'nullable|in:1',
+            'terms_accepted'           => 'required|in:1',
         ]);
 
         $now = Carbon::now();
@@ -43,17 +46,23 @@ class PublicClientController extends Controller
 
         $client = Client::where('phone', $phone)->first();
 
+        $smsConsent = isset($validated['sms_marketing_consent']);
+        $emailConsent = isset($validated['email_marketing_consent']);
+
         if (! $client) {
             $client = Client::create([
-                'firm_id'                  => $firm->id,
-                'program_id'               => $firm->program_id,
-                'name'                     => $validated['name'] ?? null,
-                'phone'                    => $phone,
-                'postal_code'              => $validated['postal_code'] ?? null,
-                'password'                 => Hash::make($validated['password']),
-                'sms_marketing_consent'    => isset($validated['sms_marketing_consent']),
-                'sms_marketing_consent_at' => isset($validated['sms_marketing_consent']) ? $now : null,
-                'terms_accepted_at'        => $now,
+                'firm_id'                     => $firm->id,
+                'program_id'                  => $firm->program_id,
+                'name'                        => $validated['name'] ?? null,
+                'email'                       => $validated['email'] ?? null,
+                'phone'                       => $phone,
+                'postal_code'                 => $validated['postal_code'] ?? null,
+                'password'                    => Hash::make($validated['password']),
+                'sms_marketing_consent'       => $smsConsent,
+                'sms_marketing_consent_at'    => $smsConsent ? $now : null,
+                'email_marketing_consent'     => $emailConsent,
+                'email_marketing_consent_at'  => $emailConsent ? $now : null,
+                'terms_accepted_at'           => $now,
             ]);
         } else {
             if (is_null($client->password)) {
@@ -69,13 +78,31 @@ class PublicClientController extends Controller
                         ->withInput();
                 }
             }
+
+            $updateData = [
+                'firm_id'            => $firm->id,
+                'program_id'         => $firm->program_id,
+                'name'               => $validated['name'] ?? $client->name,
+                'email'              => $validated['email'] ?? $client->email,
+                'postal_code'        => $validated['postal_code'] ?? $client->postal_code,
+                'terms_accepted_at'  => $client->terms_accepted_at ?? $now,
+            ];
+
+            if ($smsConsent && ! $client->sms_marketing_consent) {
+                $updateData['sms_marketing_consent'] = true;
+                $updateData['sms_marketing_consent_at'] = $now;
+                $updateData['sms_marketing_withdrawn_at'] = null;
+            }
+
+            if ($emailConsent && ! $client->email_marketing_consent) {
+                $updateData['email_marketing_consent'] = true;
+                $updateData['email_marketing_consent_at'] = $now;
+                $updateData['email_marketing_withdrawn_at'] = null;
+            }
+
+            $client->update($updateData);
         }
 
-        $consent = isset($validated['sms_marketing_consent']);
-
-        /**
-         * 🔥 ZAWSZE TWÓRZ KARTĘ (KLUCZOWA POPRAWKA)
-         */
         $existingCard = LoyaltyCard::where('client_id', $client->id)
             ->where('firm_id', $firm->id)
             ->first();
@@ -86,23 +113,54 @@ class PublicClientController extends Controller
                 'firm_id'              => $firm->id,
                 'program_id'           => $firm->program_id,
                 'stamps'               => $firm->start_stamps ?? 0,
-                'marketing_consent'    => $consent,
-                'marketing_consent_at' => $consent ? $now : null,
+                'marketing_consent'    => $smsConsent || $emailConsent,
+                'marketing_consent_at' => ($smsConsent || $emailConsent) ? $now : null,
             ]);
-
-            DB::table('consent_logs')->insert([
-                'loyalty_card_id' => $card->id,
-                'client_id'       => $client->id,
-                'firm_id'         => $firm->id,
-                'old_value'       => null,
-                'new_value'       => $consent ? 1 : 0,
-                'ip_address'      => $request->ip(),
-                'user_agent'      => substr((string) $request->userAgent(), 0, 500),
-                'source'          => 'client_register',
-                'created_at'      => $now,
-                'updated_at'      => $now,
-            ]);
+        } else {
+            $card = $existingCard;
         }
+
+        DB::table('client_consents_logs')->insert([
+            [
+                'client_id'     => $client->id,
+                'phone'         => $client->phone,
+                'firm_id'       => $firm->id,
+                'consent_type'  => 'sms_marketing',
+                'value'         => $smsConsent ? 1 : 0,
+                'ip_address'    => $request->ip(),
+                'user_agent'    => substr((string) $request->userAgent(), 0, 500),
+                'source'        => 'client_register',
+                'consent_text'  => 'Zgoda na otrzymywanie informacji marketingowych drogą SMS.',
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ],
+            [
+                'client_id'     => $client->id,
+                'phone'         => $client->phone,
+                'firm_id'       => $firm->id,
+                'consent_type'  => 'email_marketing',
+                'value'         => $emailConsent ? 1 : 0,
+                'ip_address'    => $request->ip(),
+                'user_agent'    => substr((string) $request->userAgent(), 0, 500),
+                'source'        => 'client_register',
+                'consent_text'  => 'Zgoda na otrzymywanie informacji marketingowych drogą e-mail.',
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ],
+            [
+                'client_id'     => $client->id,
+                'phone'         => $client->phone,
+                'firm_id'       => $firm->id,
+                'consent_type'  => 'terms_acceptance',
+                'value'         => 1,
+                'ip_address'    => $request->ip(),
+                'user_agent'    => substr((string) $request->userAgent(), 0, 500),
+                'source'        => 'client_register',
+                'consent_text'  => 'Akceptacja regulaminu i polityki prywatności.',
+                'created_at'    => $now,
+                'updated_at'    => $now,
+            ],
+        ]);
 
         auth('client')->login($client);
 

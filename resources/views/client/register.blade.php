@@ -24,7 +24,6 @@
             {{ $firm->name }}
         </p>
 
-        {{-- KOMUNIKATY BŁĘDÓW --}}
         @if ($errors->any())
             <div style="
                 background:#fff4f4;
@@ -46,12 +45,10 @@
                             <li style="margin-bottom:4px;">
                                 Hasło musi mieć minimum 4 znaki.
                             </li>
-
                         @elseif (str_contains($error, 'Nieprawidłowe hasło'))
                             <li style="margin-bottom:4px;">
                                 Masz już portfel. Wpisz swoje hasło, które ustawiłeś wcześniej.
                             </li>
-
                         @else
                             <li style="margin-bottom:4px;">
                                 {{ $error }}
@@ -67,16 +64,19 @@
             </div>
         @endif
 
-<form method="POST" action="/register/firm/{{ $firm->slug }}">
+        <form method="POST" action="/register/firm/{{ $firm->slug }}">
             @csrf
 
-            {{-- IMIĘ --}}
             <label style="font-weight:600;">Imię (opcjonalnie)</label>
             <input type="text" name="name" value="{{ old('name') }}"
                    placeholder="Np. Anna"
                    style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
 
-            {{-- TELEFON --}}
+            <label style="font-weight:600;">Email (opcjonalnie)</label>
+            <input type="email" name="email" value="{{ old('email') }}"
+                   placeholder="Np. anna@email.pl"
+                   style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
+
             <label style="font-weight:600;">
                 Numer telefonu <span style="color:red">*</span>
             </label>
@@ -88,13 +88,11 @@
                 📱 Najpierw wpisz swój numer telefonu
             </div>
 
-            {{-- KOD POCZTOWY --}}
             <label style="font-weight:600;">Kod pocztowy (opcjonalnie)</label>
             <input type="text" name="postal_code" value="{{ old('postal_code') }}"
                    placeholder="00-000"
                    style="width:100%;padding:12px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px;">
 
-            {{-- HASŁO --}}
             <label style="font-weight:600;">Hasło</label>
             <input type="password" name="password" required
                    placeholder="Minimum 4 znaki"
@@ -106,31 +104,47 @@
                 </a>
             </div>
 
-            {{-- ZGODA MARKETINGOWA --}}
             <div style="
                 margin-top:16px;
-                padding:12px;
+                padding:14px;
                 border:2px dashed #7c6cf3;
                 border-radius:12px;
                 background:#f8f7ff;
                 margin-bottom:16px;
             ">
-                <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
-                    <input type="checkbox" name="sms_marketing_consent" value="1">
+                <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:14px;">
+                    <input type="checkbox" id="accept_all_consents">
                     <div>
-                        <strong>✨ Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
+                        <strong>✅ Zaznacz wszystkie zgody marketingowe</strong>
                         <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
-                            📢 Informacje o rabatach i gratisach<br>
-                            📩 Maksymalnie kilka SMS-ów miesięcznie<br>
-                            🌍 Od firm z Twojej okolicy
+                            Jednym kliknięciem zaznaczysz zgodę na SMS i e-mail marketing.
+                        </div>
+                    </div>
+                </label>
+
+                <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:14px;">
+                    <input type="checkbox" name="sms_marketing_consent" id="sms_marketing_consent" value="1" {{ old('sms_marketing_consent') ? 'checked' : '' }}>
+                    <div>
+                        <strong>📱 Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
+                        <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
+                            Informacje o rabatach, gratisach i okazjach od partnerów programu.
+                        </div>
+                    </div>
+                </label>
+
+                <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer;">
+                    <input type="checkbox" name="email_marketing_consent" id="email_marketing_consent" value="1" {{ old('email_marketing_consent') ? 'checked' : '' }}>
+                    <div>
+                        <strong>📧 Chcę otrzymywać e-maile o promocjach i ofertach specjalnych</strong>
+                        <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
+                            Informacje mailowe o nowościach, promocjach i akcjach specjalnych.
                         </div>
                     </div>
                 </label>
             </div>
 
-            {{-- REGULAMIN --}}
             <label style="display:flex;gap:10px;font-size:14px;margin-bottom:18px;align-items:flex-start;">
-                <input type="checkbox" required>
+                <input type="checkbox" name="terms_accepted" value="1" required {{ old('terms_accepted') ? 'checked' : '' }}>
                 <span>
                     Akceptuję
                     <a href="https://looply.net.pl/docs/regulamin.pdf" target="_blank" style="color:#6a5af9;font-weight:700;text-decoration:underline;">
@@ -156,11 +170,10 @@
             ">
                 🚀 Zarejestruj kartę
             </button>
-
         </form>
 
         <p style="text-align:center;font-size:13px;color:#888;margin-top:16px;">
-            Dane są bezpieczne. Możesz zrezygnować w każdej chwili.
+            Dane są bezpieczne. Możesz wycofać zgody marketingowe w każdej chwili.
         </p>
 
     </div>
@@ -185,6 +198,24 @@ document.getElementById('phone').addEventListener('input', function () {
     this.style.border = '2px solid #6a5af9';
     document.getElementById('phoneError').style.display = 'none';
 });
+
+const acceptAll = document.getElementById('accept_all_consents');
+const smsConsent = document.getElementById('sms_marketing_consent');
+const emailConsent = document.getElementById('email_marketing_consent');
+
+function syncAcceptAllState() {
+    acceptAll.checked = smsConsent.checked && emailConsent.checked;
+}
+
+acceptAll.addEventListener('change', function () {
+    smsConsent.checked = this.checked;
+    emailConsent.checked = this.checked;
+});
+
+smsConsent.addEventListener('change', syncAcceptAllState);
+emailConsent.addEventListener('change', syncAcceptAllState);
+
+syncAcceptAllState();
 </script>
 
 @endsection

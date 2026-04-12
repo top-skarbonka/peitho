@@ -31,6 +31,8 @@ class Client extends Authenticatable
         // ✅ ZGODY RODO
         'sms_marketing_consent',
         'sms_marketing_consent_at',
+        'email_marketing_consent',
+        'email_marketing_consent_at',
         'terms_accepted_at',
 
         // ✅ RETENCJA / AKTYWNOŚĆ
@@ -51,9 +53,11 @@ class Client extends Authenticatable
      * ✅ Rzutowania – ważne przy RODO
      */
     protected $casts = [
-        'password'                     => 'hashed',
+        'password'                      => 'hashed',
         'sms_marketing_consent'         => 'boolean',
         'sms_marketing_consent_at'      => 'datetime',
+        'email_marketing_consent'       => 'boolean',
+        'email_marketing_consent_at'    => 'datetime',
         'terms_accepted_at'             => 'datetime',
         'activation_token_expires_at'   => 'datetime',
         'last_activity_at'              => 'datetime',
@@ -69,10 +73,6 @@ class Client extends Authenticatable
 
     /**
      * 🟢 RODO: aktualizacja ostatniej aktywności klienta
-     * Wywoływana przy:
-     * - wyszukaniu klienta
-     * - skanie QR
-     * - nadaniu punktów / naklejki
      */
     public function touchActivity(): void
     {
