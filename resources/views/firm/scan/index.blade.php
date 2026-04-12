@@ -51,7 +51,6 @@
 
 <div class="min-h-screen flex flex-col items-center justify-center bg-black text-white">
 
-    {{-- HEADER --}}
     <div class="text-center mb-4">
         <h1 class="text-lg font-bold tracking-wide">📷 SKANUJ KARTĘ</h1>
         <p class="text-sm text-slate-300">
@@ -59,7 +58,6 @@
         </p>
     </div>
 
-    {{-- BLOKADA --}}
     @if(session('lock_seconds'))
         <div class="mb-4 px-6 py-4 rounded-2xl bg-yellow-400 text-black text-center font-extrabold text-lg">
             ⏳ Odczekaj <span id="seconds">{{ session('lock_seconds') }}</span> s
@@ -81,7 +79,6 @@
         </script>
     @endif
 
-    {{-- KOMUNIKATY --}}
     @if(session('error') && !session('lock_seconds'))
         <div class="mb-4 px-5 py-3 rounded-xl bg-red-600 text-white text-center font-bold">
             ❌ {{ session('error') }}
@@ -94,17 +91,14 @@
         </div>
     @endif
 
-    {{-- SKANER --}}
     <div class="scanner-wrapper w-full max-w-sm aspect-square rounded-2xl overflow-hidden border-4 border-indigo-500 shadow-2xl">
         <div id="qr-reader" class="w-full h-full"></div>
 
-        {{-- RAMKA OSTROŚCI --}}
         <div id="frame" class="scan-frame">
             <div class="scan-line"></div>
         </div>
     </div>
 
-    {{-- STOPKA --}}
     <div class="mt-6 text-xs text-slate-400 text-center px-6">
         Jedna karta = jedna naklejka co 120 sekund
     </div>
@@ -118,12 +112,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const frame = document.getElementById('frame');
 
     function feedbackOk() {
-        // 📳 WIBRACJA
         if (navigator.vibrate) {
             navigator.vibrate([100, 50, 100]);
         }
 
-        // 🔊 BEEP
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             const osc = ctx.createOscillator();
@@ -143,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 120);
         } catch (e) {}
 
-        // 🟢 FLASH RAMKI
         frame.classList.add('success');
     }
 
@@ -164,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 form.innerHTML = `
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="code" value="${decodedText}">
+                    <input type="hidden" name="phone" value="${decodedText}">
                 `;
 
                 document.body.appendChild(form);

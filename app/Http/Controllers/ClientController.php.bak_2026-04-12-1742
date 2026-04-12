@@ -57,23 +57,49 @@ class ClientController extends Controller
                 });
             });
 
-        $points = DB::table('client_points as cp')
-            ->join('firms as f', 'f.id', '=', 'cp.firm_id')
-            ->leftJoin('loyalty_cards as lc', function ($join) {
-                $join->on('lc.firm_id', '=', 'cp.firm_id')
-                    ->on('lc.client_id', '=', 'cp.client_id');
+        $points = DB::table('firms as f')
+            ->leftJoin('client_points as cp', function ($join) use ($client) {
+                $join->on('cp.firm_id', '=', 'f.id')
+                    ->where('cp.client_id', '=', $client->id);
             })
-            ->where('cp.client_id', $client->id)
+            ->leftJoin('loyalty_cards as lc', function ($join) use ($client) {
+                $join->on('lc.firm_id', '=', 'f.id')
+                    ->where('lc.client_id', '=', $client->id);
+            })
+            ->where(function ($query) {
+                $query->where('f.program_type', 'points')
+                    ->orWhere('f.has_points', 1);
+            })
             ->select([
-                'cp.points',
-                'cp.firm_id',
+                DB::raw('COALESCE(cp.points, 0) as points'),
                 'f.id as firm_id',
                 'f.name as firm_name',
                 'f.slug as firm_slug',
                 'lc.id as linked_card_id',
             ])
-            ->orderByDesc('cp.id')
+            ->orderByDesc('f.id')
             ->get();
+
+        // 🔥 JEDYNA ZMIANA — AUTO TWORZENIE KART
+        foreach ($points as $p) {
+
+            $exists = DB::table('loyalty_cards')
+                ->where('client_id', $client->id)
+                ->where('firm_id', $p->firm_id)
+                ->exists();
+
+            if (! $exists) {
+                DB::table('loyalty_cards')->insert([
+                    'client_id' => $client->id,
+                    'firm_id'   => $p->firm_id,
+                    'max_stamps' => 10,
+                    'current_stamps' => 0,
+                    'status' => 'active',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
 
         $passes = DB::table('user_passes as up')
             ->join('company_pass_types as pt', 'pt.id', '=', 'up.pass_type_id')
@@ -201,7 +227,7 @@ class ClientController extends Controller
         $current = min($card->stamps->count(), $maxStamps);
 
         $displayCode = $client->phone;
-        $qrPayload = $client->phone;
+        $qrPayload = route('company.points.client.form', ['phone' => $client->phone]);
 
         $qr = QrCode::format('svg')
             ->size(170)

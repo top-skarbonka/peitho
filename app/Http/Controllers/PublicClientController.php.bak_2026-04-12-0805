@@ -73,14 +73,20 @@ class PublicClientController extends Controller
 
         $consent = isset($validated['sms_marketing_consent']);
 
-        /**
-         * 🔥 ZAWSZE TWÓRZ KARTĘ (KLUCZOWA POPRAWKA)
-         */
-        $existingCard = LoyaltyCard::where('client_id', $client->id)
-            ->where('firm_id', $firm->id)
-            ->first();
+        $shouldCreateCard =
+            ($firm->program_type ?? null) === 'cards'
+            || (bool) ($firm->has_stickers ?? false);
 
-        if (! $existingCard) {
+        if ($shouldCreateCard) {
+            $existingCard = LoyaltyCard::where('client_id', $client->id)
+                ->where('firm_id', $firm->id)
+                ->first();
+
+            if ($existingCard) {
+                auth('client')->login($client);
+                return redirect()->route('client.dashboard');
+            }
+
             $card = LoyaltyCard::create([
                 'client_id'            => $client->id,
                 'firm_id'              => $firm->id,

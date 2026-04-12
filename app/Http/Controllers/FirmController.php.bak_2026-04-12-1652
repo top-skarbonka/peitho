@@ -159,23 +159,10 @@ class FirmController extends Controller
             $clientId = $client->id;
         }
 
-        // 🔥 NOWE — TWORZENIE KARTY JEŚLI NIE ISTNIEJE
-        $cardExists = DB::table('loyalty_cards')
+        $alreadyHadPointsRelation = DB::table('client_points')
             ->where('client_id', $clientId)
             ->where('firm_id', $firm->id)
             ->exists();
-
-        if (!$cardExists) {
-            DB::table('loyalty_cards')->insert([
-                'client_id' => $clientId,
-                'firm_id' => $firm->id,
-                'current_stamps' => 0,
-                'max_stamps' => 10,
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
 
         $settings = DB::table('program_settings')
             ->where('firm_id', $firm->id)
@@ -284,17 +271,34 @@ class FirmController extends Controller
         ];
     }
 
+    // 🔥 POPRAWIONA FUNKCJA — SKAN QR (obsługa link + numer)
     public function scanQr(Request $request)
     {
-        $code = preg_replace('/\D+/', '', $request->input('code'));
+        $raw = $request->input('code');
 
-        if (!$code) {
+        $phone = null;
+
+        // jeśli QR to link
+        if (filter_var($raw, FILTER_VALIDATE_URL)) {
+            $query = parse_url($raw, PHP_URL_QUERY);
+            if ($query) {
+                parse_str($query, $params);
+                $phone = $params['phone'] ?? null;
+            }
+        }
+
+        // jeśli nie link → traktuj jako numer
+        if (!$phone) {
+            $phone = preg_replace('/\D+/', '', $raw);
+        }
+
+        if (!$phone) {
             return redirect()->route('company.scan.form')
                 ->with('error', 'Niepoprawny kod QR');
         }
 
         return redirect()->route('company.points.client.form', [
-            'phone' => $code
+            'phone' => $phone
         ]);
     }
 }
