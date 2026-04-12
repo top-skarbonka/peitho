@@ -59,26 +59,26 @@ class ClientController extends Controller
                 });
             });
 
-        $linkedCards = DB::table('loyalty_cards')
-            ->selectRaw('firm_id, client_id, MIN(id) as linked_card_id')
-            ->groupBy('firm_id', 'client_id');
-
-        $points = DB::table('client_points as cp')
-            ->join('firms as f', 'f.id', '=', 'cp.firm_id')
-            ->leftJoinSub($linkedCards, 'lc', function ($join) {
-                $join->on('lc.firm_id', '=', 'cp.firm_id')
-                    ->on('lc.client_id', '=', 'cp.client_id');
+        $points = DB::table('loyalty_cards as lc')
+            ->join('firms as f', 'f.id', '=', 'lc.firm_id')
+            ->leftJoin('client_points as cp', function ($join) {
+                $join->on('cp.firm_id', '=', 'lc.firm_id')
+                    ->on('cp.client_id', '=', 'lc.client_id');
             })
-            ->where('cp.client_id', $client->id)
+            ->where('lc.client_id', $client->id)
+            ->where(function ($query) {
+                $query->where('f.program_type', 'points')
+                    ->orWhere('f.has_points', 1);
+            })
             ->select([
-                'cp.points',
-                'cp.firm_id',
+                DB::raw('COALESCE(cp.points, 0) as points'),
+                'lc.firm_id',
                 'f.id as firm_id',
                 'f.name as firm_name',
                 'f.slug as firm_slug',
-                'lc.linked_card_id',
+                'lc.id as linked_card_id',
             ])
-            ->orderByDesc('cp.id')
+            ->orderBy('f.name')
             ->get();
 
         $passes = DB::table('user_passes as up')
@@ -261,7 +261,6 @@ class ClientController extends Controller
 
         $displayCode = $client->phone;
 
-        // ✅ JEDYNA POPRAWKA — QR prowadzi do panelu dodawania punktów
         $qrPayload = route('company.points.client.form', ['phone' => $client->phone]);
         $qr = QrCode::format('svg')
             ->size(170)
