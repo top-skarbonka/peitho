@@ -7,12 +7,14 @@ use App\Models\FirmLocation;
 use App\Models\FirmPromotion;
 use App\Models\FirmRecommendation;
 use App\Models\LoyaltyCard;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -57,9 +59,13 @@ class ClientController extends Controller
                 });
             });
 
+        $linkedCards = DB::table('loyalty_cards')
+            ->selectRaw('firm_id, client_id, MIN(id) as linked_card_id')
+            ->groupBy('firm_id', 'client_id');
+
         $points = DB::table('client_points as cp')
             ->join('firms as f', 'f.id', '=', 'cp.firm_id')
-            ->leftJoin('loyalty_cards as lc', function ($join) {
+            ->leftJoinSub($linkedCards, 'lc', function ($join) {
                 $join->on('lc.firm_id', '=', 'cp.firm_id')
                     ->on('lc.client_id', '=', 'cp.client_id');
             })
@@ -70,7 +76,7 @@ class ClientController extends Controller
                 'f.id as firm_id',
                 'f.name as firm_name',
                 'f.slug as firm_slug',
-                'lc.id as linked_card_id',
+                'lc.linked_card_id',
             ])
             ->orderByDesc('cp.id')
             ->get();
@@ -98,6 +104,59 @@ class ClientController extends Controller
             'passes'  => $passes,
             'points'  => $points,
         ]);
+    }
+
+    public function sendRodoData(Request $request)
+    {
+        $client = Auth::guard('client')->user();
+
+        if (! $client) {
+            return redirect()->route('client.login');
+        }
+
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        $points = DB::table('client_points')
+            ->join('firms', 'firms.id', '=', 'client_points.firm_id')
+            ->where('client_points.client_id', $client->id)
+            ->select('client_points.*', 'firms.name as firm_name')
+            ->get();
+
+        $transactions = DB::table('client_point_logs')
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $consents = DB::table('client_consents_logs')
+            ->join('firms', 'firms.id', '=', 'client_consents_logs.firm_id')
+            ->where('client_consents_logs.client_id', $client->id)
+            ->select('client_consents_logs.*', 'firms.name as firm_name')
+            ->orderByDesc('client_consents_logs.created_at')
+            ->get();
+
+        $pdf = Pdf::loadView('admin.pdf.client-export', [
+            'client'       => $client,
+            'points'       => $points,
+            'transactions' => $transactions,
+            'consents'     => $consents,
+        ]);
+
+        $pdfContent = $pdf->output();
+        $fileName = 'dane-klienta-' . preg_replace('/\D+/', '', (string) $client->phone) . '.pdf';
+
+        Mail::raw('W załączniku znajdziesz wygenerowany raport danych klienta (RODO) z systemu Looply.', function ($message) use ($validated, $pdfContent, $fileName, $client) {
+            $message->to($validated['email'])
+                ->subject('Looply – Twoje dane (RODO) – klient #' . $client->id)
+                ->attachData($pdfContent, $fileName, [
+                    'mime' => 'application/pdf',
+                ]);
+        });
+
+        return redirect()
+            ->route('client.dashboard')
+            ->with('success', 'Twoje dane zostały wysłane na podany adres e-mail ✅');
     }
 
     public function consents()
@@ -203,7 +262,7 @@ class ClientController extends Controller
         $displayCode = $client->phone;
 
         // ✅ JEDYNA POPRAWKA — QR prowadzi do panelu dodawania punktów
-$qrPayload = route('company.points.client.form', ['phone' => $client->phone]);
+        $qrPayload = route('company.points.client.form', ['phone' => $client->phone]);
         $qr = QrCode::format('svg')
             ->size(170)
             ->margin(0)
