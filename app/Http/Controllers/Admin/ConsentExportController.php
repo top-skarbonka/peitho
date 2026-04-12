@@ -10,6 +10,9 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+// 🔥 NOWE
+use Barryvdh\DomPDF\Facade\Pdf;
+
 class ConsentExportController extends Controller
 {
     /**
@@ -96,7 +99,7 @@ class ConsentExportController extends Controller
     }
 
     /**
-     * 🔥 NOWE — EXPORT PEŁNYCH DANYCH KLIENTA (RODO)
+     * 🔥 EXPORT JSON (RODO)
      */
     public function exportClientData(Request $request)
     {
@@ -112,7 +115,6 @@ class ConsentExportController extends Controller
             return response()->json(['error' => 'Klient nie istnieje'], 404);
         }
 
-        // 🔐 LOG ADMINA
         SecurityLog::create([
             'actor_type' => 'admin',
             'actor_id'   => Auth::id(),
@@ -142,5 +144,61 @@ class ConsentExportController extends Controller
             'transactions' => $transactions,
             'consents'     => $consents,
         ]);
+    }
+
+    /**
+     * 🔥 NOWE — PDF EXPORT (tylko backend fix)
+     */
+    public function exportClientPdf(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required',
+        ]);
+
+        $phone = preg_replace('/\D+/', '', $request->phone);
+
+        $client = DB::table('clients')->where('phone', $phone)->first();
+
+        if (!$client) {
+            abort(404);
+        }
+
+        SecurityLog::create([
+            'actor_type' => 'admin',
+            'actor_id'   => Auth::id(),
+            'action'     => 'export_client_pdf',
+            'target'     => 'client_id=' . $client->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // 🔥 TYLKO TO ZMIENIONE
+        $points = DB::table('client_points')
+            ->join('firms', 'firms.id', '=', 'client_points.firm_id')
+            ->where('client_points.client_id', $client->id)
+            ->select('client_points.*', 'firms.name as firm_name')
+            ->get();
+
+        $transactions = DB::table('client_point_logs')
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        // 🔥 TYLKO TO ZMIENIONE
+        $consents = DB::table('client_consents_logs')
+            ->join('firms', 'firms.id', '=', 'client_consents_logs.firm_id')
+            ->where('client_consents_logs.client_id', $client->id)
+            ->select('client_consents_logs.*', 'firms.name as firm_name')
+            ->orderByDesc('client_consents_logs.created_at')
+            ->get();
+
+        $pdf = Pdf::loadView('admin.pdf.client-export', [
+            'client' => $client,
+            'points' => $points,
+            'transactions' => $transactions,
+            'consents' => $consents,
+        ]);
+
+        return $pdf->download('dane-klienta-'.$phone.'.pdf');
     }
 }

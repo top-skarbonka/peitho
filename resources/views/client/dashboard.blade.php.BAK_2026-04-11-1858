@@ -802,35 +802,7 @@
         </a>
     </div>
 </header>
-@if(session('success'))
-    <div style="margin-bottom:15px;padding:12px 14px;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;">
-        {{ session('success') }}
-    </div>
-@endif
 
-<div class="card" style="margin-bottom:20px;">
-    <div class="brand">📄 Twoje dane (RODO)</div>
-
-    <div class="sub">
-        Możesz pobrać swoje dane z systemu Looply w formacie PDF.
-    </div>
-
-    <form method="POST" action="{{ url('/client/rodo/send') }}" style="margin-top:12px;">
-        @csrf
-
-        <input 
-            type="email" 
-            name="email" 
-            placeholder="Wpisz swój email"
-            required
-            style="width:100%;padding:12px;border-radius:10px;border:1px solid #ccc;margin-bottom:10px;"
-        >
-
-        <button type="submit" class="top-action" style="width:100%;justify-content:center;">
-            📩 Wyślij moje dane na email
-        </button>
-    </form>
-</div>
 <div class="categories">
     <div class="category active" data-filter="all">Wszystkie</div>
 

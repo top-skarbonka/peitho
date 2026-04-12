@@ -17,6 +17,10 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+// 🔥 NOWE
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
+
 class ClientController extends Controller
 {
     public function dashboard()
@@ -179,10 +183,9 @@ class ClientController extends Controller
         $card->marketing_consent_revoked_at = $newValue ? null : $now;
         $card->save();
 
-        // 🔥 LOG ZGODY (RODO)
         DB::table('client_consents_logs')->insert([
             'client_id'     => $client->id,
-            'phone'         => $client->phone, // ✅ JEDYNA ZMIANA
+            'phone'         => $client->phone,
             'firm_id'       => $card->firm_id,
             'consent_type'  => 'sms_marketing',
             'value'         => $newValue,
@@ -198,6 +201,53 @@ class ClientController extends Controller
             'success' => true,
             'marketing_consent' => (bool) $newValue,
         ]);
+    }
+
+    // 🔥 NOWA METODA — WYSYŁKA RODO PDF
+    public function sendRodoData(Request $request)
+    {
+        $client = Auth::guard('client')->user();
+
+        if (! $client) {
+            abort(403);
+        }
+
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $points = DB::table('client_points')
+            ->join('firms', 'firms.id', '=', 'client_points.firm_id')
+            ->where('client_points.client_id', $client->id)
+            ->select('client_points.*', 'firms.name as firm_name')
+            ->get();
+
+        $transactions = DB::table('client_point_logs')
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $consents = DB::table('client_consents_logs')
+            ->join('firms', 'firms.id', '=', 'client_consents_logs.firm_id')
+            ->where('client_consents_logs.client_id', $client->id)
+            ->select('client_consents_logs.*', 'firms.name as firm_name')
+            ->orderByDesc('client_consents_logs.created_at')
+            ->get();
+
+        $pdf = Pdf::loadView('admin.pdf.client-export', [
+            'client' => $client,
+            'points' => $points,
+            'transactions' => $transactions,
+            'consents' => $consents,
+        ]);
+
+        Mail::raw('Twoje dane z systemu Looply w załączniku.', function ($message) use ($request, $pdf) {
+            $message->to($request->email)
+                ->subject('Twoje dane (RODO) - Looply')
+                ->attachData($pdf->output(), 'dane-klienta.pdf');
+        });
+
+        return back()->with('success', 'Dane zostały wysłane na email.');
     }
 
     public function showCard(LoyaltyCard $card)

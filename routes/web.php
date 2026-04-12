@@ -89,6 +89,9 @@ Route::prefix('client')
 
         Route::get('/card', [ClientController::class, 'loyaltyCard'])->name('client.card');
         Route::get('/card/{card}', [ClientController::class, 'showCard'])->name('client.card.show');
+
+        // 🔥 JEDYNA ZMIANA — RODO MAIL
+        Route::post('/rodo/send', [ClientController::class, 'sendRodoData']);
     });
 
 Route::get('/register/firm/{slug}', [PublicClientController::class, 'showRegisterFormByFirm'])
@@ -126,15 +129,8 @@ Route::prefix('admin')
 
         Route::get('/consents/export', [ConsentExportController::class, 'export'])->name('admin.consents.export');
 
-        // 🔥 NOWE — EXPORT PEŁNYCH DANYCH KLIENTA
         Route::get('/api/export-client-data', [ConsentExportController::class, 'exportClientData']);
     });
-
-/*
-|--------------------------------------------------------------------------
-| 🔥 API — PUNKTY + REWARDS + OSZCZĘDNOŚCI
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware(['auth:company'])->get('/api/client-points', function (\Illuminate\Http\Request $request) {
 
