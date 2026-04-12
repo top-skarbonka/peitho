@@ -45,6 +45,7 @@
             border: 1px solid #ccc;
             padding: 6px;
             text-align: left;
+            vertical-align: top;
         }
 
         th {
@@ -83,13 +84,15 @@
 
 <div class="box">
     <strong>ID klienta:</strong> {{ $client->id }}<br>
-    <strong>Telefon:</strong> {{ $client->phone }}
+    <strong>Telefon:</strong> {{ $client->phone }}<br>
+    <strong>Email:</strong> {{ $client->email ?? '—' }}
 </div>
 
-<h2>Zgody marketingowe</h2>
+<h2>Zgody marketingowe i formalne</h2>
 
 <table>
     <tr>
+        <th>Typ zgody</th>
         <th>Wartość</th>
         <th>Firma</th>
         <th>IP</th>
@@ -97,10 +100,21 @@
     </tr>
     @foreach($consents as $c)
     <tr>
+        <td>
+            @if($c->consent_type === 'sms_marketing')
+                SMS marketing
+            @elseif($c->consent_type === 'email_marketing')
+                E-mail marketing
+            @elseif($c->consent_type === 'terms_acceptance')
+                Akceptacja regulaminu i polityki
+            @else
+                {{ $c->consent_type }}
+            @endif
+        </td>
         <td class="{{ $c->value ? 'ok' : 'no' }}">
             {{ $c->value ? 'TAK' : 'NIE' }}
         </td>
-        <td>{{ $c->firm_name ?? $c->firm_id }}</td> <!-- 🔥 ZMIANA -->
+        <td>{{ $c->firm_name ?? $c->firm_id }}</td>
         <td>{{ $c->ip_address }}</td>
         <td>{{ $c->created_at }}</td>
     </tr>
@@ -116,7 +130,7 @@
     </tr>
     @foreach($points as $p)
     <tr>
-        <td>{{ $p->firm_name ?? $p->firm_id }}</td> <!-- 🔥 ZMIANA -->
+        <td>{{ $p->firm_name ?? $p->firm_id }}</td>
         <td>{{ $p->points }}</td>
     </tr>
     @endforeach
