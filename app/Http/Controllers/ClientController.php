@@ -201,8 +201,9 @@ class ClientController extends Controller
         $current = min($card->stamps->count(), $maxStamps);
 
         $displayCode = $client->phone;
-        $qrPayload = $client->phone;
 
+        // ✅ JEDYNA POPRAWKA — QR prowadzi do panelu dodawania punktów
+$qrPayload = route('company.points.client.form', ['phone' => $client->phone]);
         $qr = QrCode::format('svg')
             ->size(170)
             ->margin(0)
