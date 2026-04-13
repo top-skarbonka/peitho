@@ -46,6 +46,9 @@ class Firm extends Authenticatable
         'subscription_status',
         'subscription_ends_at',
         'subscription_forced_status',
+
+        // 📢 Premium push
+        'push_enabled',
     ];
 
     protected $hidden = [
@@ -55,6 +58,7 @@ class Firm extends Authenticatable
     protected $casts = [
         'subscription_ends_at' => 'datetime',
         'password_changed_at' => 'datetime',
+        'push_enabled' => 'boolean',
     ];
 
     /*
