@@ -27,6 +27,15 @@ class FirmController extends Controller
         return $firm;
     }
 
+    private function ensurePushEnabled(): void
+    {
+        $firm = $this->firm();
+
+        if (! $firm->push_enabled) {
+            abort(403, 'Funkcja powiadomień push nie jest aktywna dla tej firmy.');
+        }
+    }
+
     public function dashboard()
     {
         $firm = $this->firm();
