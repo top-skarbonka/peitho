@@ -107,8 +107,8 @@ class AdminFirmController extends Controller
 
             // ✅ KLUCZOWE
             'has_points'   => $hasPoints,
-            'has_stickers'=> $hasStickers,
-            'has_passes'  => $hasPasses,
+            'has_stickers' => $hasStickers,
+            'has_passes'   => $hasPasses,
         ]);
 
         Mail::to($firm->email)->send(
@@ -211,6 +211,7 @@ class AdminFirmController extends Controller
         $data['has_stickers'] = $request->has('has_stickers');
         $data['has_points']   = $request->has('has_points');
         $data['has_passes']   = $request->has('has_passes');
+        $data['push_enabled'] = $request->has('push_enabled');
 
         if ($request->filled('card_template')) {
             $data['card_template'] = $request->card_template;
