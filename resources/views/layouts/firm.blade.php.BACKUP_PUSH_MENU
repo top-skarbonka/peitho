@@ -9,10 +9,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-@php
-    $firm = auth()->guard('company')->user();
-@endphp
-
 <div class="min-h-screen flex">
 
     {{-- SIDEBAR --}}
@@ -29,16 +25,9 @@
             <a href="#" class="block px-4 py-2 rounded-lg hover:bg-slate-100">
                 🧾 Transakcje
             </a>
-
-            <a href="/company/points" class="block px-4 py-2 rounded-lg hover:bg-slate-100">
-                💰 Dodaj punkty
-            </a>
-
-            @if($firm && $firm->push_enabled && Route::has('company.push.index'))
-                <a href="{{ route('company.push.index') }}" class="block px-4 py-2 rounded-lg hover:bg-slate-100">
-                    📢 Push premium
-                </a>
-            @endif
+<a href="/company/points" class="block px-4 py-2 rounded-lg hover:bg-slate-100">
+    💰 Dodaj punkty
+</a>
         </nav>
 
         <div class="mt-auto p-4">

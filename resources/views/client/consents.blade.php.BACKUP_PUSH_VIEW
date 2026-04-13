@@ -250,25 +250,6 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-
-                    <div class="consent-row">
-                        <div class="consent-copy">
-                            <div class="consent-title">Powiadomienia push</div>
-                            <div class="consent-status" id="status-push-{{ $card->id }}">
-                                {{ $card->push_consent ? 'Aktywna' : 'Nieaktywna' }}
-                            </div>
-                        </div>
-
-                        <label class="switch">
-                            <input
-                                type="checkbox"
-                                data-id="{{ $card->id }}"
-                                data-type="push"
-                                {{ $card->push_consent ? 'checked' : '' }}
-                            >
-                            <span class="slider"></span>
-                        </label>
-                    </div>
                 </div>
             @endforeach
         </div>
@@ -286,17 +267,9 @@ document.querySelectorAll('.switch input').forEach(toggle => {
     toggle.addEventListener('change', function() {
         const cardId = this.dataset.id;
         const consentType = this.dataset.type;
-
-        let statusLabelId = '';
-
-        if (consentType === 'sms_marketing') {
-            statusLabelId = `status-sms-${cardId}`;
-        } else if (consentType === 'email_marketing') {
-            statusLabelId = `status-email-${cardId}`;
-        } else {
-            statusLabelId = `status-push-${cardId}`;
-        }
-
+        const statusLabelId = consentType === 'sms_marketing'
+            ? `status-sms-${cardId}`
+            : `status-email-${cardId}`;
         const statusLabel = document.getElementById(statusLabelId);
         const value = this.checked ? 1 : 0;
         const previousChecked = !this.checked;

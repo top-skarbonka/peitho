@@ -156,13 +156,6 @@ class FirmController extends Controller
         ));
     }
 
-    public function pushIndex()
-    {
-        $this->ensurePushEnabled();
-
-        return view('firm.push.index');
-    }
-
     public function showPointsForm()
     {
         $firm = $this->firm();

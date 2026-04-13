@@ -57,8 +57,6 @@ Route::prefix('company')
 
         Route::get('/passes', [FirmController::class, 'issuedPasses'])->name('company.passes.index');
 
-        Route::get('/push', [FirmController::class, 'pushIndex'])->name('company.push.index');
-
         Route::post('/redeem', [FirmController::class, 'redeemPoints'])
             ->name('company.points.redeem');
     });

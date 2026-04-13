@@ -65,15 +65,6 @@
 
 <hr>
 
-{{-- 📢 PUSH PREMIUM --}}
-<h4>📢 Push premium</h4>
-<label style="display:block;margin-bottom:20px;">
-    <input type="checkbox" name="push_enabled" value="1" {{ old('push_enabled', $firm->push_enabled) ? 'checked' : '' }}>
-    Włącz dostęp do powiadomień push dla tej firmy
-</label>
-
-<hr>
-
 {{-- 🎁 PROMOCJA --}}
 <h4>🎁 Warunki promocji / nagroda</h4>
 <textarea name="promotion_text"

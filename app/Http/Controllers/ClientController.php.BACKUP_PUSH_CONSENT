@@ -218,7 +218,7 @@ class ClientController extends Controller
         }
 
         $validated = $request->validate([
-            'consent_type' => 'required|in:sms_marketing,email_marketing,push',
+            'consent_type' => 'required|in:sms_marketing,email_marketing',
             'value'        => 'required|boolean',
         ]);
 
@@ -240,7 +240,7 @@ class ClientController extends Controller
             $card->sms_marketing_consent = $newValue;
             $card->sms_marketing_consent_at = $newValue ? ($card->sms_marketing_consent_at ?? $now) : null;
             $card->sms_marketing_consent_revoked_at = $newValue ? null : $now;
-        } elseif ($consentType === 'email_marketing') {
+        } else {
             $oldValue = (bool) $card->email_marketing_consent;
 
             if ($oldValue === $newValue) {
@@ -254,20 +254,6 @@ class ClientController extends Controller
             $card->email_marketing_consent = $newValue;
             $card->email_marketing_consent_at = $newValue ? ($card->email_marketing_consent_at ?? $now) : null;
             $card->email_marketing_consent_revoked_at = $newValue ? null : $now;
-        } else {
-            $oldValue = (bool) $card->push_consent;
-
-            if ($oldValue === $newValue) {
-                return response()->json([
-                    'success' => true,
-                    'consent_type' => $consentType,
-                    'value' => $newValue,
-                ]);
-            }
-
-            $card->push_consent = $newValue;
-            $card->push_consent_at = $newValue ? ($card->push_consent_at ?? $now) : null;
-            $card->push_consent_revoked_at = $newValue ? null : $now;
         }
 
         $card->marketing_consent = (bool) ($card->sms_marketing_consent || $card->email_marketing_consent);
@@ -288,9 +274,7 @@ class ClientController extends Controller
             'source'       => 'client_consents_panel',
             'consent_text' => $consentType === 'sms_marketing'
                 ? 'Zgoda na otrzymywanie informacji marketingowych drogą SMS.'
-                : ($consentType === 'email_marketing'
-                    ? 'Zgoda na otrzymywanie informacji marketingowych drogą e-mail.'
-                    : 'Zgoda na otrzymywanie powiadomień push.'),
+                : 'Zgoda na otrzymywanie informacji marketingowych drogą e-mail.',
             'created_at'   => $now,
             'updated_at'   => $now,
         ]);
@@ -299,13 +283,13 @@ class ClientController extends Controller
             $client->sms_marketing_consent = $newValue;
             $client->sms_marketing_consent_at = $newValue ? ($client->sms_marketing_consent_at ?? $now) : null;
             $client->sms_marketing_withdrawn_at = $newValue ? null : $now;
-            $client->save();
-        } elseif ($consentType === 'email_marketing') {
+        } else {
             $client->email_marketing_consent = $newValue;
             $client->email_marketing_consent_at = $newValue ? ($client->email_marketing_consent_at ?? $now) : null;
             $client->email_marketing_withdrawn_at = $newValue ? null : $now;
-            $client->save();
         }
+
+        $client->save();
 
         return response()->json([
             'success'      => true,
