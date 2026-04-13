@@ -68,6 +68,19 @@
 
     </div>
 
+    {{-- PUSH PREMIUM --}}
+    @if($firm && $firm->push_enabled)
+        <div class="bg-white rounded-2xl p-6 shadow border border-indigo-100">
+            <h2 class="text-xl font-bold mb-2">📢 Push premium</h2>
+            <p class="text-slate-600">
+                Funkcja powiadomień push jest aktywna dla Twojej firmy.
+            </p>
+            <p class="text-sm text-slate-500 mt-2">
+                W kolejnym kroku pojawi się tutaj panel do zarządzania powiadomieniami push.
+            </p>
+        </div>
+    @endif
+
     {{-- WYKRESY --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
