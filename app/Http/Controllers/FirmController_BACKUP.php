@@ -88,48 +88,6 @@ class FirmController extends Controller
             $trend = (($currentPoints - $previousPoints) / $previousPoints) * 100;
         }
 
-        // NOWE BOXY STATYSTYK
-        $positiveLogs = DB::table('client_point_logs')
-            ->where('firm_id', $firm->id)
-            ->where('points', '>', 0)
-            ->select('id', 'client_id', 'created_at')
-            ->orderBy('created_at')
-            ->orderBy('id')
-            ->get();
-
-        $newClients = 0;
-        $returningClients = 0;
-        $newTransactions = 0;
-        $returningTransactions = 0;
-
-        if ($positiveLogs->isNotEmpty()) {
-            $logsByClient = $positiveLogs->groupBy('client_id');
-
-            $newClients = $logsByClient
-                ->filter(function ($logs) {
-                    return $logs->count() === 1;
-                })
-                ->count();
-
-            $returningClients = $logsByClient
-                ->filter(function ($logs) {
-                    return $logs->count() > 1;
-                })
-                ->count();
-
-            $newTransactions = $logsByClient
-                ->map(function ($logs) {
-                    return min(1, $logs->count());
-                })
-                ->sum();
-
-            $returningTransactions = $logsByClient
-                ->map(function ($logs) {
-                    return max(0, $logs->count() - 1);
-                })
-                ->sum();
-        }
-
         return view('firm.dashboard', compact(
             'totalClients',
             'totalTransactions',
@@ -139,11 +97,7 @@ class FirmController extends Controller
             'pointsPerDay',
             'currentPoints',
             'previousPoints',
-            'trend',
-            'newClients',
-            'returningClients',
-            'newTransactions',
-            'returningTransactions'
+            'trend'
         ));
     }
 

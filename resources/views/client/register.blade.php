@@ -125,7 +125,7 @@
                 <label style="display:flex; align-items:flex-start; gap:12px; cursor:pointer; margin-bottom:14px;">
                     <input type="checkbox" name="sms_marketing_consent" id="sms_marketing_consent" value="1" {{ old('sms_marketing_consent') ? 'checked' : '' }}>
                     <div>
-                        <strong>📱 Chcę otrzymywać SMS-y o promocjach i ofertach specjalnych</strong>
+                        <strong>🎁 Chcę otrzymywać SMS-y z rabatami i okazjami (czasem coś gratis 😉)</strong>
                         <div style="font-size:13px; color:#555; margin-top:6px; line-height:1.4;">
                             Informacje o rabatach, gratisach i okazjach od partnerów programu.
                         </div>

@@ -217,30 +217,84 @@ class ClientController extends Controller
             abort(403);
         }
 
-        $request->validate([
-            'marketing_consent' => 'required',
+        $validated = $request->validate([
+            'consent_type' => 'required|in:sms_marketing,email_marketing',
+            'value'        => 'required|boolean',
         ]);
 
-        $oldValue = (int) ((bool) $card->marketing_consent);
-        $newValue = (int) ($request->boolean('marketing_consent'));
+        $now = Carbon::now();
+        $newValue = (bool) $validated['value'];
+        $consentType = $validated['consent_type'];
 
-        if ($oldValue === $newValue) {
-            return response()->json([
-                'success' => true,
-                'marketing_consent' => (bool) $newValue,
-            ]);
+        if ($consentType === 'sms_marketing') {
+            $oldValue = (bool) $card->sms_marketing_consent;
+
+            if ($oldValue === $newValue) {
+                return response()->json([
+                    'success' => true,
+                    'consent_type' => $consentType,
+                    'value' => $newValue,
+                ]);
+            }
+
+            $card->sms_marketing_consent = $newValue;
+            $card->sms_marketing_consent_at = $newValue ? ($card->sms_marketing_consent_at ?? $now) : null;
+            $card->sms_marketing_consent_revoked_at = $newValue ? null : $now;
+        } else {
+            $oldValue = (bool) $card->email_marketing_consent;
+
+            if ($oldValue === $newValue) {
+                return response()->json([
+                    'success' => true,
+                    'consent_type' => $consentType,
+                    'value' => $newValue,
+                ]);
+            }
+
+            $card->email_marketing_consent = $newValue;
+            $card->email_marketing_consent_at = $newValue ? ($card->email_marketing_consent_at ?? $now) : null;
+            $card->email_marketing_consent_revoked_at = $newValue ? null : $now;
         }
 
-        $now = Carbon::now();
-
-        $card->marketing_consent = $newValue;
-        $card->marketing_consent_at = $newValue ? $now : null;
-        $card->marketing_consent_revoked_at = $newValue ? null : $now;
+        $card->marketing_consent = (bool) ($card->sms_marketing_consent || $card->email_marketing_consent);
+        $card->marketing_consent_at = $card->marketing_consent
+            ? ($card->marketing_consent_at ?? $now)
+            : null;
+        $card->marketing_consent_revoked_at = $card->marketing_consent ? null : $now;
         $card->save();
 
+        DB::table('client_consents_logs')->insert([
+            'client_id'    => $client->id,
+            'phone'        => $client->phone,
+            'firm_id'      => $card->firm_id,
+            'consent_type' => $consentType,
+            'value'        => $newValue ? 1 : 0,
+            'ip_address'   => request()->ip(),
+            'user_agent'   => substr((string) request()->userAgent(), 0, 500),
+            'source'       => 'client_consents_panel',
+            'consent_text' => $consentType === 'sms_marketing'
+                ? 'Zgoda na otrzymywanie informacji marketingowych drogą SMS.'
+                : 'Zgoda na otrzymywanie informacji marketingowych drogą e-mail.',
+            'created_at'   => $now,
+            'updated_at'   => $now,
+        ]);
+
+        if ($consentType === 'sms_marketing') {
+            $client->sms_marketing_consent = $newValue;
+            $client->sms_marketing_consent_at = $newValue ? ($client->sms_marketing_consent_at ?? $now) : null;
+            $client->sms_marketing_withdrawn_at = $newValue ? null : $now;
+        } else {
+            $client->email_marketing_consent = $newValue;
+            $client->email_marketing_consent_at = $newValue ? ($client->email_marketing_consent_at ?? $now) : null;
+            $client->email_marketing_withdrawn_at = $newValue ? null : $now;
+        }
+
+        $client->save();
+
         return response()->json([
-            'success' => true,
-            'marketing_consent' => (bool) $newValue,
+            'success'      => true,
+            'consent_type' => $consentType,
+            'value'        => $newValue,
         ]);
     }
 

@@ -80,12 +80,12 @@ class PublicClientController extends Controller
             }
 
             $updateData = [
-                'firm_id'            => $firm->id,
-                'program_id'         => $firm->program_id,
-                'name'               => $validated['name'] ?? $client->name,
-                'email'              => $validated['email'] ?? $client->email,
-                'postal_code'        => $validated['postal_code'] ?? $client->postal_code,
-                'terms_accepted_at'  => $client->terms_accepted_at ?? $now,
+                'firm_id'           => $firm->id,
+                'program_id'        => $firm->program_id,
+                'name'              => $validated['name'] ?? $client->name,
+                'email'             => $validated['email'] ?? $client->email,
+                'postal_code'       => $validated['postal_code'] ?? $client->postal_code,
+                'terms_accepted_at' => $client->terms_accepted_at ?? $now,
             ];
 
             if ($smsConsent && ! $client->sms_marketing_consent) {
@@ -109,15 +109,38 @@ class PublicClientController extends Controller
 
         if (! $existingCard) {
             $card = LoyaltyCard::create([
-                'client_id'            => $client->id,
-                'firm_id'              => $firm->id,
-                'program_id'           => $firm->program_id,
-                'stamps'               => $firm->start_stamps ?? 0,
-                'marketing_consent'    => $smsConsent || $emailConsent,
-                'marketing_consent_at' => ($smsConsent || $emailConsent) ? $now : null,
+                'client_id'                     => $client->id,
+                'firm_id'                       => $firm->id,
+                'program_id'                    => $firm->program_id,
+                'stamps'                        => $firm->start_stamps ?? 0,
+                'marketing_consent'             => $smsConsent || $emailConsent,
+                'marketing_consent_at'          => ($smsConsent || $emailConsent) ? $now : null,
+                'sms_marketing_consent'         => $smsConsent,
+                'sms_marketing_consent_at'      => $smsConsent ? $now : null,
+                'email_marketing_consent'       => $emailConsent,
+                'email_marketing_consent_at'    => $emailConsent ? $now : null,
             ]);
         } else {
             $card = $existingCard;
+
+            $cardUpdateData = [
+                'marketing_consent' => $smsConsent || $emailConsent,
+                'marketing_consent_at' => ($smsConsent || $emailConsent) ? ($card->marketing_consent_at ?? $now) : null,
+            ];
+
+            if ($smsConsent && ! $card->sms_marketing_consent) {
+                $cardUpdateData['sms_marketing_consent'] = true;
+                $cardUpdateData['sms_marketing_consent_at'] = $now;
+                $cardUpdateData['sms_marketing_consent_revoked_at'] = null;
+            }
+
+            if ($emailConsent && ! $card->email_marketing_consent) {
+                $cardUpdateData['email_marketing_consent'] = true;
+                $cardUpdateData['email_marketing_consent_at'] = $now;
+                $cardUpdateData['email_marketing_consent_revoked_at'] = null;
+            }
+
+            $card->update($cardUpdateData);
         }
 
         DB::table('client_consents_logs')->insert([

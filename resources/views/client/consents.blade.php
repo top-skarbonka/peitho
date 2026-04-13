@@ -84,37 +84,66 @@
             display:flex;
             flex-direction:column;
             justify-content:space-between;
-            min-height:140px;
+            min-height:190px;
         }
 
         .firm {
             font-weight:700;
             font-size:1rem;
-            margin-bottom:6px;
+            margin-bottom:10px;
         }
 
-        .desc {
-            font-size:.8rem;
-            opacity:.75;
-            line-height:1.4;
-        }
-
-        .footer {
+        .consent-row {
             display:flex;
             align-items:center;
             justify-content:space-between;
-            margin-top:18px;
+            gap:14px;
+            padding:10px 0;
+            border-top:1px solid rgba(255,255,255,.08);
         }
 
-        .status {
+        .consent-row:first-of-type {
+            border-top:none;
+        }
+
+        .consent-copy {
+            display:flex;
+            flex-direction:column;
+            gap:4px;
+        }
+
+        .consent-title {
+            font-size:.88rem;
+            font-weight:700;
+        }
+
+        .consent-status {
+            font-size:.75rem;
+            opacity:.72;
+        }
+
+        .note {
+            margin-top:28px;
             font-size:.75rem;
             opacity:.7;
+            line-height:1.4;
+        }
+
+        .empty {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 18px;
+            font-size: .95rem;
+            line-height: 1.6;
+            opacity: .9;
         }
 
         .switch {
             position: relative;
             width: 48px;
             height: 26px;
+            flex: 0 0 auto;
         }
 
         .switch input {
@@ -154,23 +183,6 @@
         input:checked + .slider:before {
             transform:translateX(22px);
         }
-
-        .note {
-            margin-top:28px;
-            font-size:.75rem;
-            opacity:.7;
-            line-height:1.4;
-        }
-
-        .empty {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 18px;
-            padding: 18px;
-            font-size: .95rem;
-            line-height: 1.6;
-            opacity: .9;
-        }
     </style>
 </head>
 <body>
@@ -199,23 +211,41 @@
         <div class="grid">
             @foreach($cards as $card)
                 <div class="card">
-                    <div>
-                        <div class="firm">{{ $card->firm->name }}</div>
-                        <div class="desc">
-                            Zgoda na SMS / komunikację marketingową
-                        </div>
-                    </div>
+                    <div class="firm">{{ $card->firm->name }}</div>
 
-                    <div class="footer">
-                        <span class="status" id="status-{{ $card->id }}">
-                            {{ $card->marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
-                        </span>
+                    <div class="consent-row">
+                        <div class="consent-copy">
+                            <div class="consent-title">SMS marketing</div>
+                            <div class="consent-status" id="status-sms-{{ $card->id }}">
+                                {{ $card->sms_marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
+                            </div>
+                        </div>
 
                         <label class="switch">
                             <input
                                 type="checkbox"
                                 data-id="{{ $card->id }}"
-                                {{ $card->marketing_consent ? 'checked' : '' }}
+                                data-type="sms_marketing"
+                                {{ $card->sms_marketing_consent ? 'checked' : '' }}
+                            >
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="consent-row">
+                        <div class="consent-copy">
+                            <div class="consent-title">Email marketing</div>
+                            <div class="consent-status" id="status-email-{{ $card->id }}">
+                                {{ $card->email_marketing_consent ? 'Aktywna' : 'Nieaktywna' }}
+                            </div>
+                        </div>
+
+                        <label class="switch">
+                            <input
+                                type="checkbox"
+                                data-id="{{ $card->id }}"
+                                data-type="email_marketing"
+                                {{ $card->email_marketing_consent ? 'checked' : '' }}
                             >
                             <span class="slider"></span>
                         </label>
@@ -227,7 +257,7 @@
 
     <div class="note">
         ℹ️ Zmiany zapisują się automatycznie.<br>
-        Zgoda jest ustawiana osobno dla każdej firmy.
+        Zgody są ustawiane osobno dla każdej firmy i osobno dla każdego kanału komunikacji.
     </div>
 
 </div>
@@ -236,8 +266,12 @@
 document.querySelectorAll('.switch input').forEach(toggle => {
     toggle.addEventListener('change', function() {
         const cardId = this.dataset.id;
-        const statusLabel = document.getElementById('status-' + cardId);
-        const consent = this.checked ? 1 : 0;
+        const consentType = this.dataset.type;
+        const statusLabelId = consentType === 'sms_marketing'
+            ? `status-sms-${cardId}`
+            : `status-email-${cardId}`;
+        const statusLabel = document.getElementById(statusLabelId);
+        const value = this.checked ? 1 : 0;
         const previousChecked = !this.checked;
         const currentToggle = this;
 
@@ -245,14 +279,15 @@ document.querySelectorAll('.switch input').forEach(toggle => {
 
         fetch(`/client/consents/${cardId}`, {
             method: 'POST',
-            credentials: 'same-origin', // 🔥 KLUCZOWY FIX
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                marketing_consent: consent
+                consent_type: consentType,
+                value: value
             })
         })
         .then(async res => {
@@ -262,7 +297,7 @@ document.querySelectorAll('.switch input').forEach(toggle => {
                 throw new Error('Błąd zapisu');
             }
 
-            statusLabel.textContent = data.marketing_consent ? 'Aktywna' : 'Nieaktywna';
+            statusLabel.textContent = data.value ? 'Aktywna' : 'Nieaktywna';
         })
         .catch(() => {
             alert('Błąd zapisu. Spróbuj ponownie.');

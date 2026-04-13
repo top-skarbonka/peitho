@@ -48,22 +48,22 @@
 
         <div class="bg-white rounded-2xl p-5 shadow">
             <p class="text-sm text-slate-500">🟢 Nowi klienci</p>
-            <p class="text-3xl font-bold text-green-600 mt-2">{{ $newClients ?? 0 }}</p>
+            <p class="text-3xl font-bold text-green-600 mt-2">{{ $newClientsToday ?? 0 }}</p>
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
             <p class="text-sm text-slate-500">🔁 Powracający</p>
-            <p class="text-3xl font-bold text-blue-600 mt-2">{{ $returningClients ?? 0 }}</p>
+            <p class="text-3xl font-bold text-blue-600 mt-2">{{ $returningClientsToday ?? 0 }}</p>
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
             <p class="text-sm text-slate-500">💰 Transakcje nowych</p>
-            <p class="text-3xl font-bold text-yellow-600 mt-2">{{ $newTransactions ?? 0 }}</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2">{{ $newTransactionsToday ?? 0 }}</p>
         </div>
 
         <div class="bg-white rounded-2xl p-5 shadow">
             <p class="text-sm text-slate-500">💰 Transakcje powracających</p>
-            <p class="text-3xl font-bold text-indigo-600 mt-2">{{ $returningTransactions ?? 0 }}</p>
+            <p class="text-3xl font-bold text-indigo-600 mt-2">{{ $returningTransactionsToday ?? 0 }}</p>
         </div>
 
     </div>
